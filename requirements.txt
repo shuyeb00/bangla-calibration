@@ -1,0 +1,17 @@
+transformers==4.44.2
+datasets==2.20.0
+peft==0.12.0
+accelerate==0.33.0
+evaluate==0.4.2
+scikit-learn==1.5.1
+pandas==2.2.2
+numpy==1.26.4
+matplotlib==3.9.1
+seaborn==0.13.2
+netcal==1.3.5
+mapie==1.1.0
+torch==2.4.0
+jupyter==1.0.0
+tqdm==4.66.4
+statsmodels==0.14.2
+scipy==1.14.0
