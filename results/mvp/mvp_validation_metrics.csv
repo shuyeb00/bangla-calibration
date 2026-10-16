@@ -1,0 +1,2 @@
+macro_f1,ece_uncalibrated,ece_calibrated,conformal_coverage_90,avg_prediction_set_size
+0.3329,0.0136,0.0136,0.9667,2.65

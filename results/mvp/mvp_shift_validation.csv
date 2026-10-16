@@ -1,0 +1,6 @@
+condition,macro_f1,ece_uncalibrated,ece_calibrated,conformal_coverage_90,avg_set_size
+D0_clean,0.3329,0.0136,0.0136,0.9667,2.65
+D2_codemixed,0.1878,0.039,0.039,0.6833,2.1667
+D3_noise_05pct,0.43,0.0839,0.0839,1.0,2.7667
+D3_noise_10pct,0.3989,0.0535,0.0535,1.0,2.8667
+D3_noise_20pct,0.2473,0.0299,0.0299,1.0,2.95
