@@ -1,4 +1,8 @@
 import numpy as np
+
+if not hasattr(np, "infty"):
+    np.infty = np.inf
+
 from scipy.special import softmax
 from sklearn.metrics import f1_score, accuracy_score
 from netcal.scaling import TemperatureScaling
