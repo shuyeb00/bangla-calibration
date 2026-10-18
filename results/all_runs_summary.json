@@ -68,5 +68,145 @@
     "model": "banglabert",
     "ft_method": "lora",
     "seed": 99
+  },
+  {
+    "run_id": "sentiment_xlmr_base_full_ft_seed42",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "full_ft",
+    "seed": 42
+  },
+  {
+    "run_id": "sentiment_xlmr_base_full_ft_seed123",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "full_ft",
+    "seed": 123
+  },
+  {
+    "run_id": "sentiment_xlmr_base_full_ft_seed2026",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "full_ft",
+    "seed": 2026
+  },
+  {
+    "run_id": "sentiment_xlmr_base_full_ft_seed7",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "full_ft",
+    "seed": 7
+  },
+  {
+    "run_id": "sentiment_xlmr_base_full_ft_seed99",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "full_ft",
+    "seed": 99
+  },
+  {
+    "run_id": "sentiment_xlmr_base_lora_seed42",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "lora",
+    "seed": 42
+  },
+  {
+    "run_id": "sentiment_xlmr_base_lora_seed123",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "lora",
+    "seed": 123
+  },
+  {
+    "run_id": "sentiment_xlmr_base_lora_seed2026",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "lora",
+    "seed": 2026
+  },
+  {
+    "run_id": "sentiment_xlmr_base_lora_seed7",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "lora",
+    "seed": 7
+  },
+  {
+    "run_id": "sentiment_xlmr_base_lora_seed99",
+    "task": "sentiment",
+    "model": "xlmr_base",
+    "ft_method": "lora",
+    "seed": 99
+  },
+  {
+    "run_id": "sentiment_indicbert_full_ft_seed42",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "full_ft",
+    "seed": 42
+  },
+  {
+    "run_id": "sentiment_indicbert_full_ft_seed123",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "full_ft",
+    "seed": 123
+  },
+  {
+    "run_id": "sentiment_indicbert_full_ft_seed2026",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "full_ft",
+    "seed": 2026
+  },
+  {
+    "run_id": "sentiment_indicbert_full_ft_seed7",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "full_ft",
+    "seed": 7
+  },
+  {
+    "run_id": "sentiment_indicbert_full_ft_seed99",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "full_ft",
+    "seed": 99
+  },
+  {
+    "run_id": "sentiment_indicbert_lora_seed42",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "lora",
+    "seed": 42
+  },
+  {
+    "run_id": "sentiment_indicbert_lora_seed123",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "lora",
+    "seed": 123
+  },
+  {
+    "run_id": "sentiment_indicbert_lora_seed2026",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "lora",
+    "seed": 2026
+  },
+  {
+    "run_id": "sentiment_indicbert_lora_seed7",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "lora",
+    "seed": 7
+  },
+  {
+    "run_id": "sentiment_indicbert_lora_seed99",
+    "task": "sentiment",
+    "model": "indicbert",
+    "ft_method": "lora",
+    "seed": 99
   }
 ]
