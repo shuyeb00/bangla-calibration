@@ -1,0 +1,13 @@
+{
+  "run_id": "sentiment_banglabert_full_ft_seed7",
+  "model_name": "csebuetnlp/banglabert",
+  "model_key": "banglabert",
+  "ft_method": "full_ft",
+  "task": "sentiment",
+  "num_labels": 3,
+  "seed": 7,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-17T15:24:55.778868"
+}

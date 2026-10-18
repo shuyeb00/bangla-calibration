@@ -1,0 +1,13 @@
+{
+  "run_id": "sentiment_banglabert_lora_seed2026",
+  "model_name": "csebuetnlp/banglabert",
+  "model_key": "banglabert",
+  "ft_method": "lora",
+  "task": "sentiment",
+  "num_labels": 3,
+  "seed": 2026,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-17T16:00:56.079704"
+}

@@ -1,0 +1,13 @@
+{
+  "run_id": "sentiment_xlmr_base_lora_seed99",
+  "model_name": "xlm-roberta-base",
+  "model_key": "xlmr_base",
+  "ft_method": "lora",
+  "task": "sentiment",
+  "num_labels": 3,
+  "seed": 99,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-18T11:14:28.386087"
+}
