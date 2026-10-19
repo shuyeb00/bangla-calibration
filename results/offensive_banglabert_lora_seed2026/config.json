@@ -1,0 +1,13 @@
+{
+  "run_id": "offensive_banglabert_lora_seed2026",
+  "model_name": "csebuetnlp/banglabert",
+  "model_key": "banglabert",
+  "ft_method": "lora",
+  "task": "offensive",
+  "num_labels": 2,
+  "seed": 2026,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-18T18:29:17.554517"
+}

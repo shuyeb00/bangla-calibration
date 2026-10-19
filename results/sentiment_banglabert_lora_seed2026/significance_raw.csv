@@ -1,0 +1,13 @@
+run_id,task,model,ft_method,seed,comparison,metric,test_type,endpoint_family,mean_diff,ci_lo,ci_hi,raw_p,ci_excludes_zero,mcnemar_stat,mcnemar_p
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d2_test,nll,independent_bootstrap,secondary,-0.5409763368964196,-0.6105924144387245,-0.4718029126524925,0.0,True,,
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d2_test,ece_15,independent_bootstrap,secondary,-0.18256930753893263,-0.2212617942383134,-0.145034902990941,0.0,True,,
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d2_test,brier,independent_bootstrap,secondary,-0.316283278585897,-0.3622575255889329,-0.273214832354267,0.0,True,,
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise05,nll,paired_bootstrap,secondary,-0.017652815866571473,-0.033639974519610406,-0.0009529033210128585,0.042,True,0.0,1.0
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise05,ece_15,paired_bootstrap,secondary,0.025682295114284052,0.005498436217141505,0.04362863074549856,0.016,True,0.0,1.0
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise05,brier,paired_bootstrap,secondary,-0.0068593707654839,-0.016282994748856743,0.003432998063778879,0.164,False,0.0,1.0
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise10,nll,paired_bootstrap,secondary,-0.03936502813838888,-0.05937352785840631,-0.0173628737218678,0.0,True,4.1118421052631575,0.04258395584112498
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise10,ece_15,paired_bootstrap,secondary,0.03084020696755718,0.0038828467955703224,0.05618271073600386,0.02,True,4.1118421052631575,0.04258395584112498
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise10,brier,paired_bootstrap,secondary,-0.024107182674265638,-0.03695000326106592,-0.010968399085575732,0.002,True,4.1118421052631575,0.04258395584112498
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise20,nll,paired_bootstrap,secondary,-0.0813818334415555,-0.10843134131282568,-0.05472333310171962,0.0,True,15.041666666666666,0.00010516355403363098
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise20,ece_15,paired_bootstrap,secondary,0.020559109155176315,-0.00944717256078387,0.04878809499828254,0.186,False,15.041666666666666,0.00010516355403363098
+sentiment_banglabert_lora_seed2026,sentiment,banglabert,lora,2026,D0_vs_shift_d3_noise20,brier,paired_bootstrap,secondary,-0.046664224413470075,-0.06413273410927972,-0.030417076599712517,0.0,True,15.041666666666666,0.00010516355403363098

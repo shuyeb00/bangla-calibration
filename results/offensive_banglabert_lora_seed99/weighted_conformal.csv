@@ -1,0 +1,8 @@
+run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_barishal_test,0.9304703476482618,1.243762781186094,36.56305594169771,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_chittagong_test,0.9484240687679084,1.6872697503069995,49.13276792246338,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_noakhali_test,0.912474437627812,1.2482617586912066,4.366193232614087,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d2_test,1.0,2.0,3404.285358357729,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise05,0.8871240999576451,1.0209656925031767,177.5759638723925,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise10,0.9095722151630664,1.2249047013977128,43.08868150823626,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise20,0.9483269800931808,1.650571791613723,6.492007469439854,4718

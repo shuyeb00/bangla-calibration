@@ -84,6 +84,32 @@ def mahalanobis_distance(hidden: np.ndarray, class_means: np.ndarray, cov_inv: n
     return np.min(distances, axis=1)
 
 
+def backfill_cached_tables() -> None:
+    rep_table_path = RESULTS_DIR / "tables" / "representation_distance_metrics.csv"
+    if rep_table_path.exists():
+        try:
+            df_existing = pd.read_csv(rep_table_path)
+            for run_id, grp in df_existing.groupby("run_id"):
+                run_dir = RESULTS_DIR / str(run_id)
+                cache_path = run_dir / "representation_distance.csv"
+                if run_dir.exists() and not cache_path.exists():
+                    grp.to_csv(cache_path, index=False)
+        except Exception as e:
+            print(f"Warning while backfilling representation distance cache: {e}")
+
+    w_table_path = RESULTS_DIR / "tables" / "weighted_conformal_metrics.csv"
+    if w_table_path.exists():
+        try:
+            df_w = pd.read_csv(w_table_path)
+            for run_id, grp in df_w.groupby("run_id"):
+                run_dir = RESULTS_DIR / str(run_id)
+                cache_path = run_dir / "weighted_conformal.csv"
+                if run_dir.exists() and not cache_path.exists():
+                    grp.to_csv(cache_path, index=False)
+        except Exception as e:
+            print(f"Warning while backfilling weighted conformal cache: {e}")
+
+
 def evaluate_representation_distance(
     run_dir: Path,
     task: str,
@@ -92,6 +118,10 @@ def evaluate_representation_distance(
     seed: int,
     eval_conditions: list,
 ) -> list:
+    cache_path = run_dir / "representation_distance.csv"
+    if cache_path.exists():
+        return pd.read_csv(cache_path).to_dict("records")
+
     train_hidden_path = run_dir / "train_hidden.npy"
     train_labels_path = run_dir / "train_labels.npy"
     if not train_hidden_path.exists() or not train_labels_path.exists():
@@ -148,6 +178,9 @@ def evaluate_representation_distance(
                     "auprc": float(average_precision_score(is_wrong, oof_probs)),
                 }
             )
+
+    if records:
+        pd.DataFrame(records).to_csv(cache_path, index=False)
     return records
 
 
@@ -167,20 +200,6 @@ def estimate_importance_weights(cal_hidden: np.ndarray, shift_hidden: np.ndarray
     return to_weights(cal_z), to_weights(shift_z)
 
 
-def weighted_conformal_quantile(
-    cal_scores: np.ndarray,
-    weights_cal: np.ndarray,
-    weight_test_point: float,
-    alpha: float = 0.10,
-) -> float:
-    order = np.argsort(cal_scores)
-    sorted_scores = cal_scores[order]
-    sorted_weights = weights_cal[order]
-    cumulative = np.cumsum(sorted_weights) / (sorted_weights.sum() + weight_test_point)
-    idx = np.searchsorted(cumulative, 1.0 - alpha)
-    return float(np.inf) if idx >= len(sorted_scores) else float(sorted_scores[idx])
-
-
 def evaluate_weighted_conformal(
     run_dir: Path,
     task: str,
@@ -190,6 +209,10 @@ def evaluate_weighted_conformal(
     eval_conditions: list,
     alpha: float = 0.10,
 ) -> list:
+    cache_path = run_dir / "weighted_conformal.csv"
+    if cache_path.exists():
+        return pd.read_csv(cache_path).to_dict("records")
+
     cal_logits_path = run_dir / "cal_logits.npy"
     cal_labels_path = run_dir / "cal_labels.npy"
     cal_hidden_path = run_dir / "cal_hidden.npy"
@@ -200,6 +223,9 @@ def evaluate_weighted_conformal(
     cal_labels = np.load(cal_labels_path)
     cal_hidden = np.load(cal_hidden_path)
     cal_scores = 1.0 - cal_probs[np.arange(len(cal_labels)), cal_labels]
+
+    order = np.argsort(cal_scores)
+    sorted_scores = cal_scores[order]
 
     records = []
     for cond_name in eval_conditions:
@@ -216,15 +242,27 @@ def evaluate_weighted_conformal(
         cond_hidden = np.load(hidden_path)
 
         weights_cal, weights_shift = estimate_importance_weights(cal_hidden, cond_hidden)
-        covered, set_sizes = [], []
-        for i in range(len(cond_labels)):
-            q_i = weighted_conformal_quantile(cal_scores, weights_cal, weights_shift[i], alpha=alpha)
-            included = [c for c in range(cond_probs.shape[1]) if (1.0 - cond_probs[i, c]) <= q_i]
-            if not included:
-                included = [int(np.argmax(cond_probs[i]))]
-            covered.append(cond_labels[i] in included)
-            set_sizes.append(len(included))
+        sorted_weights = weights_cal[order]
+        cum_weights = np.cumsum(sorted_weights)
+        total_cal_weight = float(cum_weights[-1])
 
+        thresholds = (1.0 - alpha) * (total_cal_weight + weights_shift)
+        idxs = np.searchsorted(cum_weights, thresholds)
+        q_vec = np.where(
+            idxs >= len(sorted_scores),
+            np.inf,
+            sorted_scores[np.minimum(idxs, len(sorted_scores) - 1)],
+        )
+
+        inc_matrix = (1.0 - cond_probs) <= q_vec[:, None]
+        row_sums = inc_matrix.sum(axis=1)
+        empty_rows = row_sums == 0
+        if np.any(empty_rows):
+            top_preds = np.argmax(cond_probs[empty_rows], axis=1)
+            inc_matrix[empty_rows, top_preds] = True
+            row_sums = inc_matrix.sum(axis=1)
+
+        covered = inc_matrix[np.arange(len(cond_labels)), cond_labels]
         ess = float((weights_cal.sum() ** 2) / (weights_cal ** 2).sum())
         records.append(
             {
@@ -235,11 +273,14 @@ def evaluate_weighted_conformal(
                 "seed": seed,
                 "condition": cond_name,
                 "weighted_coverage": float(np.mean(covered)),
-                "weighted_avg_set_size": float(np.mean(set_sizes)),
+                "weighted_avg_set_size": float(np.mean(row_sums)),
                 "effective_sample_size": ess,
                 "n_calibration": int(len(cal_hidden)),
             }
         )
+
+    if records:
+        pd.DataFrame(records).to_csv(cache_path, index=False)
     return records
 
 
@@ -254,6 +295,7 @@ def evaluate_single_run(task: str, model_key: str, ft_method: str, seed: int):
     if not (cal_logits_path.exists() and cal_labels_path.exists()):
         return [], [], []
 
+    print(f"Evaluating {run_id}...", flush=True)
     cal_logits = np.load(cal_logits_path)
     cal_labels = np.load(cal_labels_path)
     n_classes = TASKS[task]
@@ -353,6 +395,8 @@ def main():
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     args = parser.parse_args()
 
+    backfill_cached_tables()
+
     all_metrics, all_rep, all_weighted = [], [], []
     for task, model_key, ft_method, seed in itertools.product(
         args.tasks, args.models, args.ft_methods, args.seeds
@@ -396,7 +440,7 @@ def main():
             for col in agg_df.columns.values
         ]
         agg_df.to_csv(tables_dir / "metrics_seed_aggregated.csv", index=False)
-        print(f"Saved evaluation tables to {tables_dir}")
+        print(f"Saved evaluation tables to {tables_dir}", flush=True)
 
     if all_rep:
         pd.DataFrame(all_rep).to_csv(tables_dir / "representation_distance_metrics.csv", index=False)

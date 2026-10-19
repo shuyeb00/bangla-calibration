@@ -8,26 +8,31 @@ from scipy.special import softmax
 from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.multitest import multipletests
 
-from src.calibration import compute_brier_score, compute_ece, compute_nll
 from src.config import DATA_DIR, FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
 
 
-def paired_bootstrap_test(
-    metric_fn,
-    probs_a: np.ndarray,
-    probs_b: np.ndarray,
-    labels: np.ndarray,
-    n_bootstrap: int = 1000,
-    **kwargs,
-) -> dict:
-    n = len(labels)
-    rng = np.random.default_rng(42)
-    diffs = np.empty(n_bootstrap, dtype=float)
-    for i in range(n_bootstrap):
-        idx = rng.choice(n, size=n, replace=True)
-        diffs[i] = metric_fn(probs_a[idx], labels[idx], **kwargs) - metric_fn(
-            probs_b[idx], labels[idx], **kwargs
-        )
+def _sample_nll_losses(probs: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    p = np.clip(probs[np.arange(len(labels)), labels], 1e-12, 1.0)
+    return -np.log(p)
+
+
+def _sample_brier_losses(probs: np.ndarray, labels: np.ndarray, n_classes: int) -> np.ndarray:
+    one_hot = np.eye(n_classes)[labels]
+    return np.sum((probs - one_hot) ** 2, axis=1)
+
+
+def _precompute_ece_bins(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15):
+    confidences = np.max(probs, axis=1)
+    predictions = np.argmax(probs, axis=1)
+    accuracies = (predictions == labels).astype(float)
+    bin_boundaries = np.linspace(0.0, 1.0, n_bins + 1)
+    bin_ids = np.clip(np.searchsorted(bin_boundaries[1:], confidences, side="left"), 0, n_bins - 1)
+    valid = confidences > 0.0
+    diff_ac = np.where(valid, accuracies - confidences, 0.0)
+    return bin_ids, diff_ac
+
+
+def _summarize_diffs(diffs: np.ndarray) -> dict:
     lo, hi = np.percentile(diffs, [2.5, 97.5])
     p_val = 2.0 * min(np.mean(diffs <= 0.0), np.mean(diffs >= 0.0))
     return {
@@ -39,33 +44,60 @@ def paired_bootstrap_test(
     }
 
 
-def independent_bootstrap_test(
-    metric_fn,
+def fast_bootstrap_test(
+    metric_name: str,
     probs_a: np.ndarray,
     labels_a: np.ndarray,
     probs_b: np.ndarray,
     labels_b: np.ndarray,
+    is_paired: bool,
+    n_classes: int,
     n_bootstrap: int = 1000,
-    **kwargs,
 ) -> dict:
     rng = np.random.default_rng(42)
     n_a, n_b = len(labels_a), len(labels_b)
     diffs = np.empty(n_bootstrap, dtype=float)
-    for i in range(n_bootstrap):
-        idx_a = rng.choice(n_a, size=n_a, replace=True)
-        idx_b = rng.choice(n_b, size=n_b, replace=True)
-        diffs[i] = metric_fn(probs_a[idx_a], labels_a[idx_a], **kwargs) - metric_fn(
-            probs_b[idx_b], labels_b[idx_b], **kwargs
+
+    if metric_name in ("nll", "brier"):
+        loss_a = (
+            _sample_nll_losses(probs_a, labels_a)
+            if metric_name == "nll"
+            else _sample_brier_losses(probs_a, labels_a, n_classes)
         )
-    lo, hi = np.percentile(diffs, [2.5, 97.5])
-    p_val = 2.0 * min(np.mean(diffs <= 0.0), np.mean(diffs >= 0.0))
-    return {
-        "mean_diff": float(diffs.mean()),
-        "ci_lo": float(lo),
-        "ci_hi": float(hi),
-        "raw_p": float(min(p_val, 1.0)),
-        "ci_excludes_zero": bool((lo > 0.0) or (hi < 0.0)),
-    }
+        loss_b = (
+            _sample_nll_losses(probs_b, labels_b)
+            if metric_name == "nll"
+            else _sample_brier_losses(probs_b, labels_b, n_classes)
+        )
+        if is_paired:
+            delta = loss_a - loss_b
+            for i in range(n_bootstrap):
+                idx = rng.choice(n_a, size=n_a, replace=True)
+                diffs[i] = np.mean(delta[idx])
+        else:
+            for i in range(n_bootstrap):
+                idx_a = rng.choice(n_a, size=n_a, replace=True)
+                idx_b = rng.choice(n_b, size=n_b, replace=True)
+                diffs[i] = np.mean(loss_a[idx_a]) - np.mean(loss_b[idx_b])
+    else:
+        n_bins = 15
+        bin_a, dac_a = _precompute_ece_bins(probs_a, labels_a, n_bins=n_bins)
+        bin_b, dac_b = _precompute_ece_bins(probs_b, labels_b, n_bins=n_bins)
+        if is_paired:
+            for i in range(n_bootstrap):
+                idx = rng.choice(n_a, size=n_a, replace=True)
+                ece_a = np.sum(np.abs(np.bincount(bin_a[idx], weights=dac_a[idx], minlength=n_bins))) / n_a
+                ece_b = np.sum(np.abs(np.bincount(bin_b[idx], weights=dac_b[idx], minlength=n_bins))) / n_a
+                diffs[i] = ece_a - ece_b
+        else:
+            for i in range(n_bootstrap):
+                idx_a = rng.choice(n_a, size=n_a, replace=True)
+                idx_b = rng.choice(n_b, size=n_b, replace=True)
+                ece_a = np.sum(np.abs(np.bincount(bin_a[idx_a], weights=dac_a[idx_a], minlength=n_bins))) / n_a
+                ece_b = np.sum(np.abs(np.bincount(bin_b[idx_b], weights=dac_b[idx_b], minlength=n_bins))) / n_b
+                diffs[i] = ece_a - ece_b
+
+    return _summarize_diffs(diffs)
 
 
 def mcnemar_test(preds_a: np.ndarray, preds_b: np.ndarray, labels: np.ndarray) -> dict:
@@ -95,16 +127,15 @@ def run_shift_significance_for_run(
     if not (run_dir / "test_logits.npy").exists():
         return []
 
+    cache_path = run_dir / "significance_raw.csv"
+    if cache_path.exists():
+        return pd.read_csv(cache_path).to_dict("records")
+
+    print(f"Running significance tests for {run_id}...", flush=True)
     d0_probs = softmax(np.load(run_dir / "test_logits.npy"), axis=1)
     d0_labels = np.load(run_dir / "test_labels.npy")
     d0_preds = np.argmax(d0_probs, axis=1)
     n_classes = TASKS[task]
-
-    metrics_spec = [
-        ("nll", compute_nll, {}),
-        ("ece_15", compute_ece, {"n_bins": 15}),
-        ("brier", compute_brier_score, {"n_classes": n_classes}),
-    ]
 
     records = []
     for f in sorted(run_dir.glob("shift_*_logits.npy")):
@@ -138,18 +169,18 @@ def run_shift_significance_for_run(
             else {"statistic": np.nan, "pvalue": np.nan}
         )
 
-        for metric_name, metric_fn, kwargs in metrics_spec:
-            if is_paired:
-                boot_res = paired_bootstrap_test(
-                    metric_fn, d0_p_use, cond_probs, cond_labels, n_bootstrap=n_bootstrap, **kwargs
-                )
-                test_type = "paired_bootstrap"
-            else:
-                boot_res = independent_bootstrap_test(
-                    metric_fn, d0_p_use, d0_l_use, cond_probs, cond_labels, n_bootstrap=n_bootstrap, **kwargs
-                )
-                test_type = "independent_bootstrap"
-
+        for metric_name in ["nll", "ece_15", "brier"]:
+            boot_res = fast_bootstrap_test(
+                metric_name=metric_name,
+                probs_a=d0_p_use,
+                labels_a=d0_l_use,
+                probs_b=cond_probs,
+                labels_b=cond_labels,
+                is_paired=is_paired,
+                n_classes=n_classes,
+                n_bootstrap=n_bootstrap,
+            )
+            test_type = "paired_bootstrap" if is_paired else "independent_bootstrap"
             is_primary = (
                 task == "sentiment"
                 and model_key == "banglabert"
@@ -174,6 +205,8 @@ def run_shift_significance_for_run(
                 }
             )
 
+    if records:
+        pd.DataFrame(records).to_csv(cache_path, index=False)
     return records
 
 
@@ -214,7 +247,7 @@ def main():
     tables_dir.mkdir(parents=True, exist_ok=True)
     out_path = tables_dir / "significance_results.csv"
     df.to_csv(out_path, index=False)
-    print(f"Saved significance results to {out_path}")
+    print(f"Saved significance results to {out_path}", flush=True)
 
 
 if __name__ == "__main__":

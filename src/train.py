@@ -4,7 +4,7 @@ import json
 import os
 import random
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -140,12 +140,22 @@ def save_split_outputs(
 
 
 def is_run_complete(run_dir: Path, shift_keys: list) -> bool:
-    required = ["config.json", "train_metrics.json", "val_logits.npy", "val_labels.npy"]
-    for split in ["train", "cal", "test"]:
+    required = [
+        "config.json",
+        "train_metrics.json",
+        "val_logits.npy",
+        "val_labels.npy",
+        "train_logits.npy",
+        "train_labels.npy",
+    ]
+    for split in ["cal", "test"]:
         required.extend([f"{split}_logits.npy", f"{split}_labels.npy", f"{split}_hidden.npy"])
     for cond in shift_keys:
         required.extend([f"{cond}_logits.npy", f"{cond}_labels.npy", f"{cond}_hidden.npy"])
-    return all((run_dir / fname).exists() for fname in required)
+    has_train_rep = (run_dir / "train_hidden.npy").exists() or (
+        run_dir / "representation_distance.csv"
+    ).exists()
+    return has_train_rep and all((run_dir / fname).exists() for fname in required)
 
 
 def run_single_experiment(
@@ -228,7 +238,7 @@ def run_single_experiment(
         "learning_rate": training_args.learning_rate,
         "batch_size": training_args.per_device_train_batch_size,
         "num_epochs": training_args.num_train_epochs,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     with open(run_dir / "config.json", "w", encoding="utf-8") as f:
         json.dump(config_payload, f, indent=2)
@@ -295,12 +305,7 @@ def main():
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     lora_preflight_done = set()
-    results_log = []
-
     summary_path = RESULTS_DIR / "all_runs_summary.json"
-    if summary_path.exists():
-        with open(summary_path, "r", encoding="utf-8") as f:
-            results_log = json.load(f)
 
     for task, model_key, ft_method, seed in itertools.product(
         args.tasks, args.models, args.ft_methods, args.seeds
@@ -313,6 +318,13 @@ def main():
             lora_preflight_done=lora_preflight_done,
             cleanup_checkpoints=not args.keep_checkpoints,
         )
+        results_log = []
+        if summary_path.exists():
+            try:
+                with open(summary_path, "r", encoding="utf-8") as f:
+                    results_log = json.load(f)
+            except Exception:
+                results_log = []
         if not any(r["run_id"] == record["run_id"] for r in results_log):
             results_log.append(record)
         with open(summary_path, "w", encoding="utf-8") as f:

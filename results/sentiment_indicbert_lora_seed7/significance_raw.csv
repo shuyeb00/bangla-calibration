@@ -1,0 +1,13 @@
+run_id,task,model,ft_method,seed,comparison,metric,test_type,endpoint_family,mean_diff,ci_lo,ci_hi,raw_p,ci_excludes_zero,mcnemar_stat,mcnemar_p
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d2_test,nll,independent_bootstrap,secondary,0.0009093194007873535,-0.011301353573799133,0.012930017709732053,0.864,False,,
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d2_test,ece_15,independent_bootstrap,secondary,-0.001961920843219108,-0.04426258770520844,0.03559511929314626,0.98,False,,
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d2_test,brier,independent_bootstrap,secondary,0.0005685845481735332,-0.007447385542480489,0.008407231144033819,0.872,False,,
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise05,nll,paired_bootstrap,secondary,-4.1162994599861946e-05,-0.0001672720169153763,9.784073808987158e-05,0.54,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise05,ece_15,paired_bootstrap,secondary,-5.4104556756861164e-05,-0.00011189294376355813,1.9960142124224307e-05,0.102,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise05,brier,paired_bootstrap,secondary,-2.9864440651561444e-05,-0.00011608467346271583,6.29396776679073e-05,0.492,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise10,nll,paired_bootstrap,secondary,-8.339864149867538e-06,-0.00019397529868001585,0.00016552480228710915,0.93,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise10,ece_15,paired_bootstrap,secondary,-3.492817493046044e-05,-0.00012104425798444043,5.261188427753449e-05,0.452,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise10,brier,paired_bootstrap,secondary,-6.1709442531809305e-06,-0.0001282096040299851,0.00011255913374391898,0.928,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise20,nll,paired_bootstrap,secondary,-0.0001353395228013028,-0.0003770414914470166,8.69701343617634e-05,0.25,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise20,ece_15,paired_bootstrap,secondary,-1.9422241387998448e-05,-0.00012785890797043265,8.725640090072568e-05,0.732,False,0.0,1.0
+sentiment_indicbert_lora_seed7,sentiment,indicbert,lora,7,D0_vs_shift_d3_noise20,brier,paired_bootstrap,secondary,-9.005131873921621e-05,-0.0002455164269899586,6.403383216969116e-05,0.25,False,0.0,1.0

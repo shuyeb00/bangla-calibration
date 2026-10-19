@@ -1,0 +1,5 @@
+run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+sentiment_xlmr_base_lora_seed7,sentiment,xlmr_base,lora,7,shift_d2_test,1.0,3.0,1084.8911982658808,1359
+sentiment_xlmr_base_lora_seed7,sentiment,xlmr_base,lora,7,shift_d3_noise05,0.9889705882352942,2.6838235294117645,4.647026662854006,1359
+sentiment_xlmr_base_lora_seed7,sentiment,xlmr_base,lora,7,shift_d3_noise10,0.7823529411764706,1.8573529411764709,2.739443130399793,1359
+sentiment_xlmr_base_lora_seed7,sentiment,xlmr_base,lora,7,shift_d3_noise20,0.998529411764706,2.9977941176470586,61.79251893351757,1359
