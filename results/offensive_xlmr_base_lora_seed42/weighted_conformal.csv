@@ -1,0 +1,8 @@
+run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d1_barishal_test,0.9750511247443763,1.5390593047034764,27.397284945805346,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d1_chittagong_test,0.9361440851412198,1.6856324191567744,13.14403241165499,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d1_noakhali_test,0.947239263803681,1.5443762781186094,32.231581026342205,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d2_test,1.0,2.0,2735.6770592598205,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d3_noise05,0.8907242693773825,1.1473951715374842,624.4447650486076,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d3_noise10,0.8557814485387548,1.1376535366370182,32.212267675676,4718
+offensive_xlmr_base_lora_seed42,offensive,xlmr_base,lora,42,shift_d3_noise20,0.8765353663701821,1.4087251164760695,10.200160236340162,4718

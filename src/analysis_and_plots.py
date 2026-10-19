@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.special import softmax
+from sklearn.metrics import cohen_kappa_score
 from transformers import AutoTokenizer
 
 from src.calibration import apply_temperature, fit_temperature, risk_coverage_curve
@@ -24,6 +25,17 @@ LABEL_MAPS = {
     "sentiment": {0: "Negative", 1: "Neutral", 2: "Positive"},
     "offensive": {0: "Non-Offensive", 1: "Offensive"},
 }
+
+
+def df_to_markdown(df: pd.DataFrame) -> str:
+    cols = [str(c) for c in df.columns]
+    header = "| " + " | ".join(cols) + " |"
+    sep = "| " + " | ".join(["---"] * len(cols)) + " |"
+    rows = [header, sep]
+    for _, row in df.iterrows():
+        vals = [str(row[c]) for c in df.columns]
+        rows.append("| " + " | ".join(vals) + " |")
+    return "\n".join(rows)
 
 
 def vocabulary_overlap(source_texts: list, shift_texts: list) -> float:
@@ -56,7 +68,26 @@ def non_bangla_token_ratio(texts: list) -> float:
     return float(non_bangla / total) if total > 0 else 0.0
 
 
-def compute_shift_quantification() -> None:
+def compute_shift_quantification(force: bool = False) -> None:
+    TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = TABLES_DIR / "shift_quantification.csv"
+
+    expected_rows = 0
+    for task in TASKS.keys():
+        if (DATA_DIR / task / "test.csv").exists():
+            expected_rows += 1 + sum(
+                1 for k in get_shift_conditions_paths(task).keys() if not k.endswith("_cal")
+            )
+
+    if not force and out_path.exists():
+        try:
+            existing_df = pd.read_csv(out_path)
+            if len(existing_df) == expected_rows:
+                print(f"Shift quantification table already up-to-date ({expected_rows} rows).")
+                return
+        except Exception:
+            pass
+
     tokenizer = AutoTokenizer.from_pretrained(MODELS["banglabert"])
     records = []
 
@@ -103,8 +134,6 @@ def compute_shift_quantification() -> None:
                 }
             )
 
-    TABLES_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = TABLES_DIR / "shift_quantification.csv"
     pd.DataFrame(records).to_csv(out_path, index=False)
     print(f"Saved shift quantification table to {out_path}")
 
@@ -169,7 +198,16 @@ def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
     cal_labels = np.load(run_dir / "cal_labels.npy")
     t_source = fit_temperature(cal_logits, cal_labels)
 
-    for cond in ["test", "shift_d2_test", "shift_d3_noise10"]:
+    rel_conditions = [
+        "test",
+        "shift_d1_test",
+        "shift_d1_barishal_test",
+        "shift_d1_chittagong_test",
+        "shift_d1_noakhali_test",
+        "shift_d2_test",
+        "shift_d3_noise10",
+    ]
+    for cond in rel_conditions:
         logits_path = run_dir / f"{cond}_logits.npy"
         labels_path = run_dir / f"{cond}_labels.npy"
         if not logits_path.exists():
@@ -193,12 +231,17 @@ def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
             save_path=FIGURES_DIR / f"reliability_{task}_{cond}_source_scaled.png",
         )
 
-    fig, ax = plt.subplots(figsize=(7, 5))
-    for cond, label_str in [
+    fig, ax = plt.subplots(figsize=(7.5, 5))
+    rc_specs = [
         ("test", "D0 (Source)"),
+        ("shift_d1_test", "D1 (Sylheti Dialect)"),
+        ("shift_d1_barishal_test", "D1 (Barishal Dialect)"),
+        ("shift_d1_noakhali_test", "D1 (Noakhali Dialect)"),
+        ("shift_d1_chittagong_test", "D1 (Chittagong Dialect)"),
         ("shift_d3_noise10", "D3 (10% Char Noise)"),
         ("shift_d2_test", "D2 (Code-Mixed)"),
-    ]:
+    ]
+    for cond, label_str in rc_specs:
         logits_path = run_dir / f"{cond}_logits.npy"
         labels_path = run_dir / f"{cond}_labels.npy"
         if not logits_path.exists():
@@ -243,13 +286,13 @@ def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
 
             axes[0].set_xlabel("Synthetic Character Noise (%)")
             axes[0].set_ylabel("Negative Log-Likelihood (NLL)")
-            axes[0].set_title("NLL vs. Noise Severity")
+            axes[0].set_title(f"NLL vs. Noise Severity ({task.capitalize()})")
             axes[0].legend()
             axes[0].grid(True, alpha=0.3)
 
             axes[1].set_xlabel("Synthetic Character Noise (%)")
             axes[1].set_ylabel("Top-Label ECE (15 bins)")
-            axes[1].set_title("ECE vs. Noise Severity")
+            axes[1].set_title(f"ECE vs. Noise Severity ({task.capitalize()})")
             axes[1].legend()
             axes[1].grid(True, alpha=0.3)
 
@@ -261,6 +304,14 @@ def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
 
 
 def sample_errors_for_annotation(task: str = "sentiment", seed: int = 42, n_per_condition: int = 40) -> None:
+    out_path = TABLES_DIR / f"error_analysis_sample_{task}.csv"
+    if out_path.exists():
+        df_existing = pd.read_csv(out_path)
+        if "annotator_1_category" in df_existing.columns and df_existing["annotator_1_category"].notna().any():
+            print(f"Preserving existing annotated file {out_path}")
+            evaluate_human_annotations(df_existing, task)
+            return
+
     run_id = f"{task}_banglabert_full_ft_seed{seed}"
     run_dir = RESULTS_DIR / run_id
     if not run_dir.exists():
@@ -327,20 +378,131 @@ def sample_errors_for_annotation(task: str = "sentiment", seed: int = 42, n_per_
             )
 
     if all_errors:
-        out_path = TABLES_DIR / f"error_analysis_sample_{task}.csv"
         pd.DataFrame(all_errors).to_csv(out_path, index=False, encoding="utf-8-sig")
         print(f"Saved {len(all_errors)} stratified error samples to {out_path}")
 
 
+def evaluate_human_annotations(df: pd.DataFrame, task: str) -> None:
+    valid = df.dropna(subset=["annotator_1_category", "annotator_2_category"])
+    valid = valid[
+        (valid["annotator_1_category"].astype(str).str.strip() != "")
+        & (valid["annotator_2_category"].astype(str).str.strip() != "")
+    ]
+    if len(valid) == 0:
+        return
+    a1 = valid["annotator_1_category"].astype(str).str.strip().str.lower()
+    a2 = valid["annotator_2_category"].astype(str).str.strip().str.lower()
+    kappa = cohen_kappa_score(a1, a2)
+    print(f"[{task}] Human Inter-Annotator Agreement (Cohen's kappa, n={len(valid)}): {kappa:.4f}")
+
+
+def generate_markdown_summary_report() -> None:
+    agg_path = TABLES_DIR / "metrics_seed_aggregated.csv"
+    if not agg_path.exists():
+        return
+
+    agg_df = pd.read_csv(agg_path)
+    lines = ["# Thesis Master Results Summary (60-Run Full Grid)\n"]
+
+    shift_path = TABLES_DIR / "shift_quantification.csv"
+    if shift_path.exists():
+        sq_df = pd.read_csv(shift_path)
+        lines.append("## 1. Shift Quantification (Part D.2)\n")
+        lines.append(df_to_markdown(sq_df))
+        lines.append("\n")
+
+    for task in ["sentiment", "offensive"]:
+        sub = agg_df[agg_df["task"] == task].copy()
+        if sub.empty:
+            continue
+        lines.append(f"## 2. {task.capitalize()} Task — Seed-Aggregated Metrics (5 Seeds)\n")
+        cols = [
+            "model",
+            "ft_method",
+            "condition",
+            "calibration_regime",
+            "accuracy_mean",
+            "macro_f1_mean",
+            "nll_mean",
+            "nll_std",
+            "ece_15_mean",
+            "brier_mean",
+            "aurc_mean",
+            "conformal_coverage_mean",
+            "conformal_set_size_mean",
+        ]
+        avail_cols = [c for c in cols if c in sub.columns]
+        lines.append(df_to_markdown(sub[avail_cols].round(4)))
+        lines.append("\n")
+
+    w_path = TABLES_DIR / "weighted_conformal_metrics.csv"
+    if w_path.exists():
+        w_df = pd.read_csv(w_path)
+        if not w_df.empty:
+            lines.append("## 3. Importance-Weighted Conformal Prediction (Part I.7)\n")
+            w_agg = (
+                w_df.groupby(["task", "model", "ft_method", "condition"])[
+                    ["weighted_coverage", "weighted_avg_set_size", "effective_sample_size"]
+                ]
+                .mean()
+                .reset_index()
+                .round(4)
+            )
+            lines.append(df_to_markdown(w_agg))
+            lines.append("\n")
+
+    rep_path = TABLES_DIR / "representation_distance_metrics.csv"
+    if rep_path.exists():
+        r_df = pd.read_csv(rep_path)
+        if not r_df.empty:
+            lines.append("## 4. Representation Distance Misclassification Detection (Part I.6)\n")
+            r_agg = (
+                r_df.groupby(["task", "model", "ft_method", "condition", "predictor"])[
+                    ["auroc", "auprc"]
+                ]
+                .mean()
+                .reset_index()
+                .round(4)
+            )
+            lines.append(df_to_markdown(r_agg))
+            lines.append("\n")
+
+    sig_path = TABLES_DIR / "significance_results.csv"
+    if sig_path.exists():
+        s_df = pd.read_csv(sig_path)
+        if not s_df.empty:
+            lines.append("## 5. Statistical Significance Summary (Part J — Holm-Corrected)\n")
+            s_agg = (
+                s_df.groupby(["task", "model", "ft_method", "comparison", "metric", "endpoint_family"])
+                .agg(
+                    mean_diff=("mean_diff", "mean"),
+                    median_raw_p=("raw_p", "median"),
+                    median_holm_p=("holm_corrected_p", "median"),
+                    seeds_sig_05=("significant_05", "sum"),
+                )
+                .reset_index()
+                .round(4)
+            )
+            lines.append(df_to_markdown(s_agg))
+            lines.append("\n")
+
+    report_path = TABLES_DIR / "THESIS_RESULTS_SUMMARY.md"
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    print(f"Saved master Markdown report to {report_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run shift quantification, plotting, and error sampling.")
-    parser.add_argument("--tasks", nargs="+", default=["sentiment"], choices=list(TASKS.keys()))
+    parser.add_argument("--tasks", nargs="+", default=["sentiment", "offensive"], choices=list(TASKS.keys()))
+    parser.add_argument("--recompute_shift", action="store_true")
     args = parser.parse_args()
 
-    compute_shift_quantification()
+    compute_shift_quantification(force=args.recompute_shift)
     for task in args.tasks:
         generate_plots_for_task(task=task)
         sample_errors_for_annotation(task=task)
+    generate_markdown_summary_report()
 
 
 if __name__ == "__main__":

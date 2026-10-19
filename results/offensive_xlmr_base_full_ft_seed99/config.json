@@ -1,0 +1,13 @@
+{
+  "run_id": "offensive_xlmr_base_full_ft_seed99",
+  "model_name": "xlm-roberta-base",
+  "model_key": "xlmr_base",
+  "ft_method": "full_ft",
+  "task": "offensive",
+  "num_labels": 2,
+  "seed": 99,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-19T13:37:00.080108+00:00"
+}

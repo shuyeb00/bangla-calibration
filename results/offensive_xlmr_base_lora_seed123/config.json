@@ -1,0 +1,13 @@
+{
+  "run_id": "offensive_xlmr_base_lora_seed123",
+  "model_name": "xlm-roberta-base",
+  "model_key": "xlmr_base",
+  "ft_method": "lora",
+  "task": "offensive",
+  "num_labels": 2,
+  "seed": 123,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "num_epochs": 4,
+  "timestamp": "2026-10-19T14:19:42.369946+00:00"
+}

@@ -1,0 +1,8 @@
+run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d1_barishal_test,0.907157464212679,1.1100204498977506,2864.225258151644,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d1_chittagong_test,0.8600081866557511,1.1764224314367582,2998.596804956303,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d1_noakhali_test,0.9443762781186094,1.23640081799591,728.0015992200666,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d2_test,0.79375,1.57375,58.68718980977995,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d3_noise05,0.8960186361711139,1.0626853028377805,4180.878049064474,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d3_noise10,0.8839474798814062,1.0861922914019484,4090.94933113973,4718
+offensive_indicbert_full_ft_seed42,offensive,indicbert,full_ft,42,shift_d3_noise20,0.8670055061414654,1.1338415925455316,3512.625072679641,4718

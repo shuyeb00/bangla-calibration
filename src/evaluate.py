@@ -85,19 +85,24 @@ def mahalanobis_distance(hidden: np.ndarray, class_means: np.ndarray, cov_inv: n
 
 
 def backfill_cached_tables() -> None:
-    rep_table_path = RESULTS_DIR / "tables" / "representation_distance_metrics.csv"
-    if rep_table_path.exists():
-        try:
-            df_existing = pd.read_csv(rep_table_path)
-            for run_id, grp in df_existing.groupby("run_id"):
-                run_dir = RESULTS_DIR / str(run_id)
-                cache_path = run_dir / "representation_distance.csv"
-                if run_dir.exists() and not cache_path.exists():
-                    grp.to_csv(cache_path, index=False)
-        except Exception as e:
-            print(f"Warning while backfilling representation distance cache: {e}")
+    tables_dir = RESULTS_DIR / "tables"
+    for fname in [
+        "representation_distance_metrics.csv",
+        "representation_distance_offensive_20.csv",
+    ]:
+        fpath = tables_dir / fname
+        if fpath.exists():
+            try:
+                df_existing = pd.read_csv(fpath)
+                for run_id, grp in df_existing.groupby("run_id"):
+                    run_dir = RESULTS_DIR / str(run_id)
+                    cache_path = run_dir / "representation_distance.csv"
+                    if run_dir.exists() and not cache_path.exists():
+                        grp.to_csv(cache_path, index=False)
+            except Exception as e:
+                print(f"Warning while backfilling {fname}: {e}")
 
-    w_table_path = RESULTS_DIR / "tables" / "weighted_conformal_metrics.csv"
+    w_table_path = tables_dir / "weighted_conformal_metrics.csv"
     if w_table_path.exists():
         try:
             df_w = pd.read_csv(w_table_path)
