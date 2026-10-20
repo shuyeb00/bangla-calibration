@@ -128,8 +128,15 @@ def run_shift_significance_for_run(
         return []
 
     cache_path = run_dir / "significance_raw.csv"
+    expected_comps = {
+        f"D0_vs_{f.name[:-len('_logits.npy')]}"
+        for f in run_dir.glob("shift_*_logits.npy")
+        if not f.name[:-len("_logits.npy")].endswith("_cal")
+    }
     if cache_path.exists():
-        return pd.read_csv(cache_path).to_dict("records")
+        cached_df = pd.read_csv(cache_path)
+        if expected_comps.issubset(set(cached_df["comparison"].unique())):
+            return cached_df.to_dict("records")
 
     print(f"Running significance tests for {run_id}...", flush=True)
     d0_probs = softmax(np.load(run_dir / "test_logits.npy"), axis=1)

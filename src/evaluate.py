@@ -125,7 +125,9 @@ def evaluate_representation_distance(
 ) -> list:
     cache_path = run_dir / "representation_distance.csv"
     if cache_path.exists():
-        return pd.read_csv(cache_path).to_dict("records")
+        cached_df = pd.read_csv(cache_path)
+        if set(eval_conditions).issubset(set(cached_df["condition"].unique())):
+            return cached_df.to_dict("records")
 
     train_hidden_path = run_dir / "train_hidden.npy"
     train_labels_path = run_dir / "train_labels.npy"
@@ -216,7 +218,10 @@ def evaluate_weighted_conformal(
 ) -> list:
     cache_path = run_dir / "weighted_conformal.csv"
     if cache_path.exists():
-        return pd.read_csv(cache_path).to_dict("records")
+        cached_df = pd.read_csv(cache_path)
+        expected_shift = [c for c in eval_conditions if c != "test"]
+        if set(expected_shift).issubset(set(cached_df["condition"].unique())):
+            return cached_df.to_dict("records")
 
     cal_logits_path = run_dir / "cal_logits.npy"
     cal_labels_path = run_dir / "cal_labels.npy"

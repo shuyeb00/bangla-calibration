@@ -96,6 +96,12 @@ def save_split_outputs(
     device: str,
     save_hidden: bool = True,
 ) -> None:
+    logits_out = run_dir / f"{split_name}_logits.npy"
+    labels_out = run_dir / f"{split_name}_labels.npy"
+    hidden_out = run_dir / f"{split_name}_hidden.npy"
+    if logits_out.exists() and labels_out.exists() and (not save_hidden or hidden_out.exists()):
+        print(f"  [SKIP SPLIT] {split_name} already exists in {run_dir.name}, preserving frozen outputs.")
+        return
     max_len = TRAIN_HYPERPARAMS["max_length"]
 
     def tok_batch(batch):
