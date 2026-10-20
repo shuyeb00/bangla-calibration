@@ -33,12 +33,9 @@ FIGURES_DIR = BASE_DIR / "thesis" / "figures"
 TABLES_DIR = RESULTS_DIR / "tables"
 
 
-
 def apply_preemptive_pipeline_patches() -> None:
-    """Patches train.py, evaluate.py, and significance.py so future D1 runs never overwrite D0 or hit stale caches."""
     src_dir = BASE_DIR / "src"
 
-    # 1. Patch src/train.py to preserve existing .npy outputs when adding new shift splits (e.g., Sylheti D1)
     train_path = src_dir / "train.py"
     if train_path.exists():
         code = train_path.read_text(encoding="utf-8")
@@ -78,7 +75,6 @@ def apply_preemptive_pipeline_patches() -> None:
             train_path.write_text(code.replace(old_target, new_target), encoding="utf-8")
             print("[PATCHED] src/train.py -> Frozen split protection enabled for future D1 runs.")
 
-    # 2. Patch src/evaluate.py so representation_distance.csv and weighted_conformal.csv recompute when D1 is added
     eval_path = src_dir / "evaluate.py"
     if eval_path.exists():
         code = eval_path.read_text(encoding="utf-8")
@@ -112,7 +108,6 @@ def apply_preemptive_pipeline_patches() -> None:
             eval_path.write_text(updated, encoding="utf-8")
             print("[PATCHED] src/evaluate.py -> Dynamic cache invalidation enabled for new shift conditions.")
 
-    # 3. Patch src/significance.py so significance_raw.csv recomputes when D1 is added
     sig_path = src_dir / "significance.py"
     if sig_path.exists():
         code = sig_path.read_text(encoding="utf-8")
@@ -147,7 +142,6 @@ def df_to_markdown(df: pd.DataFrame) -> str:
         vals = [str(row[c]) for c in df.columns]
         rows.append("| " + " | ".join(vals) + " |")
     return "\n".join(rows)
-
 
 
 def compute_adaptive_ece(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15) -> float:
@@ -360,7 +354,6 @@ def run_mapie_crosscheck() -> None:
         print(f"[OK] Saved Part I.3 MAPIE cross-check table to {out_path}")
 
 
-
 def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
     run_dir = RESULTS_DIR / run_id
@@ -541,17 +534,16 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
     return ext_cal_records, conf_records, maha_records
 
 
-
 def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.DataFrame) -> pd.DataFrame:
     sq_path = TABLES_DIR / "shift_quantification.csv"
     if not sq_path.exists() or df_cal_agg.empty:
         return pd.DataFrame()
 
-    sq_df = pd.read_csv(sq_path)
-    sq_df["cond_key"] = sq_df["condition"].replace({"D0_source_test": "test"})
+    sq_df = pd.read_csv(sq_path).copy()
+    sq_df["condition"] = sq_df["condition"].replace({"D0_source_test": "test"})
 
     uncal = df_cal_agg[df_cal_agg["calibration_regime"] == "uncalibrated"].copy()
-    merged = pd.merge(uncal, sq_df, left_on=["task", "condition"], right_on=["task", "cond_key"])
+    merged = pd.merge(uncal, sq_df, on=["task", "condition"], how="inner")
     if not df_maha_agg.empty:
         merged = pd.merge(
             merged,
@@ -844,5 +836,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-    
