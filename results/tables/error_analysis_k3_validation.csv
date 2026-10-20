@@ -1,0 +1,13 @@
+task,category,support_gold,precision,recall,f1_score,overall_ai_kappa,overall_macro_f1,clears_k3_validation_bar
+sentiment,dialect-specific word,7,0.4286,0.4286,0.4286,0.6065,0.5512,False
+sentiment,heavy code-mixing,39,0.9512,1.0,0.975,0.6065,0.5512,False
+sentiment,negation,17,0.7895,0.8824,0.8333,0.6065,0.5512,False
+sentiment,other,30,0.525,0.7,0.6,0.6065,0.5512,False
+sentiment,sarcasm,14,0.6667,0.1429,0.2353,0.6065,0.5512,False
+sentiment,unclear true label,10,0.2857,0.2,0.2353,0.6065,0.5512,False
+offensive,dialect-specific word,114,0.95,1.0,0.9744,0.8909,0.6575,False
+offensive,heavy code-mixing,41,0.9318,1.0,0.9647,0.8909,0.6575,False
+offensive,negation,20,0.9444,0.85,0.8947,0.8909,0.6575,False
+offensive,other,49,0.88,0.898,0.8889,0.8909,0.6575,False
+offensive,sarcasm,3,0.0,0.0,0.0,0.8909,0.6575,False
+offensive,unclear true label,7,0.5,0.1429,0.2222,0.8909,0.6575,False
