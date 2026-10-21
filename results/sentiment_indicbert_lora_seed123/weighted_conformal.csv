@@ -1,5 +1,6 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d1_test,1.0,3.0,289.9403300429991,1359
 sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d2_test,1.0,3.0,859.5377347753798,1359
-sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise05,0.9095588235294118,2.481617647058824,471.2624198687207,1359
-sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise10,0.913970588235294,2.4661764705882354,239.14343083320952,1359
-sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise20,0.9338235294117648,2.615441176470588,96.85451966381872,1359
+sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise05,0.9095588235294118,2.4816176470588234,471.26241986872066,1359
+sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise10,0.9139705882352941,2.4661764705882354,239.14343083320952,1359
+sentiment_indicbert_lora_seed123,sentiment,indicbert,lora,123,shift_d3_noise20,0.9338235294117647,2.615441176470588,96.85451966381873,1359

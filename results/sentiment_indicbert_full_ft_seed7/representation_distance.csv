@@ -1,4 +1,8 @@
 run_id,task,model,ft_method,seed,condition,predictor,auroc,auprc
+sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d1_test,confidence_only,0.633882705479452,0.457355680980074
+sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d1_test,entropy_only,0.6267123287671232,0.4420523953383082
+sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d1_test,maha_distance_only,0.5986729452054795,0.4108943965138493
+sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d1_test,maha_plus_confidence,0.6315282534246576,0.4325799485276265
 sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d2_test,confidence_only,0.5808211276083467,0.6161019105771488
 sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d2_test,entropy_only,0.5841881520866773,0.6132288479558272
 sentiment_indicbert_full_ft_seed7,sentiment,indicbert,full_ft,7,shift_d2_test,maha_distance_only,0.5321779695024078,0.5868719385196604

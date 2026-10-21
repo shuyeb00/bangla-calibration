@@ -1,5 +1,6 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d1_test,1.0,2.985074626865672,142.8194194192306,1359
 sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d2_test,1.0,3.0,169.91438645417028,1359
-sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise05,0.9272058823529412,1.911764705882353,102.8031327149064,1359
-sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise10,0.9411764705882352,2.1852941176470586,36.75713824541258,1359
-sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise20,0.9911764705882352,2.8433823529411764,57.37394010173746,1359
+sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise05,0.9272058823529412,1.911764705882353,102.80313271490641,1359
+sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise10,0.9411764705882353,2.1852941176470586,36.75713824541258,1359
+sentiment_xlmr_base_full_ft_seed42,sentiment,xlmr_base,full_ft,42,shift_d3_noise20,0.9911764705882353,2.8433823529411764,57.37394010173746,1359

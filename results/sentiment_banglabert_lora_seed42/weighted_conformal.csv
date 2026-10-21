@@ -1,5 +1,6 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
+sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d1_test,1.0,3.0,165.46211124800223,1359
 sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d2_test,1.0,3.0,1141.321075804356,1359
-sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise05,0.973529411764706,2.550735294117647,58.37597303972937,1359
-sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise10,0.9992647058823528,2.974264705882353,83.15209205636377,1359
-sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise20,1.0,3.0,90.18924807769872,1359
+sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise05,0.9735294117647059,2.550735294117647,58.37597303972937,1359
+sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise10,0.9992647058823529,2.974264705882353,83.15209205636377,1359
+sentiment_banglabert_lora_seed42,sentiment,banglabert,lora,42,shift_d3_noise20,1.0,3.0,90.18924807769871,1359

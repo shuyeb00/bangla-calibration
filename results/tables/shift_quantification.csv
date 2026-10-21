@@ -1,5 +1,6 @@
 task,condition,n_samples,vocab_jaccard_overlap,subword_fragmentation,non_bangla_char_ratio,median_char_length,std_char_length
 sentiment,D0_source_test,1360,1.0,1.1851,0.0014,65.0,52.67
+sentiment,shift_d1_test,201,0.1423,1.4575,0.0126,62.0,54.8
 sentiment,shift_d2_test,804,0.058,2.1616,0.7084,496.5,108.2
 sentiment,shift_d3_noise05,1360,0.5745,1.3743,0.0014,65.0,52.7
 sentiment,shift_d3_noise10,1360,0.3846,1.5597,0.0013,65.0,52.74

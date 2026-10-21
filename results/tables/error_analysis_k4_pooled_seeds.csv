@@ -1,10 +1,10 @@
 task,category,total_5seed_sampled,pooled_unique_errors,category_count,percentage
-sentiment,heavy code-mixing,585,467,159,34.05
-sentiment,other,585,467,154,32.98
-sentiment,negation,585,467,102,21.84
-sentiment,unclear true label,585,467,25,5.35
-sentiment,dialect-specific word,585,467,16,3.43
-sentiment,sarcasm,585,467,11,2.36
+sentiment,heavy code-mixing,780,555,161,29.01
+sentiment,other,780,555,154,27.75
+sentiment,dialect-specific word,780,555,102,18.38
+sentiment,negation,780,555,102,18.38
+sentiment,unclear true label,780,555,25,4.5
+sentiment,sarcasm,780,555,11,1.98
 offensive,dialect-specific word,1170,907,452,49.83
 offensive,other,1170,907,200,22.05
 offensive,heavy code-mixing,1170,907,155,17.09

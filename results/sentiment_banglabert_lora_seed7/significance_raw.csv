@@ -1,4 +1,7 @@
 run_id,task,model,ft_method,seed,comparison,metric,test_type,endpoint_family,mean_diff,ci_lo,ci_hi,raw_p,ci_excludes_zero,mcnemar_stat,mcnemar_p
+sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d1_test,nll,paired_bootstrap,secondary,-0.08665481815728708,-0.14490438885986806,-0.02827510749921203,0.006,True,2.53125,0.11161176829829161
+sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d1_test,ece_15,paired_bootstrap,secondary,-0.010559245631321153,-0.06507061833691835,0.050284537061381675,0.706,False,2.53125,0.11161176829829161
+sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d1_test,brier,paired_bootstrap,secondary,-0.05203548521223143,-0.08975311531538126,-0.015003632442535103,0.008,True,2.53125,0.11161176829829161
 sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d2_test,nll,independent_bootstrap,secondary,-0.6021790416836739,-0.6800296619534493,-0.5279584050178527,0.0,True,,
 sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d2_test,ece_15,independent_bootstrap,secondary,-0.20708362872121827,-0.24500507154101314,-0.1705254738759233,0.0,True,,
 sentiment_banglabert_lora_seed7,sentiment,banglabert,lora,7,D0_vs_shift_d2_test,brier,independent_bootstrap,secondary,-0.3362195338268951,-0.3830946605929328,-0.2908808788905001,0.0,True,,

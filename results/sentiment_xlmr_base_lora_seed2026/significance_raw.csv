@@ -1,4 +1,7 @@
 run_id,task,model,ft_method,seed,comparison,metric,test_type,endpoint_family,mean_diff,ci_lo,ci_hi,raw_p,ci_excludes_zero,mcnemar_stat,mcnemar_p
+sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d1_test,nll,paired_bootstrap,secondary,-0.05392873525950563,-0.12641825079917907,0.016380990343168367,0.13,False,1.641025641025641,0.2001848041775755
+sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d1_test,ece_15,paired_bootstrap,secondary,-0.012475802539444681,-0.07694046830211705,0.04960045551705121,0.716,False,1.641025641025641,0.2001848041775755
+sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d1_test,brier,paired_bootstrap,secondary,-0.035884147238100156,-0.07918709268028541,0.007304035624767436,0.116,False,1.641025641025641,0.2001848041775755
 sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d2_test,nll,independent_bootstrap,secondary,-0.14903359240293504,-0.21953732669353485,-0.08188750892877582,0.0,True,,
 sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d2_test,ece_15,independent_bootstrap,secondary,-0.10786334099317672,-0.144692343164231,-0.0695149659628568,0.0,True,,
 sentiment_xlmr_base_lora_seed2026,sentiment,xlmr_base,lora,2026,D0_vs_shift_d2_test,brier,independent_bootstrap,secondary,-0.10056067648110101,-0.14488951460835056,-0.05700336852645883,0.0,True,,

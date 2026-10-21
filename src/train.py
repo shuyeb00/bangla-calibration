@@ -231,6 +231,7 @@ def run_single_experiment(
         report_to="none",
         seed=seed,
         fp16=torch.cuda.is_available(),
+        save_safetensors=False,
     )
 
     config_payload = {
