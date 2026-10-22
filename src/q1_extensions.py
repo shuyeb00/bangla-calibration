@@ -468,6 +468,9 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
     maha_records = []
     train_hidden_path = run_dir / "train_hidden.npy"
     train_labels_path = run_dir / "train_labels.npy"
+    if not (train_hidden_path.exists() and train_labels_path.exists()):
+        train_hidden_path = run_dir / "cal_hidden.npy"
+        train_labels_path = run_dir / "cal_labels.npy"
     if train_hidden_path.exists() and train_labels_path.exists():
         train_hidden = np.load(train_hidden_path)
         train_labels = np.load(train_labels_path)

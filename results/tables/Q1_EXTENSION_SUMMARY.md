@@ -4,12 +4,12 @@
 
 | task | model | ft_method | n_conditions | spearman_frag_vs_nll | p_value_frag_vs_nll | pearson_frag_vs_nll | spearman_jaccard_vs_nll | spearman_frag_vs_classwise_ece | spearman_frag_vs_overconfidence | spearman_maha_pct_vs_nll |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| offensive | banglabert | full_ft | 8 | 0.9048 | 0.002 | 0.7131 | -0.6429 | 0.9048 | 0.9048 | nan |
-| offensive | banglabert | lora | 8 | 0.9286 | 0.0009 | 0.8095 | -0.8095 | 0.8571 | 0.9524 | nan |
-| offensive | indicbert | full_ft | 8 | 0.9762 | 0.0 | 0.8055 | -0.8095 | 0.9762 | 0.9762 | nan |
-| offensive | indicbert | lora | 8 | 0.881 | 0.0039 | 0.7528 | -0.9286 | -0.1429 | 0.7619 | nan |
-| offensive | xlmr_base | full_ft | 8 | 0.9524 | 0.0003 | 0.6918 | -0.7381 | 0.9524 | 0.9762 | nan |
-| offensive | xlmr_base | lora | 8 | 0.9524 | 0.0003 | 0.7987 | -0.881 | 0.9524 | 0.9762 | nan |
+| offensive | banglabert | full_ft | 8 | 0.9048 | 0.002 | 0.7131 | -0.6429 | 0.9048 | 0.9048 | 0.9048 |
+| offensive | banglabert | lora | 8 | 0.9286 | 0.0009 | 0.8095 | -0.8095 | 0.8571 | 0.9524 | 0.119 |
+| offensive | indicbert | full_ft | 8 | 0.9762 | 0.0 | 0.8055 | -0.8095 | 0.9762 | 0.9762 | 0.9524 |
+| offensive | indicbert | lora | 8 | 0.881 | 0.0039 | 0.7528 | -0.9286 | -0.1429 | 0.7619 | 0.5952 |
+| offensive | xlmr_base | full_ft | 8 | 0.9524 | 0.0003 | 0.6918 | -0.7381 | 0.9524 | 0.9762 | 0.8571 |
+| offensive | xlmr_base | lora | 8 | 0.9524 | 0.0003 | 0.7987 | -0.881 | 0.9524 | 0.9762 | -0.3095 |
 | sentiment | banglabert | full_ft | 6 | 1.0 | 0.0 | 0.8697 | -0.8286 | 0.8286 | 0.8857 | 0.8286 |
 | sentiment | banglabert | lora | 6 | 0.9429 | 0.0048 | 0.8046 | -0.6571 | 0.0857 | -0.1429 | 0.6571 |
 | sentiment | indicbert | full_ft | 6 | 0.9429 | 0.0048 | 0.8045 | -0.6571 | 0.7714 | 0.7714 | 0.6571 |
@@ -498,6 +498,54 @@
 
 | task | model | ft_method | condition | mean_maha_percentile_mean | median_maha_percentile_mean | frac_above_95th_train_pct_mean | maha_error_gap_pct_mean | spearman_maha_nll_rho_mean |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| offensive | banglabert | full_ft | shift_d1_barishal_test | 53.0628 | 53.0733 | 0.0885 | 26.5027 | 0.3952 |
+| offensive | banglabert | full_ft | shift_d1_chittagong_test | 59.402 | 62.6833 | 0.116 | 19.8369 | 0.531 |
+| offensive | banglabert | full_ft | shift_d1_noakhali_test | 53.5302 | 54.841 | 0.0913 | 26.2452 | 0.495 |
+| offensive | banglabert | full_ft | shift_d2_test | 86.5929 | 88.1369 | 0.3728 | -1.0028 | 0.019 |
+| offensive | banglabert | full_ft | shift_d3_noise05 | 55.527 | 58.262 | 0.1014 | 25.7367 | 0.4248 |
+| offensive | banglabert | full_ft | shift_d3_noise10 | 57.4177 | 60.0805 | 0.1011 | 22.2492 | 0.4629 |
+| offensive | banglabert | full_ft | shift_d3_noise20 | 63.5659 | 67.5922 | 0.1184 | 18.1679 | 0.5246 |
+| offensive | banglabert | full_ft | test | 54.9203 | 57.9716 | 0.1044 | 27.8574 | 0.3498 |
+| offensive | banglabert | lora | shift_d1_barishal_test | 56.4203 | 59.2794 | 0.1355 | 14.9984 | 0.4812 |
+| offensive | banglabert | lora | shift_d1_chittagong_test | 51.7997 | 49.5252 | 0.0652 | 8.4327 | 0.4381 |
+| offensive | banglabert | lora | shift_d1_noakhali_test | 52.0038 | 51.2293 | 0.0861 | 12.2908 | 0.5569 |
+| offensive | banglabert | lora | shift_d2_test | 99.7182 | 99.9746 | 0.9858 | -0.2859 | -0.0679 |
+| offensive | banglabert | lora | shift_d3_noise05 | 57.5955 | 59.6842 | 0.1423 | 13.3217 | 0.4813 |
+| offensive | banglabert | lora | shift_d3_noise10 | 58.239 | 59.22 | 0.1214 | 12.9023 | 0.4909 |
+| offensive | banglabert | lora | shift_d3_noise20 | 63.8703 | 65.1272 | 0.1262 | 8.9282 | 0.3951 |
+| offensive | banglabert | lora | test | 58.8547 | 64.9788 | 0.185 | 14.7422 | 0.425 |
+| offensive | indicbert | full_ft | shift_d1_barishal_test | 54.6349 | 55.9093 | 0.0861 | 14.7481 | 0.2497 |
+| offensive | indicbert | full_ft | shift_d1_chittagong_test | 55.4954 | 57.5074 | 0.0977 | 11.7601 | 0.2755 |
+| offensive | indicbert | full_ft | shift_d1_noakhali_test | 55.2303 | 57.3591 | 0.0898 | 15.2869 | 0.261 |
+| offensive | indicbert | full_ft | shift_d2_test | 73.3247 | 75.9517 | 0.3223 | 1.4524 | 0.079 |
+| offensive | indicbert | full_ft | shift_d3_noise05 | 54.1146 | 55.5935 | 0.0891 | 14.9223 | 0.2174 |
+| offensive | indicbert | full_ft | shift_d3_noise10 | 54.9629 | 57.0941 | 0.0964 | 13.0411 | 0.2366 |
+| offensive | indicbert | full_ft | shift_d3_noise20 | 56.4225 | 58.8279 | 0.1069 | 12.4614 | 0.2833 |
+| offensive | indicbert | full_ft | test | 53.7386 | 54.9958 | 0.0859 | 15.1905 | 0.1782 |
+| offensive | indicbert | lora | shift_d1_barishal_test | 52.2981 | 50.8944 | 0.0753 | 2.2115 | -0.1856 |
+| offensive | indicbert | lora | shift_d1_chittagong_test | 55.4155 | 56.4519 | 0.0924 | 2.1441 | -0.1287 |
+| offensive | indicbert | lora | shift_d1_noakhali_test | 53.2004 | 51.3735 | 0.0908 | 2.1563 | -0.1458 |
+| offensive | indicbert | lora | shift_d2_test | 98.6796 | 99.8983 | 0.9465 | 1.0364 | 0.0545 |
+| offensive | indicbert | lora | shift_d3_noise05 | 54.5424 | 54.5634 | 0.1305 | 1.4865 | -0.1993 |
+| offensive | indicbert | lora | shift_d3_noise10 | 55.0738 | 55.4621 | 0.1297 | 1.3697 | -0.199 |
+| offensive | indicbert | lora | shift_d3_noise20 | 56.1302 | 56.9288 | 0.132 | 1.218 | -0.1938 |
+| offensive | indicbert | lora | test | 54.4136 | 54.4256 | 0.1329 | 1.489 | -0.2101 |
+| offensive | xlmr_base | full_ft | shift_d1_barishal_test | 50.7483 | 51.0089 | 0.0749 | 16.4465 | 0.2664 |
+| offensive | xlmr_base | full_ft | shift_d1_chittagong_test | 54.5337 | 56.8673 | 0.0784 | 16.4793 | 0.3661 |
+| offensive | xlmr_base | full_ft | shift_d1_noakhali_test | 50.9934 | 51.4116 | 0.0732 | 14.3081 | 0.3251 |
+| offensive | xlmr_base | full_ft | shift_d2_test | 57.8241 | 56.1742 | 0.0357 | -5.8966 | -0.1445 |
+| offensive | xlmr_base | full_ft | shift_d3_noise05 | 53.8048 | 54.9407 | 0.0888 | 17.6117 | 0.2998 |
+| offensive | xlmr_base | full_ft | shift_d3_noise10 | 54.1176 | 55.7037 | 0.093 | 17.5791 | 0.335 |
+| offensive | xlmr_base | full_ft | shift_d3_noise20 | 55.5096 | 57.6007 | 0.0908 | 16.1273 | 0.3748 |
+| offensive | xlmr_base | full_ft | test | 53.4455 | 54.2433 | 0.092 | 17.8815 | 0.2493 |
+| offensive | xlmr_base | lora | shift_d1_barishal_test | 45.647 | 42.5901 | 0.0546 | -0.5657 | 0.1049 |
+| offensive | xlmr_base | lora | shift_d1_chittagong_test | 40.5905 | 36.3629 | 0.0341 | 0.585 | 0.0076 |
+| offensive | xlmr_base | lora | shift_d1_noakhali_test | 44.8903 | 42.2849 | 0.0498 | 2.6909 | 0.1125 |
+| offensive | xlmr_base | lora | shift_d2_test | 72.9463 | 75.8393 | 0.1555 | -9.1247 | -0.2482 |
+| offensive | xlmr_base | lora | shift_d3_noise05 | 52.7008 | 53.2196 | 0.0818 | 1.6303 | 0.0964 |
+| offensive | xlmr_base | lora | shift_d3_noise10 | 47.7394 | 45.9771 | 0.0594 | 1.0172 | 0.0494 |
+| offensive | xlmr_base | lora | shift_d3_noise20 | 42.8069 | 39.4913 | 0.0366 | -0.5416 | -0.0083 |
+| offensive | xlmr_base | lora | test | 58.281 | 61.755 | 0.1223 | 2.2243 | 0.1242 |
 | sentiment | banglabert | full_ft | shift_d1_test | 74.3613 | 79.1492 | 0.1313 | 9.4642 | 0.3778 |
 | sentiment | banglabert | full_ft | shift_d2_test | 93.9629 | 96.5473 | 0.6224 | 2.0586 | 0.0818 |
 | sentiment | banglabert | full_ft | shift_d3_noise05 | 58.3037 | 63.2017 | 0.1247 | 18.941 | 0.4745 |
