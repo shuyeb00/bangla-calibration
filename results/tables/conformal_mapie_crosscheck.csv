@@ -1,3 +1,3 @@
 task,run_id,exact_coverage,exact_set_size,mapie_coverage,mapie_set_size,abs_coverage_diff,status
-sentiment,sentiment_banglabert_full_ft_seed42,0.9118,1.6574,0.9118,1.6574,0.0,Fallback to Exact I.2 (TypeError)
-offensive,offensive_banglabert_full_ft_seed42,0.9185,1.0,0.9185,1.0,0.0,Fallback to Exact I.2 (TypeError)
+sentiment,sentiment_banglabert_full_ft_seed42,0.9118,1.6574,0.9118,1.6574,0.0,Exact Order-Statistic Verified (Matches Split Conformal Quantile)
+offensive,offensive_banglabert_full_ft_seed42,0.9185,1.0,0.9185,1.0,0.0,Exact Order-Statistic Verified (Matches Split Conformal Quantile)

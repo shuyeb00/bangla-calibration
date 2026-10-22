@@ -55,20 +55,17 @@ class TemperatureScaler(nn.Module):
 
 
 def fit_temperature(logits: np.ndarray, labels: np.ndarray, max_iter: int = 50) -> float:
-    logits_t = torch.tensor(logits, dtype=torch.float32)
-    labels_t = torch.tensor(labels, dtype=torch.long)
-    scaler = TemperatureScaler()
-    optimizer = optim.LBFGS([scaler.temperature], lr=0.01, max_iter=max_iter)
-    nll_criterion = nn.CrossEntropyLoss()
+    from scipy.optimize import minimize_scalar
+    from scipy.special import log_softmax
+    logits_f = np.asarray(logits, dtype=np.float64)
+    labels_i = np.asarray(labels, dtype=np.int64)
 
-    def closure():
-        optimizer.zero_grad()
-        loss = nll_criterion(scaler(logits_t), labels_t)
-        loss.backward()
-        return loss
+    def nll_obj(t: float) -> float:
+        log_probs = log_softmax(logits_f / max(t, 1e-3), axis=1)
+        return float(-np.mean(log_probs[np.arange(len(labels_i)), labels_i]))
 
-    optimizer.step(closure)
-    return float(torch.clamp(scaler.temperature, min=1e-3).item())
+    res = minimize_scalar(nll_obj, bounds=(0.05, 10.0), method='bounded', options={'maxiter': max_iter})
+    return float(np.clip(res.x, 0.05, 10.0))
 
 
 def apply_temperature(logits: np.ndarray, temperature: float) -> np.ndarray:
