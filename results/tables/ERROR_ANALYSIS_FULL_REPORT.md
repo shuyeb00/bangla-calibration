@@ -40,12 +40,12 @@
 
 | task | category | total_5seed_sampled | pooled_unique_errors | category_count | percentage |
 | --- | --- | --- | --- | --- | --- |
-| sentiment | heavy code-mixing | 780 | 555 | 161 | 29.01 |
-| sentiment | other | 780 | 555 | 154 | 27.75 |
-| sentiment | dialect-specific word | 780 | 555 | 102 | 18.38 |
-| sentiment | negation | 780 | 555 | 102 | 18.38 |
-| sentiment | unclear true label | 780 | 555 | 25 | 4.5 |
-| sentiment | sarcasm | 780 | 555 | 11 | 1.98 |
+| sentiment | heavy code-mixing | 780 | 546 | 160 | 29.3 |
+| sentiment | other | 780 | 546 | 154 | 28.21 |
+| sentiment | negation | 780 | 546 | 102 | 18.68 |
+| sentiment | dialect-specific word | 780 | 546 | 94 | 17.22 |
+| sentiment | unclear true label | 780 | 546 | 25 | 4.58 |
+| sentiment | sarcasm | 780 | 546 | 11 | 2.01 |
 | offensive | dialect-specific word | 1170 | 907 | 452 | 49.83 |
 | offensive | other | 1170 | 907 | 200 | 22.05 |
 | offensive | heavy code-mixing | 1170 | 907 | 155 | 17.09 |

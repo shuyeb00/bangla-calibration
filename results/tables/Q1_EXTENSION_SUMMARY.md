@@ -10,12 +10,12 @@
 | offensive | indicbert | lora | 8 | 0.881 | 0.0039 | 0.7528 | -0.9286 | -0.1429 | 0.7619 | 0.5952 |
 | offensive | xlmr_base | full_ft | 8 | 0.9524 | 0.0003 | 0.6918 | -0.7381 | 0.9524 | 0.9762 | 0.8571 |
 | offensive | xlmr_base | lora | 8 | 0.9524 | 0.0003 | 0.7987 | -0.881 | 0.9524 | 0.9762 | -0.3095 |
-| sentiment | banglabert | full_ft | 6 | 1.0 | 0.0 | 0.8697 | -0.8286 | 0.8286 | 0.8857 | 0.8286 |
-| sentiment | banglabert | lora | 6 | 0.9429 | 0.0048 | 0.8046 | -0.6571 | 0.0857 | -0.1429 | 0.6571 |
-| sentiment | indicbert | full_ft | 6 | 0.9429 | 0.0048 | 0.8045 | -0.6571 | 0.7714 | 0.7714 | 0.6571 |
-| sentiment | indicbert | lora | 6 | -0.1429 | 0.7872 | 0.0147 | 0.5429 | -0.0286 | nan | -0.6571 |
-| sentiment | xlmr_base | full_ft | 6 | 1.0 | 0.0 | 0.8361 | -0.8286 | 0.8857 | 0.8286 | -0.1429 |
-| sentiment | xlmr_base | lora | 6 | 0.9429 | 0.0048 | 0.9598 | -0.9429 | 0.7714 | 0.9429 | 0.7714 |
+| sentiment | banglabert | full_ft | 6 | 1.0 | 0.0 | 0.8702 | -0.8286 | 0.9429 | 0.9429 | 1.0 |
+| sentiment | banglabert | lora | 6 | 0.8286 | 0.0416 | 0.8047 | -0.4286 | 0.0857 | -0.0857 | 0.9429 |
+| sentiment | indicbert | full_ft | 6 | 1.0 | 0.0 | 0.8033 | -0.8286 | 0.7714 | 0.7714 | 0.8286 |
+| sentiment | indicbert | lora | 6 | -0.1429 | 0.7872 | 0.0213 | 0.5429 | -0.0286 | nan | -0.6 |
+| sentiment | xlmr_base | full_ft | 6 | 0.8286 | 0.0416 | 0.8208 | -1.0 | 0.7714 | 0.8286 | 0.0286 |
+| sentiment | xlmr_base | lora | 6 | 0.8286 | 0.0416 | 0.8294 | -1.0 | 0.7714 | 0.9429 | 0.7714 |
 
 
 ## 2. MAPIE Conformal Verification Cross-Check (Part I.3)
@@ -150,9 +150,9 @@
 | offensive | xlmr_base | lora | shift_d3_noise20 | uncalibrated | 0.5036 | 0.0638 | 0.0632 | 0.1222 | 0.0627 | 0.0011 |
 | offensive | xlmr_base | lora | test | source_temp_scaled | 0.3496 | 0.0112 | 0.014 | 0.0513 | 0.005 | 0.0062 |
 | offensive | xlmr_base | lora | test | uncalibrated | 0.3675 | 0.0473 | 0.047 | 0.0615 | 0.0472 | 0.0002 |
-| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | 0.7651 | 0.0978 | 0.1168 | 0.13 | 0.0591 | 0.0386 |
-| sentiment | banglabert | full_ft | shift_d1_test | target_temp_scaled | 0.772 | 0.1026 | 0.1214 | 0.1345 | 0.0583 | 0.0443 |
-| sentiment | banglabert | full_ft | shift_d1_test | uncalibrated | 0.8104 | 0.142 | 0.1515 | 0.1375 | 0.1247 | 0.0173 |
+| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | 0.7137 | 0.0806 | 0.0963 | 0.0888 | 0.0462 | 0.0344 |
+| sentiment | banglabert | full_ft | shift_d1_test | target_temp_scaled | 2.2097 | 0.1255 | 0.137 | 0.1121 | 0.1043 | 0.0212 |
+| sentiment | banglabert | full_ft | shift_d1_test | uncalibrated | 0.779 | 0.13 | 0.1335 | 0.1121 | 0.1129 | 0.0171 |
 | sentiment | banglabert | full_ft | shift_d2_test | source_temp_scaled | 1.1708 | 0.2009 | 0.1999 | 0.1781 | 0.1989 | 0.0019 |
 | sentiment | banglabert | full_ft | shift_d2_test | target_temp_scaled | 1.1358 | 0.1804 | 0.1805 | 0.1666 | 0.1735 | 0.0069 |
 | sentiment | banglabert | full_ft | shift_d2_test | uncalibrated | 1.4317 | 0.2837 | 0.2847 | 0.2275 | 0.2833 | 0.0003 |
@@ -164,9 +164,9 @@
 | sentiment | banglabert | full_ft | shift_d3_noise20 | uncalibrated | 0.9188 | 0.1546 | 0.1563 | 0.125 | 0.1508 | 0.0038 |
 | sentiment | banglabert | full_ft | test | source_temp_scaled | 0.6715 | 0.0603 | 0.0675 | 0.0511 | 0.0407 | 0.0196 |
 | sentiment | banglabert | full_ft | test | uncalibrated | 0.7461 | 0.1171 | 0.1184 | 0.084 | 0.1104 | 0.0067 |
-| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | 0.7971 | 0.1278 | 0.1392 | 0.1012 | 0.0128 | 0.115 |
-| sentiment | banglabert | lora | shift_d1_test | target_temp_scaled | 0.814 | 0.1479 | 0.1571 | 0.1146 | 0.0126 | 0.1353 |
-| sentiment | banglabert | lora | shift_d1_test | uncalibrated | 0.7641 | 0.096 | 0.1116 | 0.082 | 0.023 | 0.073 |
+| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | 0.7585 | 0.094 | 0.1059 | 0.0849 | 0.0215 | 0.0725 |
+| sentiment | banglabert | lora | shift_d1_test | target_temp_scaled | 0.759 | 0.0918 | 0.1066 | 0.0832 | 0.0197 | 0.0721 |
+| sentiment | banglabert | lora | shift_d1_test | uncalibrated | 0.7493 | 0.0741 | 0.0911 | 0.0762 | 0.0424 | 0.0317 |
 | sentiment | banglabert | lora | shift_d2_test | source_temp_scaled | 1.2403 | 0.2103 | 0.2137 | 0.1642 | 0.2082 | 0.002 |
 | sentiment | banglabert | lora | shift_d2_test | target_temp_scaled | 1.1596 | 0.1596 | 0.168 | 0.1408 | 0.1493 | 0.0103 |
 | sentiment | banglabert | lora | shift_d2_test | uncalibrated | 1.3648 | 0.2753 | 0.2756 | 0.1976 | 0.2751 | 0.0001 |
@@ -178,9 +178,9 @@
 | sentiment | banglabert | lora | shift_d3_noise20 | uncalibrated | 0.8334 | 0.038 | 0.0498 | 0.0412 | 0.006 | 0.0319 |
 | sentiment | banglabert | lora | test | source_temp_scaled | 0.756 | 0.0574 | 0.0634 | 0.0477 | 0.0221 | 0.0353 |
 | sentiment | banglabert | lora | test | uncalibrated | 0.7558 | 0.0717 | 0.0745 | 0.0509 | 0.061 | 0.0107 |
-| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | 0.8793 | 0.0772 | 0.1087 | 0.0806 | 0.0154 | 0.0618 |
-| sentiment | indicbert | full_ft | shift_d1_test | target_temp_scaled | 0.8739 | 0.0708 | 0.0989 | 0.0768 | 0.0214 | 0.0494 |
-| sentiment | indicbert | full_ft | shift_d1_test | uncalibrated | 0.8797 | 0.0721 | 0.0939 | 0.0843 | 0.0466 | 0.0255 |
+| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | 0.8854 | 0.0714 | 0.102 | 0.0734 | 0.0297 | 0.0417 |
+| sentiment | indicbert | full_ft | shift_d1_test | target_temp_scaled | 0.8874 | 0.0884 | 0.1066 | 0.0781 | 0.0416 | 0.0468 |
+| sentiment | indicbert | full_ft | shift_d1_test | uncalibrated | 0.8952 | 0.0911 | 0.1074 | 0.0865 | 0.0736 | 0.0175 |
 | sentiment | indicbert | full_ft | shift_d2_test | source_temp_scaled | 1.143 | 0.1677 | 0.1776 | 0.1363 | 0.1556 | 0.0121 |
 | sentiment | indicbert | full_ft | shift_d2_test | target_temp_scaled | 1.1055 | 0.1383 | 0.1437 | 0.115 | 0.1191 | 0.0192 |
 | sentiment | indicbert | full_ft | shift_d2_test | uncalibrated | 1.27 | 0.2374 | 0.2439 | 0.1784 | 0.2285 | 0.0088 |
@@ -192,9 +192,9 @@
 | sentiment | indicbert | full_ft | shift_d3_noise20 | uncalibrated | 0.9201 | 0.063 | 0.0675 | 0.0553 | 0.0581 | 0.0049 |
 | sentiment | indicbert | full_ft | test | source_temp_scaled | 0.8616 | 0.0419 | 0.0499 | 0.0388 | 0.0091 | 0.0328 |
 | sentiment | indicbert | full_ft | test | uncalibrated | 0.8681 | 0.0539 | 0.0621 | 0.0451 | 0.0498 | 0.004 |
-| sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | 1.079 | 0.0349 | 0.1172 | 0.0569 | 0.0 | 0.0349 |
-| sentiment | indicbert | lora | shift_d1_test | target_temp_scaled | 1.079 | 0.0349 | 0.1172 | 0.0569 | 0.0 | 0.0349 |
-| sentiment | indicbert | lora | shift_d1_test | uncalibrated | 1.0726 | 0.0176 | 0.1029 | 0.0444 | 0.0 | 0.0176 |
+| sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | 1.0789 | 0.0349 | 0.1151 | 0.0559 | 0.0 | 0.0349 |
+| sentiment | indicbert | lora | shift_d1_test | target_temp_scaled | 1.0789 | 0.0349 | 0.1151 | 0.0559 | 0.0 | 0.0349 |
+| sentiment | indicbert | lora | shift_d1_test | uncalibrated | 1.0724 | 0.0176 | 0.11 | 0.0438 | 0.0 | 0.0176 |
 | sentiment | indicbert | lora | shift_d2_test | source_temp_scaled | 1.0811 | 0.0479 | 0.074 | 0.0396 | 0.0 | 0.0479 |
 | sentiment | indicbert | lora | shift_d2_test | target_temp_scaled | 1.0811 | 0.0478 | 0.074 | 0.0396 | 0.0 | 0.0478 |
 | sentiment | indicbert | lora | shift_d2_test | uncalibrated | 1.0758 | 0.0302 | 0.0665 | 0.027 | 0.0 | 0.0302 |
@@ -206,9 +206,9 @@
 | sentiment | indicbert | lora | shift_d3_noise20 | uncalibrated | 1.0771 | 0.0292 | 0.0494 | 0.0234 | 0.0 | 0.0292 |
 | sentiment | indicbert | lora | test | source_temp_scaled | 1.082 | 0.0466 | 0.0724 | 0.0359 | 0.0 | 0.0466 |
 | sentiment | indicbert | lora | test | uncalibrated | 1.077 | 0.0293 | 0.0652 | 0.0235 | 0.0 | 0.0293 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | 0.7636 | 0.0951 | 0.1077 | 0.0806 | 0.0385 | 0.0566 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | target_temp_scaled | 0.7619 | 0.0801 | 0.1011 | 0.0793 | 0.0395 | 0.0406 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | uncalibrated | 0.7925 | 0.11 | 0.1279 | 0.0944 | 0.0946 | 0.0153 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | 0.8169 | 0.0818 | 0.1039 | 0.0845 | 0.0663 | 0.0155 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | target_temp_scaled | 0.8177 | 0.0795 | 0.1025 | 0.084 | 0.0667 | 0.0128 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | uncalibrated | 0.9118 | 0.1565 | 0.16 | 0.1268 | 0.153 | 0.0035 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | source_temp_scaled | 1.1302 | 0.2202 | 0.2164 | 0.2061 | 0.2155 | 0.0047 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | target_temp_scaled | 1.0772 | 0.1926 | 0.1877 | 0.1909 | 0.1864 | 0.0062 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | uncalibrated | 1.4596 | 0.3057 | 0.3049 | 0.2486 | 0.3049 | 0.0008 |
@@ -220,9 +220,9 @@
 | sentiment | xlmr_base | full_ft | shift_d3_noise20 | uncalibrated | 0.8978 | 0.1439 | 0.144 | 0.101 | 0.1434 | 0.0005 |
 | sentiment | xlmr_base | full_ft | test | source_temp_scaled | 0.7141 | 0.0464 | 0.0495 | 0.0466 | 0.0313 | 0.015 |
 | sentiment | xlmr_base | full_ft | test | uncalibrated | 0.7719 | 0.1118 | 0.1113 | 0.0813 | 0.1109 | 0.0009 |
-| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | 0.8645 | 0.0775 | 0.1099 | 0.0765 | 0.0302 | 0.0473 |
-| sentiment | xlmr_base | lora | shift_d1_test | target_temp_scaled | 0.8663 | 0.0965 | 0.1121 | 0.0803 | 0.0346 | 0.0619 |
-| sentiment | xlmr_base | lora | shift_d1_test | uncalibrated | 0.869 | 0.0918 | 0.1068 | 0.0818 | 0.0673 | 0.0245 |
+| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | 0.8977 | 0.0813 | 0.1057 | 0.0795 | 0.0414 | 0.0399 |
+| sentiment | xlmr_base | lora | shift_d1_test | target_temp_scaled | 0.8969 | 0.0783 | 0.1087 | 0.0814 | 0.0329 | 0.0453 |
+| sentiment | xlmr_base | lora | shift_d1_test | uncalibrated | 0.9197 | 0.1022 | 0.1284 | 0.0828 | 0.0818 | 0.0204 |
 | sentiment | xlmr_base | lora | shift_d2_test | source_temp_scaled | 0.9154 | 0.0992 | 0.1064 | 0.1516 | 0.0847 | 0.0145 |
 | sentiment | xlmr_base | lora | shift_d2_test | target_temp_scaled | 0.9047 | 0.0757 | 0.0911 | 0.1425 | 0.0514 | 0.0243 |
 | sentiment | xlmr_base | lora | shift_d2_test | uncalibrated | 0.964 | 0.1492 | 0.1517 | 0.1797 | 0.1414 | 0.0078 |
@@ -384,9 +384,9 @@
 | offensive | xlmr_base | lora | test | source_temp_scaled | aps | 0.9195 | 1.2427 | 0.7573 | 0.2427 | 0.905 | 0.0352 |
 | offensive | xlmr_base | lora | test | source_temp_scaled | lac | 0.9008 | 1.1215 | 0.8785 | 0.1215 | 0.8862 | 0.0172 |
 | offensive | xlmr_base | lora | test | source_temp_scaled | raps | 0.9156 | 1.2218 | 0.7782 | 0.2218 | 0.9011 | 0.0313 |
-| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | aps | 0.9413 | 2.0219 | 0.1612 | 0.1831 | 0.9121 | 0.081 |
-| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | lac | 0.9582 | 2.0438 | 0.2289 | 0.2726 | 0.9368 | 0.088 |
-| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | raps | 0.9343 | 1.9652 | 0.1473 | 0.1124 | 0.8971 | 0.081 |
+| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | aps | 0.9095 | 1.8637 | 0.2577 | 0.1214 | 0.8814 | 0.0415 |
+| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | lac | 0.9224 | 1.805 | 0.392 | 0.197 | 0.8755 | 0.0569 |
+| sentiment | banglabert | full_ft | shift_d1_test | source_temp_scaled | raps | 0.9045 | 1.8607 | 0.2338 | 0.0945 | 0.869 | 0.0414 |
 | sentiment | banglabert | full_ft | shift_d2_test | source_temp_scaled | aps | 0.7485 | 1.9856 | 0.1823 | 0.1679 | 0.4 | 0.5 |
 | sentiment | banglabert | full_ft | shift_d2_test | source_temp_scaled | lac | 0.8085 | 2.1281 | 0.2139 | 0.342 | 0.5667 | 0.3333 |
 | sentiment | banglabert | full_ft | shift_d2_test | source_temp_scaled | raps | 0.7321 | 1.9485 | 0.1667 | 0.1152 | 0.3518 | 0.5482 |
@@ -402,9 +402,9 @@
 | sentiment | banglabert | full_ft | test | source_temp_scaled | aps | 0.9031 | 1.7526 | 0.3362 | 0.0888 | 0.8713 | 0.0363 |
 | sentiment | banglabert | full_ft | test | source_temp_scaled | lac | 0.9129 | 1.6724 | 0.4668 | 0.1391 | 0.8591 | 0.0481 |
 | sentiment | banglabert | full_ft | test | source_temp_scaled | raps | 0.9004 | 1.7413 | 0.3176 | 0.059 | 0.876 | 0.0278 |
-| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | aps | 0.9393 | 2.2537 | 0.0557 | 0.3095 | 0.9051 | 0.0952 |
-| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | lac | 0.9692 | 2.2587 | 0.1124 | 0.3711 | 0.9513 | 0.0952 |
-| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | raps | 0.9363 | 2.2209 | 0.0408 | 0.2617 | 0.9051 | 0.0952 |
+| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | aps | 0.9104 | 1.99 | 0.191 | 0.1811 | 0.8864 | 0.0396 |
+| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | lac | 0.9124 | 1.9005 | 0.3453 | 0.2458 | 0.9004 | 0.027 |
+| sentiment | banglabert | lora | shift_d1_test | source_temp_scaled | raps | 0.9005 | 1.993 | 0.1562 | 0.1493 | 0.8765 | 0.0443 |
 | sentiment | banglabert | lora | shift_d2_test | source_temp_scaled | aps | 0.6664 | 2.01 | 0.0709 | 0.0808 | 0.095 | 0.805 |
 | sentiment | banglabert | lora | shift_d2_test | source_temp_scaled | lac | 0.6689 | 2.0077 | 0.0284 | 0.0361 | 0.0695 | 0.8305 |
 | sentiment | banglabert | lora | shift_d2_test | source_temp_scaled | raps | 0.6619 | 2.0057 | 0.0502 | 0.056 | 0.0667 | 0.8333 |
@@ -420,9 +420,9 @@
 | sentiment | banglabert | lora | test | source_temp_scaled | aps | 0.9057 | 1.9494 | 0.175 | 0.1244 | 0.8803 | 0.0293 |
 | sentiment | banglabert | lora | test | source_temp_scaled | lac | 0.9044 | 1.8001 | 0.3606 | 0.1607 | 0.8799 | 0.0256 |
 | sentiment | banglabert | lora | test | source_temp_scaled | raps | 0.9034 | 1.96 | 0.1453 | 0.1053 | 0.8688 | 0.0404 |
-| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | aps | 0.9114 | 2.2816 | 0.0328 | 0.3144 | 0.8656 | 0.0581 |
-| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | lac | 0.9343 | 2.2736 | 0.2 | 0.4736 | 0.8696 | 0.0859 |
-| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | raps | 0.9114 | 2.2935 | 0.0119 | 0.3055 | 0.8704 | 0.0533 |
+| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | aps | 0.9045 | 2.2637 | 0.0458 | 0.3095 | 0.8593 | 0.0523 |
+| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | lac | 0.9174 | 2.1642 | 0.2547 | 0.4189 | 0.8505 | 0.0652 |
+| sentiment | indicbert | full_ft | shift_d1_test | source_temp_scaled | raps | 0.9035 | 2.2766 | 0.0199 | 0.2965 | 0.8568 | 0.0528 |
 | sentiment | indicbert | full_ft | shift_d2_test | source_temp_scaled | aps | 0.8107 | 2.2739 | 0.0231 | 0.297 | 0.5568 | 0.3432 |
 | sentiment | indicbert | full_ft | shift_d2_test | source_temp_scaled | lac | 0.7602 | 2.0756 | 0.3794 | 0.455 | 0.4824 | 0.4176 |
 | sentiment | indicbert | full_ft | shift_d2_test | source_temp_scaled | raps | 0.8129 | 2.2828 | 0.0027 | 0.2856 | 0.5558 | 0.3442 |
@@ -439,7 +439,7 @@
 | sentiment | indicbert | full_ft | test | source_temp_scaled | lac | 0.9138 | 2.1181 | 0.2754 | 0.3935 | 0.8888 | 0.0275 |
 | sentiment | indicbert | full_ft | test | source_temp_scaled | raps | 0.9009 | 2.2603 | 0.0243 | 0.2846 | 0.8796 | 0.0438 |
 | sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | aps | 0.9005 | 2.5274 | 0.0 | 0.5274 | 0.5238 | 0.3762 |
-| sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | lac | 0.8806 | 2.4537 | 0.0 | 0.4537 | 0.4286 | 0.4714 |
+| sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | lac | 0.8995 | 2.4756 | 0.0 | 0.4756 | 0.519 | 0.381 |
 | sentiment | indicbert | lora | shift_d1_test | source_temp_scaled | raps | 0.9005 | 2.5274 | 0.0 | 0.5274 | 0.5238 | 0.3762 |
 | sentiment | indicbert | lora | shift_d2_test | source_temp_scaled | aps | 0.8965 | 2.5134 | 0.0 | 0.5134 | 0.5551 | 0.3449 |
 | sentiment | indicbert | lora | shift_d2_test | source_temp_scaled | lac | 0.8261 | 2.2296 | 0.0 | 0.2296 | 0.2524 | 0.648 |
@@ -456,9 +456,9 @@
 | sentiment | indicbert | lora | test | source_temp_scaled | aps | 0.8988 | 2.544 | 0.0 | 0.544 | 0.5766 | 0.3234 |
 | sentiment | indicbert | lora | test | source_temp_scaled | lac | 0.9004 | 2.4612 | 0.0 | 0.4612 | 0.5834 | 0.3166 |
 | sentiment | indicbert | lora | test | source_temp_scaled | raps | 0.8988 | 2.544 | 0.0 | 0.544 | 0.5766 | 0.3234 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | aps | 0.9224 | 2.0836 | 0.1731 | 0.2567 | 0.8914 | 0.0495 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | lac | 0.9363 | 2.0378 | 0.2746 | 0.3124 | 0.918 | 0.0503 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | raps | 0.9164 | 2.0617 | 0.1473 | 0.209 | 0.8864 | 0.0421 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | aps | 0.8846 | 1.9662 | 0.2179 | 0.1841 | 0.8529 | 0.0471 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | lac | 0.8896 | 1.8816 | 0.3502 | 0.2318 | 0.8641 | 0.0359 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | source_temp_scaled | raps | 0.8786 | 1.9642 | 0.194 | 0.1582 | 0.8494 | 0.0506 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | source_temp_scaled | aps | 0.7667 | 1.8167 | 0.3624 | 0.1791 | 0.5314 | 0.3686 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | source_temp_scaled | lac | 0.7269 | 1.6803 | 0.5836 | 0.2639 | 0.3219 | 0.5781 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | source_temp_scaled | raps | 0.7677 | 1.8244 | 0.3192 | 0.1435 | 0.5464 | 0.3536 |
@@ -474,9 +474,9 @@
 | sentiment | xlmr_base | full_ft | test | source_temp_scaled | aps | 0.9059 | 1.8822 | 0.2625 | 0.1447 | 0.8837 | 0.0261 |
 | sentiment | xlmr_base | full_ft | test | source_temp_scaled | lac | 0.9188 | 1.8097 | 0.3803 | 0.19 | 0.8945 | 0.0447 |
 | sentiment | xlmr_base | full_ft | test | source_temp_scaled | raps | 0.9041 | 1.8897 | 0.2282 | 0.1179 | 0.8801 | 0.0267 |
-| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | aps | 0.8746 | 2.0617 | 0.1403 | 0.202 | 0.8296 | 0.0704 |
-| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | lac | 0.8766 | 2.0129 | 0.2925 | 0.3055 | 0.8284 | 0.0749 |
-| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | raps | 0.8667 | 2.0458 | 0.1264 | 0.1721 | 0.8148 | 0.0852 |
+| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | aps | 0.8537 | 2.0468 | 0.1552 | 0.202 | 0.8205 | 0.0795 |
+| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | lac | 0.8567 | 1.9522 | 0.3174 | 0.2697 | 0.7905 | 0.1095 |
+| sentiment | xlmr_base | lora | shift_d1_test | source_temp_scaled | raps | 0.8498 | 2.0358 | 0.1363 | 0.1721 | 0.8192 | 0.0808 |
 | sentiment | xlmr_base | lora | shift_d2_test | source_temp_scaled | aps | 0.84 | 1.9341 | 0.2475 | 0.1816 | 0.6894 | 0.2106 |
 | sentiment | xlmr_base | lora | shift_d2_test | source_temp_scaled | lac | 0.8251 | 1.844 | 0.4873 | 0.3313 | 0.5422 | 0.3578 |
 | sentiment | xlmr_base | lora | shift_d2_test | source_temp_scaled | raps | 0.8396 | 1.9306 | 0.2209 | 0.1515 | 0.673 | 0.227 |
@@ -546,37 +546,37 @@
 | offensive | xlmr_base | lora | shift_d3_noise10 | 47.7394 | 45.9771 | 0.0594 | 1.0172 | 0.0494 |
 | offensive | xlmr_base | lora | shift_d3_noise20 | 42.8069 | 39.4913 | 0.0366 | -0.5416 | -0.0083 |
 | offensive | xlmr_base | lora | test | 58.281 | 61.755 | 0.1223 | 2.2243 | 0.1242 |
-| sentiment | banglabert | full_ft | shift_d1_test | 74.3613 | 79.1492 | 0.1313 | 9.4642 | 0.3778 |
+| sentiment | banglabert | full_ft | shift_d1_test | 58.7784 | 63.8866 | 0.1244 | 17.3437 | 0.4571 |
 | sentiment | banglabert | full_ft | shift_d2_test | 93.9629 | 96.5473 | 0.6224 | 2.0586 | 0.0818 |
 | sentiment | banglabert | full_ft | shift_d3_noise05 | 58.3037 | 63.2017 | 0.1247 | 18.941 | 0.4745 |
 | sentiment | banglabert | full_ft | shift_d3_noise10 | 61.5711 | 66.855 | 0.1419 | 14.383 | 0.3947 |
 | sentiment | banglabert | full_ft | shift_d3_noise20 | 69.9195 | 77.9454 | 0.2101 | 12.3885 | 0.3355 |
 | sentiment | banglabert | full_ft | test | 57.9103 | 62.3813 | 0.1332 | 22.1245 | 0.5101 |
-| sentiment | banglabert | lora | shift_d1_test | 74.7429 | 82.3803 | 0.2448 | 7.8048 | 0.2309 |
+| sentiment | banglabert | lora | shift_d1_test | 55.4339 | 61.9538 | 0.1234 | 9.6972 | 0.2794 |
 | sentiment | banglabert | lora | shift_d2_test | 99.4246 | 99.6134 | 0.9938 | -0.2516 | -0.1331 |
 | sentiment | banglabert | lora | shift_d3_noise05 | 55.8201 | 60.6681 | 0.0913 | 7.9954 | 0.2024 |
 | sentiment | banglabert | lora | shift_d3_noise10 | 60.4394 | 67.4044 | 0.1465 | 4.4579 | 0.1395 |
 | sentiment | banglabert | lora | shift_d3_noise20 | 74.1152 | 87.7878 | 0.3532 | 4.9987 | 0.1614 |
 | sentiment | banglabert | lora | test | 55.2316 | 57.6996 | 0.1019 | 12.6851 | 0.2915 |
-| sentiment | indicbert | full_ft | shift_d1_test | 77.8676 | 78.7962 | 0.1313 | 4.7273 | 0.2339 |
+| sentiment | indicbert | full_ft | shift_d1_test | 59.9548 | 62.7731 | 0.1154 | 11.1522 | 0.3047 |
 | sentiment | indicbert | full_ft | shift_d2_test | 95.0735 | 98.2143 | 0.7692 | 0.2094 | 0.0449 |
 | sentiment | indicbert | full_ft | shift_d3_noise05 | 55.4264 | 57.9853 | 0.0885 | 9.4135 | 0.2503 |
 | sentiment | indicbert | full_ft | shift_d3_noise10 | 55.8804 | 57.8981 | 0.0966 | 8.1948 | 0.2212 |
 | sentiment | indicbert | full_ft | shift_d3_noise20 | 57.6959 | 60.5042 | 0.0943 | 7.5753 | 0.1941 |
 | sentiment | indicbert | full_ft | test | 54.6011 | 56.2973 | 0.0894 | 9.8844 | 0.2522 |
-| sentiment | indicbert | lora | shift_d1_test | 100.0 | 100.0 | 1.0 | 0.0 | 0.0 |
+| sentiment | indicbert | lora | shift_d1_test | 62.9723 | 69.3256 | 0.1264 | 1.3895 | 0.1076 |
 | sentiment | indicbert | lora | shift_d2_test | 99.3689 | 99.6197 | 0.9806 | 0.0017 | -0.0033 |
 | sentiment | indicbert | lora | shift_d3_noise05 | 54.6771 | 57.2248 | 0.0738 | 2.6705 | 0.0828 |
 | sentiment | indicbert | lora | shift_d3_noise10 | 55.735 | 57.7048 | 0.0854 | 3.9887 | 0.1082 |
 | sentiment | indicbert | lora | shift_d3_noise20 | 57.5247 | 60.0798 | 0.0919 | 1.9341 | 0.0657 |
 | sentiment | indicbert | lora | test | 54.7957 | 57.5315 | 0.0746 | 3.5244 | 0.0921 |
-| sentiment | xlmr_base | full_ft | shift_d1_test | 87.8865 | 88.6954 | 0.1632 | 3.2513 | 0.4303 |
+| sentiment | xlmr_base | full_ft | shift_d1_test | 51.4689 | 51.9391 | 0.0637 | 16.9765 | 0.4457 |
 | sentiment | xlmr_base | full_ft | shift_d2_test | 56.6836 | 57.3971 | 0.0214 | 10.0685 | 0.2549 |
 | sentiment | xlmr_base | full_ft | shift_d3_noise05 | 51.8618 | 53.1376 | 0.0712 | 19.1498 | 0.5162 |
 | sentiment | xlmr_base | full_ft | shift_d3_noise10 | 49.7312 | 49.0756 | 0.0576 | 17.5394 | 0.4841 |
 | sentiment | xlmr_base | full_ft | shift_d3_noise20 | 47.7329 | 45.917 | 0.0399 | 15.5717 | 0.4289 |
 | sentiment | xlmr_base | full_ft | test | 54.8278 | 57.2731 | 0.0946 | 20.2915 | 0.5289 |
-| sentiment | xlmr_base | lora | shift_d1_test | 77.7421 | 79.2164 | 0.1144 | 4.2223 | 0.2368 |
+| sentiment | xlmr_base | lora | shift_d1_test | 55.8023 | 59.9286 | 0.0915 | 15.3319 | 0.3354 |
 | sentiment | xlmr_base | lora | shift_d2_test | 92.794 | 95.8466 | 0.5764 | -0.7508 | 0.0397 |
 | sentiment | xlmr_base | lora | shift_d3_noise05 | 53.6494 | 55.2458 | 0.0809 | 10.823 | 0.2659 |
 | sentiment | xlmr_base | lora | shift_d3_noise10 | 54.1059 | 55.4727 | 0.0778 | 10.063 | 0.2445 |

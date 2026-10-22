@@ -24,9 +24,9 @@
 
 | model | ft_method | condition | calibration_regime | accuracy_mean | macro_f1_mean | nll_mean | nll_std | ece_15_mean | brier_mean | aurc_mean | conformal_coverage_mean | conformal_set_size_mean |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| banglabert | full_ft | shift_d1_test | source_temp_scaled | 0.6388 | 0.6303 | 0.7651 | 0.0361 | 0.0978 | 0.4556 | 0.18 | 0.9582 | 2.0438 |
-| banglabert | full_ft | shift_d1_test | target_temp_scaled | 0.6388 | 0.6303 | 0.772 | 0.0438 | 0.1026 | 0.4598 | 0.18 | 0.9463 | 1.9124 |
-| banglabert | full_ft | shift_d1_test | uncalibrated | 0.6388 | 0.6303 | 0.8104 | 0.0846 | 0.142 | 0.4841 | 0.1805 | 0.9562 | 2.0587 |
+| banglabert | full_ft | shift_d1_test | source_temp_scaled | 0.6985 | 0.6745 | 0.7137 | 0.0204 | 0.0806 | 0.4096 | 0.1372 | 0.9224 | 1.805 |
+| banglabert | full_ft | shift_d1_test | target_temp_scaled | 0.6985 | 0.6745 | 2.2097 | 3.3477 | 0.1255 | 0.4496 | 0.1712 | 0.9443 | 2.0567 |
+| banglabert | full_ft | shift_d1_test | uncalibrated | 0.6985 | 0.6745 | 0.779 | 0.0668 | 0.13 | 0.4336 | 0.1367 | 0.9254 | 1.81 |
 | banglabert | full_ft | shift_d2_test | source_temp_scaled | 0.4547 | 0.3759 | 1.1708 | 0.1226 | 0.2009 | 0.6807 | 0.3543 | 0.8085 | 2.1281 |
 | banglabert | full_ft | shift_d2_test | target_temp_scaled | 0.4547 | 0.3759 | 1.1358 | 0.1077 | 0.1804 | 0.6655 | 0.3543 | 0.9112 | 2.4313 |
 | banglabert | full_ft | shift_d2_test | uncalibrated | 0.4547 | 0.3759 | 1.4317 | 0.3117 | 0.2837 | 0.7599 | 0.3546 | 0.8206 | 2.1473 |
@@ -38,9 +38,9 @@
 | banglabert | full_ft | shift_d3_noise20 | uncalibrated | 0.62 | 0.6162 | 0.9188 | 0.091 | 0.1546 | 0.5249 | 0.1971 | 0.9215 | 1.9897 |
 | banglabert | full_ft | test | source_temp_scaled | 0.7216 | 0.6959 | 0.6715 | 0.0121 | 0.0603 | 0.3845 | 0.1264 | 0.9129 | 1.6724 |
 | banglabert | full_ft | test | uncalibrated | 0.7216 | 0.6959 | 0.7461 | 0.0768 | 0.1171 | 0.4098 | 0.1258 | 0.9104 | 1.6609 |
-| banglabert | lora | shift_d1_test | source_temp_scaled | 0.6527 | 0.5866 | 0.7971 | 0.005 | 0.1278 | 0.4597 | 0.1647 | 0.9692 | 2.2587 |
-| banglabert | lora | shift_d1_test | target_temp_scaled | 0.6527 | 0.5866 | 0.814 | 0.0057 | 0.1479 | 0.4703 | 0.1651 | 0.9413 | 1.999 |
-| banglabert | lora | shift_d1_test | uncalibrated | 0.6527 | 0.5866 | 0.7641 | 0.0055 | 0.096 | 0.4405 | 0.1634 | 0.9711 | 2.2746 |
+| banglabert | lora | shift_d1_test | source_temp_scaled | 0.6826 | 0.6063 | 0.7585 | 0.0094 | 0.094 | 0.4306 | 0.1483 | 0.9124 | 1.9005 |
+| banglabert | lora | shift_d1_test | target_temp_scaled | 0.6826 | 0.6063 | 0.759 | 0.0096 | 0.0918 | 0.4309 | 0.1483 | 0.9214 | 1.9473 |
+| banglabert | lora | shift_d1_test | uncalibrated | 0.6826 | 0.6063 | 0.7493 | 0.0104 | 0.0741 | 0.4248 | 0.1477 | 0.9144 | 1.9124 |
 | banglabert | lora | shift_d2_test | source_temp_scaled | 0.4172 | 0.1971 | 1.2403 | 0.0513 | 0.2103 | 0.7273 | 0.4217 | 0.6689 | 2.0077 |
 | banglabert | lora | shift_d2_test | target_temp_scaled | 0.4172 | 0.1971 | 1.1596 | 0.0284 | 0.1596 | 0.6906 | 0.4233 | 0.8935 | 2.509 |
 | banglabert | lora | shift_d2_test | uncalibrated | 0.4172 | 0.1971 | 1.3648 | 0.0808 | 0.2753 | 0.7777 | 0.4204 | 0.6769 | 2.0137 |
@@ -52,9 +52,9 @@
 | banglabert | lora | shift_d3_noise20 | uncalibrated | 0.6269 | 0.5658 | 0.8334 | 0.0034 | 0.038 | 0.4853 | 0.2143 | 0.9421 | 2.281 |
 | banglabert | lora | test | source_temp_scaled | 0.6643 | 0.5941 | 0.756 | 0.0041 | 0.0574 | 0.4375 | 0.1608 | 0.9044 | 1.8001 |
 | banglabert | lora | test | uncalibrated | 0.6643 | 0.5941 | 0.7558 | 0.0042 | 0.0717 | 0.4397 | 0.1607 | 0.9044 | 1.7972 |
-| indicbert | full_ft | shift_d1_test | source_temp_scaled | 0.609 | 0.546 | 0.8793 | 0.0076 | 0.0772 | 0.5116 | 0.2254 | 0.9343 | 2.2736 |
-| indicbert | full_ft | shift_d1_test | target_temp_scaled | 0.609 | 0.546 | 0.8739 | 0.0084 | 0.0708 | 0.5084 | 0.2254 | 0.9065 | 2.1393 |
-| indicbert | full_ft | shift_d1_test | uncalibrated | 0.609 | 0.546 | 0.8797 | 0.0196 | 0.0721 | 0.5097 | 0.2251 | 0.9373 | 2.2756 |
+| indicbert | full_ft | shift_d1_test | source_temp_scaled | 0.5861 | 0.5259 | 0.8854 | 0.0244 | 0.0714 | 0.5167 | 0.2366 | 0.9174 | 2.1642 |
+| indicbert | full_ft | shift_d1_test | target_temp_scaled | 0.5861 | 0.5259 | 0.8874 | 0.0222 | 0.0884 | 0.518 | 0.2366 | 0.8776 | 2.0209 |
+| indicbert | full_ft | shift_d1_test | uncalibrated | 0.5861 | 0.5259 | 0.8952 | 0.0341 | 0.0911 | 0.5214 | 0.2364 | 0.9184 | 2.1721 |
 | indicbert | full_ft | shift_d2_test | source_temp_scaled | 0.453 | 0.3202 | 1.143 | 0.0869 | 0.1677 | 0.6948 | 0.4842 | 0.7602 | 2.0756 |
 | indicbert | full_ft | shift_d2_test | target_temp_scaled | 0.453 | 0.3202 | 1.1055 | 0.0584 | 0.1383 | 0.6717 | 0.4841 | 0.9174 | 2.6321 |
 | indicbert | full_ft | shift_d2_test | uncalibrated | 0.453 | 0.3202 | 1.27 | 0.1706 | 0.2374 | 0.754 | 0.4842 | 0.759 | 2.0697 |
@@ -66,9 +66,9 @@
 | indicbert | full_ft | shift_d3_noise20 | uncalibrated | 0.5894 | 0.5462 | 0.9201 | 0.0072 | 0.063 | 0.5378 | 0.271 | 0.9062 | 2.1984 |
 | indicbert | full_ft | test | source_temp_scaled | 0.6097 | 0.5667 | 0.8616 | 0.0215 | 0.0419 | 0.5025 | 0.2289 | 0.9138 | 2.1181 |
 | indicbert | full_ft | test | uncalibrated | 0.6097 | 0.5667 | 0.8681 | 0.0133 | 0.0539 | 0.5059 | 0.2289 | 0.9163 | 2.1253 |
-| indicbert | lora | shift_d1_test | source_temp_scaled | 0.403 | 0.1915 | 1.079 | 0.0013 | 0.0349 | 0.654 | 0.5898 | 0.8806 | 2.4537 |
-| indicbert | lora | shift_d1_test | target_temp_scaled | 0.403 | 0.1915 | 1.079 | 0.0013 | 0.0349 | 0.654 | 0.5897 | 0.8935 | 2.5343 |
-| indicbert | lora | shift_d1_test | uncalibrated | 0.403 | 0.1915 | 1.0726 | 0.0017 | 0.0176 | 0.6501 | 0.5899 | 0.8806 | 2.4547 |
+| indicbert | lora | shift_d1_test | source_temp_scaled | 0.403 | 0.1915 | 1.0789 | 0.0012 | 0.0349 | 0.6539 | 0.589 | 0.8995 | 2.4756 |
+| indicbert | lora | shift_d1_test | target_temp_scaled | 0.403 | 0.1915 | 1.0789 | 0.0012 | 0.0349 | 0.6539 | 0.589 | 0.8925 | 2.4448 |
+| indicbert | lora | shift_d1_test | uncalibrated | 0.403 | 0.1915 | 1.0724 | 0.0016 | 0.0176 | 0.65 | 0.5891 | 0.8995 | 2.4756 |
 | indicbert | lora | shift_d2_test | source_temp_scaled | 0.4167 | 0.1961 | 1.0811 | 0.0009 | 0.0479 | 0.6552 | 0.5862 | 0.8261 | 2.2296 |
 | indicbert | lora | shift_d2_test | target_temp_scaled | 0.4167 | 0.1961 | 1.0811 | 0.0009 | 0.0478 | 0.6552 | 0.5862 | 0.894 | 2.5065 |
 | indicbert | lora | shift_d2_test | uncalibrated | 0.4167 | 0.1961 | 1.0758 | 0.0009 | 0.0302 | 0.6519 | 0.586 | 0.8264 | 2.2306 |
@@ -80,9 +80,9 @@
 | indicbert | lora | shift_d3_noise20 | uncalibrated | 0.4147 | 0.1954 | 1.0771 | 0.0007 | 0.0292 | 0.6526 | 0.5648 | 0.8975 | 2.4426 |
 | indicbert | lora | test | source_temp_scaled | 0.4147 | 0.1954 | 1.082 | 0.0006 | 0.0466 | 0.6558 | 0.5534 | 0.9004 | 2.4612 |
 | indicbert | lora | test | uncalibrated | 0.4147 | 0.1954 | 1.077 | 0.0007 | 0.0293 | 0.6526 | 0.5535 | 0.9006 | 2.4621 |
-| xlmr_base | full_ft | shift_d1_test | source_temp_scaled | 0.6687 | 0.6307 | 0.7636 | 0.0191 | 0.0951 | 0.4415 | 0.1579 | 0.9363 | 2.0378 |
-| xlmr_base | full_ft | shift_d1_test | target_temp_scaled | 0.6687 | 0.6307 | 0.7619 | 0.0188 | 0.0801 | 0.4409 | 0.158 | 0.8965 | 1.8488 |
-| xlmr_base | full_ft | shift_d1_test | uncalibrated | 0.6687 | 0.6307 | 0.7925 | 0.015 | 0.11 | 0.455 | 0.1588 | 0.9383 | 2.0338 |
+| xlmr_base | full_ft | shift_d1_test | source_temp_scaled | 0.6368 | 0.5984 | 0.8169 | 0.0197 | 0.0818 | 0.473 | 0.1886 | 0.8896 | 1.8816 |
+| xlmr_base | full_ft | shift_d1_test | target_temp_scaled | 0.6368 | 0.5984 | 0.8177 | 0.0204 | 0.0795 | 0.4734 | 0.1887 | 0.8766 | 1.806 |
+| xlmr_base | full_ft | shift_d1_test | uncalibrated | 0.6368 | 0.5984 | 0.9118 | 0.0326 | 0.1565 | 0.5084 | 0.1889 | 0.8876 | 1.8697 |
 | xlmr_base | full_ft | shift_d2_test | source_temp_scaled | 0.541 | 0.3961 | 1.1302 | 0.0679 | 0.2202 | 0.6589 | 0.3255 | 0.7269 | 1.6803 |
 | xlmr_base | full_ft | shift_d2_test | target_temp_scaled | 0.541 | 0.3961 | 1.0772 | 0.0493 | 0.1926 | 0.6374 | 0.3262 | 0.9281 | 2.3649 |
 | xlmr_base | full_ft | shift_d2_test | uncalibrated | 0.541 | 0.3961 | 1.4596 | 0.1268 | 0.3057 | 0.74 | 0.3227 | 0.7221 | 1.6689 |
@@ -94,9 +94,9 @@
 | xlmr_base | full_ft | shift_d3_noise20 | uncalibrated | 0.6337 | 0.5974 | 0.8978 | 0.0391 | 0.1439 | 0.5084 | 0.1999 | 0.8991 | 1.92 |
 | xlmr_base | full_ft | test | source_temp_scaled | 0.6866 | 0.6567 | 0.7141 | 0.007 | 0.0464 | 0.4141 | 0.148 | 0.9188 | 1.8097 |
 | xlmr_base | full_ft | test | uncalibrated | 0.6866 | 0.6567 | 0.7719 | 0.0275 | 0.1118 | 0.4363 | 0.1484 | 0.9175 | 1.7959 |
-| xlmr_base | lora | shift_d1_test | source_temp_scaled | 0.608 | 0.5373 | 0.8645 | 0.0126 | 0.0775 | 0.5044 | 0.2274 | 0.8766 | 2.0129 |
-| xlmr_base | lora | shift_d1_test | target_temp_scaled | 0.608 | 0.5373 | 0.8663 | 0.0121 | 0.0965 | 0.5054 | 0.2274 | 0.8925 | 2.0995 |
-| xlmr_base | lora | shift_d1_test | uncalibrated | 0.608 | 0.5373 | 0.869 | 0.0179 | 0.0918 | 0.5069 | 0.2274 | 0.8806 | 2.0259 |
+| xlmr_base | lora | shift_d1_test | source_temp_scaled | 0.601 | 0.5432 | 0.8977 | 0.0107 | 0.0813 | 0.5254 | 0.2553 | 0.8567 | 1.9522 |
+| xlmr_base | lora | shift_d1_test | target_temp_scaled | 0.601 | 0.5432 | 0.8969 | 0.0095 | 0.0783 | 0.5252 | 0.2551 | 0.8826 | 2.0915 |
+| xlmr_base | lora | shift_d1_test | uncalibrated | 0.601 | 0.5432 | 0.9197 | 0.0176 | 0.1022 | 0.5345 | 0.2559 | 0.8637 | 1.9801 |
 | xlmr_base | lora | shift_d2_test | source_temp_scaled | 0.5754 | 0.4444 | 0.9154 | 0.0188 | 0.0992 | 0.5479 | 0.2671 | 0.8251 | 1.844 |
 | xlmr_base | lora | shift_d2_test | target_temp_scaled | 0.5754 | 0.4444 | 0.9047 | 0.0134 | 0.0757 | 0.5386 | 0.2679 | 0.9087 | 2.1092 |
 | xlmr_base | lora | shift_d2_test | uncalibrated | 0.5754 | 0.4444 | 0.964 | 0.0329 | 0.1492 | 0.5747 | 0.2658 | 0.8279 | 1.852 |

@@ -56,13 +56,13 @@
 | offensive | test | source_temp_scaled | 0.2317 | 0.0289 | 0.036 | 0.0331 | 0.1307 |
 | offensive | test | uncalibrated | 0.2996 | 0.0564 | 0.0566 | 0.0575 | 0.1404 |
 | offensive | test | vector_scaling | 0.2244 | 0.0199 | 0.0321 | 0.0263 | 0.1279 |
-| sentiment | shift_d1_test | fa_temp_scaled_ours | 0.7778 | 0.1027 | 0.1301 | 0.1381 | 0.4578 |
-| sentiment | shift_d1_test | isotonic_regression | 0.7541 | 0.0852 | 0.1054 | 0.1187 | 0.4427 |
-| sentiment | shift_d1_test | matrix_scaling_l2 | 0.7565 | 0.1041 | 0.1229 | 0.1233 | 0.4495 |
-| sentiment | shift_d1_test | oracle_target_temp_scaled | 0.772 | 0.1026 | 0.1214 | 0.1345 | 0.4598 |
-| sentiment | shift_d1_test | source_temp_scaled | 0.7651 | 0.0978 | 0.1168 | 0.13 | 0.4556 |
-| sentiment | shift_d1_test | uncalibrated | 0.8104 | 0.142 | 0.1515 | 0.1375 | 0.4841 |
-| sentiment | shift_d1_test | vector_scaling | 0.7523 | 0.0811 | 0.1181 | 0.1218 | 0.4447 |
+| sentiment | shift_d1_test | fa_temp_scaled_ours | 0.7223 | 0.0899 | 0.1123 | 0.0978 | 0.412 |
+| sentiment | shift_d1_test | isotonic_regression | 0.7044 | 0.0623 | 0.082 | 0.0825 | 0.4008 |
+| sentiment | shift_d1_test | matrix_scaling_l2 | 0.707 | 0.0723 | 0.0845 | 0.0878 | 0.406 |
+| sentiment | shift_d1_test | oracle_target_temp_scaled | 2.2097 | 0.1255 | 0.137 | 0.1121 | 0.4496 |
+| sentiment | shift_d1_test | source_temp_scaled | 0.7137 | 0.0806 | 0.0963 | 0.0888 | 0.4096 |
+| sentiment | shift_d1_test | uncalibrated | 0.779 | 0.13 | 0.1335 | 0.1121 | 0.4336 |
+| sentiment | shift_d1_test | vector_scaling | 0.7048 | 0.0724 | 0.0889 | 0.0835 | 0.4037 |
 | sentiment | shift_d2_test | fa_temp_scaled_ours | 1.0664 | 0.143 | 0.1436 | 0.1407 | 0.6329 |
 | sentiment | shift_d2_test | isotonic_regression | 1.0466 | 0.1337 | 0.1439 | 0.1371 | 0.6173 |
 | sentiment | shift_d2_test | matrix_scaling_l2 | 1.1396 | 0.1843 | 0.1816 | 0.17 | 0.6672 |
@@ -121,9 +121,9 @@
 | offensive | shift_d3_noise20 | riw_cp_ours | 0.3 | 2656.5 | 0.834 | 1.0 | 0.0 |
 | offensive | shift_d3_noise20 | standard_iw_cp | 1.0 | 83.58 | 0.8762 | 1.1011 | 0.1011 |
 | offensive | shift_d3_noise20 | unweighted_cp | 0.0 | 4718.0 | 0.834 | 1.0 | 0.0 |
-| sentiment | shift_d1_test | riw_cp_ours | 0.398 | 776.56 | 0.9851 | 2.4567 | 0.5692 |
-| sentiment | shift_d1_test | standard_iw_cp | 1.0 | 14.7 | 0.9721 | 2.6567 | 0.7811 |
-| sentiment | shift_d1_test | unweighted_cp | 0.0 | 1359.0 | 0.9582 | 2.0438 | 0.2726 |
+| sentiment | shift_d1_test | riw_cp_ours | 0.336 | 759.66 | 0.9552 | 2.0786 | 0.3234 |
+| sentiment | shift_d1_test | standard_iw_cp | 1.0 | 11.76 | 0.8945 | 1.7672 | 0.2348 |
+| sentiment | shift_d1_test | unweighted_cp | 0.0 | 1359.0 | 0.9224 | 1.805 | 0.197 |
 | sentiment | shift_d2_test | riw_cp_ours | 0.842 | 891.14 | 0.9993 | 2.9672 | 0.9694 |
 | sentiment | shift_d2_test | standard_iw_cp | 1.0 | 626.96 | 1.0 | 2.9985 | 0.9993 |
 | sentiment | shift_d2_test | unweighted_cp | 0.0 | 1359.0 | 0.8085 | 2.1281 | 0.342 |
@@ -136,4 +136,38 @@
 | sentiment | shift_d3_noise20 | riw_cp_ours | 0.332 | 761.18 | 0.9885 | 2.6849 | 0.7315 |
 | sentiment | shift_d3_noise20 | standard_iw_cp | 1.0 | 8.74 | 0.9888 | 2.8468 | 0.9003 |
 | sentiment | shift_d3_noise20 | unweighted_cp | 0.0 | 1359.0 | 0.9187 | 1.9715 | 0.2456 |
+
+
+## 3. 2026 Multilingual LLM Zero-Shot Calibration Baseline (Qwen2.5-Instruct)
+
+| task | model | ft_method | condition | calibration_regime | accuracy | nll | ece_15 | adaptive_ece_15 | classwise_ece_15 | overconfidence_15 | brier |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | test | uncalibrated | 0.44 | 1.9127 | 0.437 | 0.4315 | 0.2905 | 0.4343 | 0.9325 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | test | source_temp_scaled | 0.44 | 1.3174 | 0.2817 | 0.2761 | 0.1875 | 0.2789 | 0.7675 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d1_test | uncalibrated | 0.403 | 1.8621 | 0.4573 | 0.4573 | 0.3084 | 0.4573 | 0.9645 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d1_test | source_temp_scaled | 0.403 | 1.3001 | 0.3104 | 0.3007 | 0.2099 | 0.3055 | 0.7813 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d2_test | uncalibrated | 0.435 | 1.6202 | 0.2442 | 0.2461 | 0.1891 | 0.2433 | 0.7727 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d2_test | source_temp_scaled | 0.435 | 1.2368 | 0.139 | 0.1562 | 0.1226 | 0.1386 | 0.7027 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise05 | uncalibrated | 0.4425 | 1.8982 | 0.4308 | 0.4245 | 0.2916 | 0.4276 | 0.9281 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise05 | source_temp_scaled | 0.4425 | 1.3129 | 0.2882 | 0.2733 | 0.1894 | 0.2786 | 0.7653 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise10 | uncalibrated | 0.44 | 1.9088 | 0.4296 | 0.4259 | 0.2867 | 0.4278 | 0.9306 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise10 | source_temp_scaled | 0.44 | 1.3213 | 0.274 | 0.269 | 0.184 | 0.2715 | 0.7678 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | uncalibrated | 0.44 | 1.8845 | 0.427 | 0.4229 | 0.2844 | 0.425 | 0.9246 |
+| sentiment | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | source_temp_scaled | 0.44 | 1.3117 | 0.2712 | 0.265 | 0.1796 | 0.2681 | 0.7632 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | test | uncalibrated | 0.4825 | 1.9214 | 0.4911 | 0.4911 | 0.4911 | 0.4911 | 0.9774 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | test | source_temp_scaled | 0.4825 | 1.1614 | 0.4 | 0.4 | 0.4 | 0.4 | 0.8109 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_barishal_test | uncalibrated | 0.4875 | 1.8476 | 0.4836 | 0.4836 | 0.4836 | 0.4836 | 0.9638 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_barishal_test | source_temp_scaled | 0.4875 | 1.1276 | 0.3883 | 0.388 | 0.3883 | 0.3881 | 0.7946 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_chittagong_test | uncalibrated | 0.49 | 1.8536 | 0.4806 | 0.4806 | 0.4806 | 0.4806 | 0.9603 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_chittagong_test | source_temp_scaled | 0.49 | 1.1319 | 0.3843 | 0.3843 | 0.3843 | 0.3843 | 0.7946 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_noakhali_test | uncalibrated | 0.4875 | 1.8287 | 0.4826 | 0.4826 | 0.4826 | 0.4826 | 0.9621 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d1_noakhali_test | source_temp_scaled | 0.4875 | 1.1194 | 0.3856 | 0.3856 | 0.3856 | 0.3856 | 0.7912 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d2_test | uncalibrated | 0.4775 | 1.6754 | 0.485 | 0.485 | 0.485 | 0.485 | 0.95 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d2_test | source_temp_scaled | 0.4775 | 1.0441 | 0.3851 | 0.3851 | 0.3851 | 0.3851 | 0.7587 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise05 | uncalibrated | 0.4825 | 1.9258 | 0.4914 | 0.4914 | 0.4914 | 0.4914 | 0.9782 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise05 | source_temp_scaled | 0.4825 | 1.1637 | 0.4004 | 0.4004 | 0.4004 | 0.4004 | 0.812 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise10 | uncalibrated | 0.4825 | 1.9463 | 0.4922 | 0.4922 | 0.4922 | 0.4922 | 0.9814 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise10 | source_temp_scaled | 0.4825 | 1.1737 | 0.4016 | 0.4016 | 0.4016 | 0.4016 | 0.8169 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | uncalibrated | 0.4825 | 1.9705 | 0.4929 | 0.4929 | 0.4929 | 0.4929 | 0.9844 |
+| offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | source_temp_scaled | 0.4825 | 1.1856 | 0.4032 | 0.4032 | 0.4032 | 0.4032 | 0.8225 |
 
