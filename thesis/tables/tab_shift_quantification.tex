@@ -1,0 +1,27 @@
+\begin{table*}[htbp]
+\centering
+\caption{Shift Quantification Metrics Across Datasets and Perturbation Conditions}
+\label{tab:tab_shift_quantification}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrrrr}
+\toprule
+task & condition & n\_samples & vocab\_jaccard\_overlap & subword\_fragmentation & non\_bangla\_char\_ratio & median\_char\_length & std\_char\_length \\
+\midrule
+sentiment & D0\_source\_test & 1360 & 1.0 & 1.1851 & 0.0014 & 65.0 & 52.67 \\
+sentiment & shift\_d1\_test & 201 & 0.1423 & 1.4575 & 0.0126 & 62.0 & 54.8 \\
+sentiment & shift\_d2\_test & 804 & 0.058 & 2.1616 & 0.7084 & 496.5 & 108.2 \\
+sentiment & shift\_d3\_noise05 & 1360 & 0.5745 & 1.3743 & 0.0014 & 65.0 & 52.7 \\
+sentiment & shift\_d3\_noise10 & 1360 & 0.3846 & 1.5597 & 0.0013 & 65.0 & 52.74 \\
+sentiment & shift\_d3\_noise20 & 1360 & 0.1993 & 1.9363 & 0.0013 & 65.0 & 52.89 \\
+offensive & D0\_source\_test & 4722 & 1.0 & 1.3541 & 0.0018 & 44.0 & 119.11 \\
+offensive & shift\_d1\_barishal\_test & 2445 & 0.1698 & 1.6264 & 0.0 & 47.0 & 44.96 \\
+offensive & shift\_d1\_chittagong\_test & 2443 & 0.1021 & 1.9065 & 0.0 & 46.0 & 43.1 \\
+offensive & shift\_d1\_noakhali\_test & 2445 & 0.1515 & 1.7016 & 0.0 & 46.0 & 45.74 \\
+offensive & shift\_d2\_test & 800 & 0.0596 & 2.1673 & 0.704 & 492.5 & 131.43 \\
+offensive & shift\_d3\_noise05 & 4722 & 0.5359 & 1.5423 & 0.0018 & 44.0 & 119.18 \\
+offensive & shift\_d3\_noise10 & 4722 & 0.3512 & 1.7068 & 0.0018 & 44.0 & 119.15 \\
+offensive & shift\_d3\_noise20 & 4722 & 0.1808 & 2.0704 & 0.0018 & 44.0 & 119.32 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

@@ -171,3 +171,135 @@
 | offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | uncalibrated | 0.4825 | 1.9705 | 0.4929 | 0.4929 | 0.4929 | 0.4929 | 0.9844 |
 | offensive | qwen2.5_1.5b_instruct | zero_shot | shift_d3_noise20 | source_temp_scaled | 0.4825 | 1.1856 | 0.4032 | 0.4032 | 0.4032 | 0.4032 | 0.8225 |
 
+
+## 4. Component-Wise Ablation Study of FA-TS (BanglaBERT Full-FT)
+
+| task | condition | ablation_stage | temperature | nll | ece_15 | adaptive_ece_15 | overconfidence_15 | brier |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| offensive | shift_d1_barishal_test | 1_source_ts_baseline | 1.8103 | 0.2333 | 0.021 | 0.0284 | 0.0168 | 0.1319 |
+| offensive | shift_d1_barishal_test | 2_fats_frag_only | 1.9742 | 0.2333 | 0.0242 | 0.0269 | 0.0126 | 0.1312 |
+| offensive | shift_d1_barishal_test | 3_fats_frag_plus_lexical | 2.1545 | 0.2359 | 0.0296 | 0.0296 | 0.0087 | 0.1312 |
+| offensive | shift_d1_barishal_test | 4_fats_full_dispersion_gated | 2.1867 | 0.2366 | 0.0287 | 0.0305 | 0.0071 | 0.1313 |
+| offensive | shift_d1_chittagong_test | 1_source_ts_baseline | 1.8103 | 0.43 | 0.0672 | 0.068 | 0.0662 | 0.2643 |
+| offensive | shift_d1_chittagong_test | 2_fats_frag_only | 2.1427 | 0.4128 | 0.0439 | 0.0496 | 0.0411 | 0.2577 |
+| offensive | shift_d1_chittagong_test | 3_fats_frag_plus_lexical | 2.3377 | 0.4088 | 0.0346 | 0.0441 | 0.0288 | 0.2555 |
+| offensive | shift_d1_chittagong_test | 4_fats_full_dispersion_gated | 1.7689 | 0.4333 | 0.0705 | 0.0708 | 0.0697 | 0.2654 |
+| offensive | shift_d1_noakhali_test | 1_source_ts_baseline | 1.8103 | 0.2439 | 0.0297 | 0.0316 | 0.02 | 0.1416 |
+| offensive | shift_d1_noakhali_test | 2_fats_frag_only | 2.0194 | 0.2456 | 0.0296 | 0.0327 | 0.012 | 0.1409 |
+| offensive | shift_d1_noakhali_test | 3_fats_frag_plus_lexical | 2.2037 | 0.25 | 0.0388 | 0.0386 | 0.0096 | 0.1413 |
+| offensive | shift_d1_noakhali_test | 4_fats_full_dispersion_gated | 2.1504 | 0.2483 | 0.0354 | 0.0356 | 0.0106 | 0.1409 |
+| offensive | shift_d2_test | 1_source_ts_baseline | 1.8103 | 1.4578 | 0.4142 | 0.4125 | 0.4131 | 0.8483 |
+| offensive | shift_d2_test | 2_fats_frag_only | 2.2996 | 1.2041 | 0.3772 | 0.3751 | 0.3754 | 0.7887 |
+| offensive | shift_d2_test | 3_fats_frag_plus_lexical | 2.5039 | 1.1327 | 0.3614 | 0.3595 | 0.3596 | 0.7654 |
+| offensive | shift_d2_test | 4_fats_full_dispersion_gated | 2.6025 | 1.1049 | 0.3557 | 0.3542 | 0.3543 | 0.7572 |
+| offensive | shift_d3_noise05 | 1_source_ts_baseline | 1.8103 | 0.2643 | 0.0259 | 0.0345 | 0.0227 | 0.154 |
+| offensive | shift_d3_noise05 | 2_fats_frag_only | 1.9236 | 0.2632 | 0.028 | 0.0324 | 0.0196 | 0.1532 |
+| offensive | shift_d3_noise05 | 3_fats_frag_plus_lexical | 2.0244 | 0.2633 | 0.0286 | 0.0318 | 0.0162 | 0.1527 |
+| offensive | shift_d3_noise05 | 4_fats_full_dispersion_gated | 2.0001 | 0.2634 | 0.0277 | 0.0324 | 0.017 | 0.1529 |
+| offensive | shift_d3_noise10 | 1_source_ts_baseline | 1.8103 | 0.3059 | 0.0315 | 0.037 | 0.0304 | 0.1801 |
+| offensive | shift_d3_noise10 | 2_fats_frag_only | 2.0225 | 0.3022 | 0.0262 | 0.0317 | 0.0196 | 0.1781 |
+| offensive | shift_d3_noise10 | 3_fats_frag_plus_lexical | 2.1635 | 0.3022 | 0.0269 | 0.0305 | 0.0145 | 0.1776 |
+| offensive | shift_d3_noise10 | 4_fats_full_dispersion_gated | 2.1118 | 0.3023 | 0.0275 | 0.0316 | 0.0176 | 0.1779 |
+| offensive | shift_d3_noise20 | 1_source_ts_baseline | 1.8103 | 0.4173 | 0.0653 | 0.0673 | 0.0652 | 0.2559 |
+| offensive | shift_d3_noise20 | 2_fats_frag_only | 2.2413 | 0.3993 | 0.04 | 0.0451 | 0.0349 | 0.2482 |
+| offensive | shift_d3_noise20 | 3_fats_frag_plus_lexical | 2.4192 | 0.3975 | 0.0362 | 0.0426 | 0.0261 | 0.2467 |
+| offensive | shift_d3_noise20 | 4_fats_full_dispersion_gated | 1.7684 | 0.4205 | 0.0691 | 0.0706 | 0.069 | 0.2571 |
+| sentiment | shift_d1_test | 1_source_ts_baseline | 1.5955 | 0.7102 | 0.0766 | 0.0891 | 0.037 | 0.4069 |
+| sentiment | shift_d1_test | 2_fats_frag_only | 1.7605 | 0.7152 | 0.0787 | 0.0995 | 0.0258 | 0.4083 |
+| sentiment | shift_d1_test | 3_fats_frag_plus_lexical | 1.9248 | 0.7229 | 0.097 | 0.1104 | 0.0239 | 0.4116 |
+| sentiment | shift_d1_test | 4_fats_full_dispersion_gated | 1.573 | 0.7097 | 0.0773 | 0.0866 | 0.0392 | 0.4068 |
+| sentiment | shift_d2_test | 1_source_ts_baseline | 1.5955 | 1.1334 | 0.1824 | 0.184 | 0.1819 | 0.6656 |
+| sentiment | shift_d2_test | 2_fats_frag_only | 2.1871 | 1.0663 | 0.1418 | 0.1402 | 0.1272 | 0.6328 |
+| sentiment | shift_d2_test | 3_fats_frag_plus_lexical | 2.3675 | 1.0569 | 0.1333 | 0.136 | 0.115 | 0.6279 |
+| sentiment | shift_d2_test | 4_fats_full_dispersion_gated | 2.1209 | 1.0698 | 0.1402 | 0.1419 | 0.1306 | 0.6348 |
+| sentiment | shift_d3_noise05 | 1_source_ts_baseline | 1.5955 | 0.692 | 0.0471 | 0.0494 | 0.0246 | 0.3966 |
+| sentiment | shift_d3_noise05 | 2_fats_frag_only | 1.7101 | 0.6947 | 0.0526 | 0.0522 | 0.0187 | 0.3971 |
+| sentiment | shift_d3_noise05 | 3_fats_frag_plus_lexical | 1.7916 | 0.6976 | 0.0579 | 0.0593 | 0.0154 | 0.3981 |
+| sentiment | shift_d3_noise05 | 4_fats_full_dispersion_gated | 1.733 | 0.695 | 0.0532 | 0.0541 | 0.0186 | 0.3973 |
+| sentiment | shift_d3_noise10 | 1_source_ts_baseline | 1.5955 | 0.7433 | 0.0545 | 0.0593 | 0.0352 | 0.4315 |
+| sentiment | shift_d3_noise10 | 2_fats_frag_only | 1.8225 | 0.7473 | 0.0574 | 0.0625 | 0.0201 | 0.4319 |
+| sentiment | shift_d3_noise10 | 3_fats_frag_plus_lexical | 1.9403 | 0.7516 | 0.0623 | 0.0693 | 0.0148 | 0.4335 |
+| sentiment | shift_d3_noise10 | 4_fats_full_dispersion_gated | 1.573 | 0.7432 | 0.0533 | 0.0589 | 0.0365 | 0.4317 |
+| sentiment | shift_d3_noise20 | 1_source_ts_baseline | 1.5955 | 0.818 | 0.0785 | 0.0805 | 0.0609 | 0.4806 |
+| sentiment | shift_d3_noise20 | 2_fats_frag_only | 2.0506 | 0.8248 | 0.0776 | 0.0843 | 0.0305 | 0.4812 |
+| sentiment | shift_d3_noise20 | 3_fats_frag_plus_lexical | 2.2039 | 0.8304 | 0.0812 | 0.088 | 0.0241 | 0.4839 |
+| sentiment | shift_d3_noise20 | 4_fats_full_dispersion_gated | 1.5487 | 0.8187 | 0.08 | 0.0823 | 0.0655 | 0.4815 |
+
+
+## 5. Sensitivity Analysis of Power-Annealing Exponent in RIW-CP
+
+| task | condition | setting | beta_value | effective_sample_size | empirical_coverage | avg_set_size | trivial_set_rate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| offensive | shift_d1_barishal_test | beta_0.00_unweighted | 0.0 | 4718.0 | 0.9175 | 1.0 | 0.0 |
+| offensive | shift_d1_barishal_test | beta_0.25 | 0.25 | 3830.7 | 0.9175 | 1.0 | 0.0 |
+| offensive | shift_d1_barishal_test | beta_0.50 | 0.5 | 1761.14 | 0.9175 | 1.0 | 0.0 |
+| offensive | shift_d1_barishal_test | beta_0.75 | 0.75 | 472.42 | 0.9216 | 1.0083 | 0.0083 |
+| offensive | shift_d1_barishal_test | beta_1.00_standard_iw | 1.0 | 125.24 | 0.9331 | 1.0411 | 0.0411 |
+| offensive | shift_d1_barishal_test | beta_star_riw_ours | 0.398 | 2622.64 | 0.9175 | 1.0 | 0.0 |
+| offensive | shift_d1_chittagong_test | beta_0.00_unweighted | 0.0 | 4718.0 | 0.8292 | 1.0 | 0.0 |
+| offensive | shift_d1_chittagong_test | beta_0.25 | 0.25 | 3584.26 | 0.8292 | 1.0 | 0.0 |
+| offensive | shift_d1_chittagong_test | beta_0.50 | 0.5 | 1039.32 | 0.8292 | 1.0 | 0.0 |
+| offensive | shift_d1_chittagong_test | beta_0.75 | 0.75 | 190.5 | 0.8524 | 1.0499 | 0.0499 |
+| offensive | shift_d1_chittagong_test | beta_1.00_standard_iw | 1.0 | 55.82 | 0.8697 | 1.0945 | 0.0945 |
+| offensive | shift_d1_chittagong_test | beta_star_riw_ours | 0.334 | 2673.04 | 0.8292 | 1.0 | 0.0 |
+| offensive | shift_d1_noakhali_test | beta_0.00_unweighted | 0.0 | 4718.0 | 0.9092 | 1.0 | 0.0 |
+| offensive | shift_d1_noakhali_test | beta_0.25 | 0.25 | 3773.06 | 0.9092 | 1.0 | 0.0 |
+| offensive | shift_d1_noakhali_test | beta_0.50 | 0.5 | 1611.58 | 0.9092 | 1.0 | 0.0 |
+| offensive | shift_d1_noakhali_test | beta_0.75 | 0.75 | 408.34 | 0.922 | 1.029 | 0.029 |
+| offensive | shift_d1_noakhali_test | beta_1.00_standard_iw | 1.0 | 111.46 | 0.9324 | 1.058 | 0.058 |
+| offensive | shift_d1_noakhali_test | beta_star_riw_ours | 0.382 | 2638.4 | 0.9092 | 1.0 | 0.0 |
+| offensive | shift_d2_test | beta_0.00_unweighted | 0.0 | 4718.0 | 0.5255 | 1.0 | 0.0 |
+| offensive | shift_d2_test | beta_0.25 | 0.25 | 4692.04 | 0.5255 | 1.0 | 0.0 |
+| offensive | shift_d2_test | beta_0.50 | 0.5 | 4280.18 | 0.5255 | 1.0 | 0.0 |
+| offensive | shift_d2_test | beta_0.75 | 0.75 | 2637.46 | 0.9825 | 1.9652 | 0.9652 |
+| offensive | shift_d2_test | beta_1.00_standard_iw | 1.0 | 817.78 | 0.998 | 1.996 | 0.996 |
+| offensive | shift_d2_test | beta_star_riw_ours | 0.764 | 2647.04 | 0.8978 | 1.7845 | 0.7845 |
+| offensive | shift_d3_noise05 | beta_0.00_unweighted | 0.0 | 4718.0 | 0.9019 | 1.0 | 0.0 |
+| offensive | shift_d3_noise05 | beta_0.25 | 0.25 | 4178.16 | 0.9019 | 1.0 | 0.0 |
+| offensive | shift_d3_noise05 | beta_0.50 | 0.5 | 2615.46 | 0.9019 | 1.0 | 0.0 |
+| offensive | shift_d3_noise05 | beta_0.75 | 0.75 | 1048.66 | 0.9053 | 1.0063 | 0.0063 |
+| offensive | shift_d3_noise05 | beta_1.00_standard_iw | 1.0 | 343.3 | 0.9146 | 1.0324 | 0.0324 |
+| offensive | shift_d3_noise05 | beta_star_riw_ours | 0.5 | 2617.82 | 0.9019 | 1.0 | 0.0 |
+| offensive | shift_d3_noise10 | beta_0.00_unweighted | 0.0 | 4718.0 | 0.8854 | 1.0 | 0.0 |
+| offensive | shift_d3_noise10 | beta_0.25 | 0.25 | 3679.42 | 0.8854 | 1.0 | 0.0 |
+| offensive | shift_d3_noise10 | beta_0.50 | 0.5 | 1533.44 | 0.8856 | 1.0008 | 0.0008 |
+| offensive | shift_d3_noise10 | beta_0.75 | 0.75 | 461.78 | 0.8988 | 1.033 | 0.033 |
+| offensive | shift_d3_noise10 | beta_1.00_standard_iw | 1.0 | 169.48 | 0.9111 | 1.0692 | 0.0692 |
+| offensive | shift_d3_noise10 | beta_star_riw_ours | 0.366 | 2650.36 | 0.8854 | 1.0 | 0.0 |
+| offensive | shift_d3_noise20 | beta_0.00_unweighted | 0.0 | 4718.0 | 0.834 | 1.0 | 0.0 |
+| offensive | shift_d3_noise20 | beta_0.25 | 0.25 | 3267.44 | 0.834 | 1.0 | 0.0 |
+| offensive | shift_d3_noise20 | beta_0.50 | 0.5 | 809.94 | 0.838 | 1.0072 | 0.0072 |
+| offensive | shift_d3_noise20 | beta_0.75 | 0.75 | 196.66 | 0.8673 | 1.0745 | 0.0745 |
+| offensive | shift_d3_noise20 | beta_1.00_standard_iw | 1.0 | 83.58 | 0.8747 | 1.0967 | 0.0967 |
+| offensive | shift_d3_noise20 | beta_star_riw_ours | 0.3 | 2656.5 | 0.834 | 1.0 | 0.0 |
+| sentiment | shift_d1_test | beta_0.00_unweighted | 0.0 | 1359.0 | 0.9204 | 1.791 | 0.1861 |
+| sentiment | shift_d1_test | beta_0.25 | 0.25 | 1051.42 | 0.9184 | 1.7881 | 0.1861 |
+| sentiment | shift_d1_test | beta_0.50 | 0.5 | 257.52 | 0.9224 | 1.793 | 0.19 |
+| sentiment | shift_d1_test | beta_0.75 | 0.75 | 39.4 | 0.9154 | 1.8229 | 0.2348 |
+| sentiment | shift_d1_test | beta_1.00_standard_iw | 1.0 | 11.76 | 0.8955 | 1.7632 | 0.2308 |
+| sentiment | shift_d1_test | beta_star_riw_ours | 0.336 | 759.66 | 0.9194 | 1.794 | 0.1891 |
+| sentiment | shift_d2_test | beta_0.00_unweighted | 0.0 | 1359.0 | 0.906 | 2.4381 | 0.5346 |
+| sentiment | shift_d2_test | beta_0.25 | 0.25 | 1347.08 | 0.9224 | 2.49 | 0.5756 |
+| sentiment | shift_d2_test | beta_0.50 | 0.5 | 1151.7 | 0.9965 | 2.9022 | 0.9162 |
+| sentiment | shift_d2_test | beta_0.75 | 0.75 | 925.56 | 1.0 | 2.9978 | 0.9985 |
+| sentiment | shift_d2_test | beta_1.00_standard_iw | 1.0 | 626.96 | 1.0 | 2.999 | 0.9995 |
+| sentiment | shift_d2_test | beta_star_riw_ours | 0.842 | 891.14 | 0.994 | 2.9271 | 0.9405 |
+| sentiment | shift_d3_noise05 | beta_0.00_unweighted | 0.0 | 1359.0 | 0.9276 | 1.8274 | 0.1853 |
+| sentiment | shift_d3_noise05 | beta_0.25 | 0.25 | 1015.24 | 0.9238 | 1.8 | 0.1738 |
+| sentiment | shift_d3_noise05 | beta_0.50 | 0.5 | 420.1 | 0.9224 | 1.7874 | 0.169 |
+| sentiment | shift_d3_noise05 | beta_0.75 | 0.75 | 146.46 | 0.9179 | 1.7669 | 0.165 |
+| sentiment | shift_d3_noise05 | beta_1.00_standard_iw | 1.0 | 62.06 | 0.9134 | 1.7566 | 0.1741 |
+| sentiment | shift_d3_noise05 | beta_star_riw_ours | 0.348 | 761.96 | 0.9216 | 1.7891 | 0.17 |
+| sentiment | shift_d3_noise10 | beta_0.00_unweighted | 0.0 | 1359.0 | 0.9084 | 1.7997 | 0.1651 |
+| sentiment | shift_d3_noise10 | beta_0.25 | 0.25 | 892.62 | 0.911 | 1.8063 | 0.169 |
+| sentiment | shift_d3_noise10 | beta_0.50 | 0.5 | 207.62 | 0.9246 | 1.8946 | 0.2201 |
+| sentiment | shift_d3_noise10 | beta_0.75 | 0.75 | 55.58 | 0.9418 | 2.0362 | 0.3082 |
+| sentiment | shift_d3_noise10 | beta_1.00_standard_iw | 1.0 | 25.74 | 0.9465 | 2.1006 | 0.3576 |
+| sentiment | shift_d3_noise10 | beta_star_riw_ours | 0.284 | 767.46 | 0.9121 | 1.8109 | 0.1715 |
+| sentiment | shift_d3_noise20 | beta_0.00_unweighted | 0.0 | 1359.0 | 0.9118 | 1.9285 | 0.2154 |
+| sentiment | shift_d3_noise20 | beta_0.25 | 0.25 | 1066.16 | 0.9219 | 1.9931 | 0.2556 |
+| sentiment | shift_d3_noise20 | beta_0.50 | 0.5 | 215.74 | 0.9587 | 2.27 | 0.4493 |
+| sentiment | shift_d3_noise20 | beta_0.75 | 0.75 | 28.08 | 0.9885 | 2.8162 | 0.8762 |
+| sentiment | shift_d3_noise20 | beta_1.00_standard_iw | 1.0 | 8.74 | 0.9881 | 2.8415 | 0.8972 |
+| sentiment | shift_d3_noise20 | beta_star_riw_ours | 0.332 | 761.18 | 0.9299 | 2.0434 | 0.2888 |
+
