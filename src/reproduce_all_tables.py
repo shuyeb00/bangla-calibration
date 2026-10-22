@@ -321,12 +321,12 @@ def run_fa_ts_and_ablation() -> tuple:
         compute_nll,
         fit_temperature,
     )
-    from src.q1_extensions import (
+    from src.extended_diagnostics import (
         compute_adaptive_ece,
         compute_classwise_ece,
         compute_over_under_confidence,
     )
-    from src.q1_novel_and_baselines import (
+    from src.adaptive_calibration_conformal import (
         apply_isotonic_calibrator,
         apply_matrix_scaling,
         apply_vector_scaling,
@@ -462,16 +462,16 @@ def run_fa_ts_and_ablation() -> tuple:
 
     df_base.to_csv(TABLES_DIR / "adaptive_calibration_baselines_per_run.csv", index=False)
     df_base_agg.to_csv(TABLES_DIR / "adaptive_calibration_baselines_aggregated.csv", index=False)
-    df_base_agg.to_csv(TABLES_DIR / "q1_calibration_baselines_aggregated.csv", index=False)
+    df_base_agg.to_csv(TABLES_DIR / "adaptive_calibration_baselines_aggregated.csv", index=False)
     df_abl_agg.to_csv(TABLES_DIR / "fa_ts_ablation_study.csv", index=False)
-    df_abl_agg.to_csv(TABLES_DIR / "q1_fa_ts_ablation.csv", index=False)
+    df_abl_agg.to_csv(TABLES_DIR / "fa_ts_ablation_study.csv", index=False)
     print("[OK] Saved FA-TS multi-method benchmark and 4-stage component ablation tables.")
     return df_base, df_base_agg, df_abl_agg
 
 
 def run_riw_cp_sensitivity_and_verification() -> tuple:
     from src.calibration import apply_temperature, fit_temperature
-    from src.q1_novel_and_baselines import tune_power_exponent_for_ess
+    from src.adaptive_calibration_conformal import tune_power_exponent_for_ess
 
     sq_path = TABLES_DIR / "shift_quantification.csv"
     sq_df = pd.read_csv(sq_path) if sq_path.exists() else pd.DataFrame()
@@ -661,10 +661,10 @@ def create_dataset_schema_and_samples_doc() -> None:
 
 def sync_reviewer_grade_filenames(df_abl_agg: pd.DataFrame, df_sens_agg: pd.DataFrame) -> None:
     src_dir = BASE_DIR / "src"
-    if (src_dir / "q1_extensions.py").exists():
-        shutil.copyfile(src_dir / "q1_extensions.py", src_dir / "extended_diagnostics.py")
-    if (src_dir / "q1_novel_and_baselines.py").exists():
-        shutil.copyfile(src_dir / "q1_novel_and_baselines.py", src_dir / "adaptive_calibration_conformal.py")
+    if (src_dir / "extended_diagnostics.py").exists():
+        shutil.copyfile(src_dir / "extended_diagnostics.py", src_dir / "extended_diagnostics.py")
+    if (src_dir / "adaptive_calibration_conformal.py").exists():
+        shutil.copyfile(src_dir / "adaptive_calibration_conformal.py", src_dir / "adaptive_calibration_conformal.py")
 
     mapie_path = TABLES_DIR / "conformal_mapie_crosscheck.csv"
     if mapie_path.exists():
@@ -673,20 +673,20 @@ def sync_reviewer_grade_filenames(df_abl_agg: pd.DataFrame, df_sens_agg: pd.Data
         m_df.to_csv(mapie_path, index=False)
 
     table_aliases = [
-        ("q1_extended_calibration_aggregated.csv", "extended_calibration_aggregated.csv"),
-        ("q1_conformal_aggregated.csv", "conformal_lac_aps_raps_aggregated.csv"),
-        ("q1_mahalanobis_aggregated.csv", "mahalanobis_percentile_aggregated.csv"),
-        ("q1_mechanistic_shift_correlations.csv", "mechanistic_shift_correlations.csv"),
-        ("q1_riw_conformal_aggregated.csv", "riw_conformal_aggregated.csv"),
-        ("q1_llm_zeroshot_calibration.csv", "llm_zeroshot_calibration.csv"),
-        ("THESIS_RESULTS_SUMMARY.md", "BENCHMARK_SUMMARY_REPORT.md"),
-        ("Q1_EXTENSION_SUMMARY.md", "EXTENDED_DIAGNOSTICS_REPORT.md"),
+        ("extended_calibration_aggregated.csv", "extended_calibration_aggregated.csv"),
+        ("conformal_lac_aps_raps_aggregated.csv", "conformal_lac_aps_raps_aggregated.csv"),
+        ("mahalanobis_percentile_aggregated.csv", "mahalanobis_percentile_aggregated.csv"),
+        ("mechanistic_shift_correlations.csv", "mechanistic_shift_correlations.csv"),
+        ("riw_conformal_aggregated.csv", "riw_conformal_aggregated.csv"),
+        ("llm_zeroshot_calibration.csv", "llm_zeroshot_calibration.csv"),
+        ("BENCHMARK_SUMMARY_REPORT.md", "BENCHMARK_SUMMARY_REPORT.md"),
+        ("EXTENDED_DIAGNOSTICS_REPORT.md", "EXTENDED_DIAGNOSTICS_REPORT.md"),
     ]
     for old_name, new_name in table_aliases:
         if (TABLES_DIR / old_name).exists():
             shutil.copyfile(TABLES_DIR / old_name, TABLES_DIR / new_name)
 
-    nov_md = TABLES_DIR / "Q1_NOVEL_METHODS_AND_BASELINES.md"
+    nov_md = TABLES_DIR / "ADAPTIVE_METHODS_AND_ABLATION_REPORT.md"
     if nov_md.exists():
         content = nov_md.read_text(encoding="utf-8")
         extra_sections = [
@@ -750,14 +750,14 @@ def main():
 
     from src.evaluate import main as eval_main
     from src.analysis_and_plots import generate_markdown_summary_report
-    from src.q1_extensions import main as ext_main
+    from src.extended_diagnostics import main as ext_main
     import sys
 
     sys.argv = ["evaluate.py"]
     eval_main()
     generate_markdown_summary_report()
 
-    sys.argv = ["q1_extensions.py", "--force"]
+    sys.argv = ["extended_diagnostics.py", "--force"]
     ext_main()
 
     _, _, df_abl_agg = run_fa_ts_and_ablation()

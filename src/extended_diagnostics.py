@@ -372,9 +372,9 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
             continue
         discovered_conditions.append(prefix)
 
-    cal_cache = run_dir / "q1_extended_calibration.csv"
-    conf_cache = run_dir / "q1_conformal.csv"
-    maha_cache = run_dir / "q1_maha_percentile.csv"
+    cal_cache = run_dir / "extended_calibration.csv"
+    conf_cache = run_dir / "conformal_lac_aps_raps.csv"
+    maha_cache = run_dir / "mahalanobis_percentile.csv"
 
     if not force and cal_cache.exists() and conf_cache.exists() and maha_cache.exists():
         try:
@@ -584,8 +584,8 @@ def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.D
         })
 
     out_df = pd.DataFrame(corr_records)
-    out_df.to_csv(TABLES_DIR / "q1_mechanistic_shift_correlations.csv", index=False)
-    print(f"[OK] Saved mechanistic correlation table to {TABLES_DIR / 'q1_mechanistic_shift_correlations.csv'}")
+    out_df.to_csv(TABLES_DIR / "mechanistic_shift_correlations.csv", index=False)
+    print(f"[OK] Saved mechanistic correlation table to {TABLES_DIR / 'mechanistic_shift_correlations.csv'}")
     return out_df
 
 
@@ -617,7 +617,7 @@ def generate_q1_figures(
             ax.legend()
             ax.grid(axis="y", alpha=0.3)
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "q1_ece_vs_cece_lora_diagnostic.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "lora_calibration_pathology_diagnostic.png", dpi=200)
             plt.close(fig)
 
     if not df_conf_agg.empty:
@@ -654,7 +654,7 @@ def generate_q1_figures(
             axes[1].grid(axis="y", alpha=0.3)
 
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "q1_conformal_lac_aps_raps.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "conformal_lac_aps_raps_comparison.png", dpi=200)
             plt.close(fig)
 
     if not df_maha_agg.empty:
@@ -684,7 +684,7 @@ def generate_q1_figures(
             ax.legend()
             ax.grid(axis="y", alpha=0.3)
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "q1_mahalanobis_percentile_shift.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "mahalanobis_representation_shift.png", dpi=200)
             plt.close(fig)
 
     err_path = TABLES_DIR / "error_analysis_sample_sentiment.csv"
@@ -702,7 +702,7 @@ def generate_q1_figures(
             ax.set_xlim(0, max(counts.values) * 1.22)
             ax.grid(axis="x", alpha=0.3)
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "q1_error_taxonomy_sentiment.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "human_adjudicated_error_taxonomy_sentiment.png", dpi=200)
             plt.close(fig)
 
     print(f"[OK] Saved Q1 extension figures to {FIGURES_DIR}")
@@ -714,7 +714,7 @@ def write_q1_markdown_report(
     df_maha_agg: pd.DataFrame,
     df_corr: pd.DataFrame,
 ) -> None:
-    report_path = TABLES_DIR / "Q1_EXTENSION_SUMMARY.md"
+    report_path = TABLES_DIR / "EXTENDED_DIAGNOSTICS_REPORT.md"
     lines = ["# Q1 Methodological & Analytical Extensions Summary\n"]
 
     if not df_corr.empty:
@@ -787,7 +787,7 @@ def main():
 
     if all_cal:
         df_cal = pd.DataFrame(all_cal)
-        df_cal.to_csv(TABLES_DIR / "q1_extended_calibration_per_run.csv", index=False)
+        df_cal.to_csv(TABLES_DIR / "extended_calibration_per_run.csv", index=False)
         cal_cols = [
             "nll", "top_label_ece_15", "adaptive_ece_15", "classwise_ece_15",
             "overconfidence_ece_15", "underconfidence_ece_15", "mce_15", "brier"
@@ -798,11 +798,11 @@ def main():
             .reset_index()
         )
         df_cal_agg.columns = ["_".join(c).strip("_") if isinstance(c, tuple) else c for c in df_cal_agg.columns.values]
-        df_cal_agg.to_csv(TABLES_DIR / "q1_extended_calibration_aggregated.csv", index=False)
+        df_cal_agg.to_csv(TABLES_DIR / "extended_calibration_aggregated.csv", index=False)
 
     if all_conf:
         df_conf = pd.DataFrame(all_conf)
-        df_conf.to_csv(TABLES_DIR / "q1_conformal_per_run.csv", index=False)
+        df_conf.to_csv(TABLES_DIR / "conformal_lac_aps_raps_per_run.csv", index=False)
         conf_cols = [
             "q_hat", "empirical_coverage", "avg_set_size",
             "singleton_rate", "trivial_set_rate", "worst_class_coverage", "class_coverage_gap"
@@ -813,11 +813,11 @@ def main():
             .reset_index()
         )
         df_conf_agg.columns = ["_".join(c).strip("_") if isinstance(c, tuple) else c for c in df_conf_agg.columns.values]
-        df_conf_agg.to_csv(TABLES_DIR / "q1_conformal_aggregated.csv", index=False)
+        df_conf_agg.to_csv(TABLES_DIR / "conformal_lac_aps_raps_aggregated.csv", index=False)
 
     if all_maha:
         df_maha = pd.DataFrame(all_maha)
-        df_maha.to_csv(TABLES_DIR / "q1_mahalanobis_percentiles.csv", index=False)
+        df_maha.to_csv(TABLES_DIR / "mahalanobis_percentile_per_run.csv", index=False)
         maha_cols = [
             "mean_raw_maha", "mean_maha_percentile", "median_maha_percentile",
             "frac_above_95th_train_pct", "mean_pct_wrong", "mean_pct_correct",
@@ -829,7 +829,7 @@ def main():
             .reset_index()
         )
         df_maha_agg.columns = ["_".join(c).strip("_") if isinstance(c, tuple) else c for c in df_maha_agg.columns.values]
-        df_maha_agg.to_csv(TABLES_DIR / "q1_mahalanobis_aggregated.csv", index=False)
+        df_maha_agg.to_csv(TABLES_DIR / "mahalanobis_percentile_aggregated.csv", index=False)
 
     df_corr = compute_mechanistic_correlations(df_cal_agg, df_maha_agg)
     generate_q1_figures(df_cal_agg, df_conf_agg, df_maha_agg)

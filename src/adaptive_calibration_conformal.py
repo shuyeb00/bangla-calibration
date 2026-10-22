@@ -20,7 +20,7 @@ from src.calibration import (
     fit_temperature,
 )
 from src.config import BASE_DIR, FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
-from src.q1_extensions import (
+from src.extended_diagnostics import (
     compute_adaptive_ece,
     compute_classwise_ece,
     compute_over_under_confidence,
@@ -32,7 +32,7 @@ FIGURES_DIR = BASE_DIR / "thesis" / "figures"
 
 
 def patch_q1_extensions_mahalanobis() -> None:
-    ext_path = BASE_DIR / "src" / "q1_extensions.py"
+    ext_path = BASE_DIR / "src" / "extended_diagnostics.py"
     if not ext_path.exists():
         return
     code = ext_path.read_text(encoding="utf-8")
@@ -55,7 +55,7 @@ def patch_q1_extensions_mahalanobis() -> None:
     )
     if old_block in code:
         ext_path.write_text(code.replace(old_block, new_block), encoding="utf-8")
-        print("[PATCHED] src/q1_extensions.py -> Enabled cal_hidden.npy fallback for Offensive Mahalanobis.")
+        print("[PATCHED] src/extended_diagnostics.py -> Enabled cal_hidden.npy fallback for Offensive Mahalanobis.")
 
 
 def fit_vector_scaling(cal_logits: np.ndarray, cal_labels: np.ndarray) -> tuple:
@@ -226,7 +226,7 @@ def run_calibration_baselines_and_fats() -> pd.DataFrame:
                 })
 
     df_all = pd.DataFrame(records)
-    df_all.to_csv(TABLES_DIR / "q1_calibration_baselines_per_run.csv", index=False)
+    df_all.to_csv(TABLES_DIR / "adaptive_calibration_baselines_per_run.csv", index=False)
 
     metric_cols = ["nll", "ece_15", "adaptive_ece_15", "classwise_ece_15", "overconfidence_15", "brier"]
     df_agg = (
@@ -235,8 +235,8 @@ def run_calibration_baselines_and_fats() -> pd.DataFrame:
         .reset_index()
     )
     df_agg.columns = ["_".join(c).strip("_") if isinstance(c, tuple) else c for c in df_agg.columns.values]
-    df_agg.to_csv(TABLES_DIR / "q1_calibration_baselines_aggregated.csv", index=False)
-    print(f"[OK] Saved multi-method calibration & FA-TS benchmark to {TABLES_DIR / 'q1_calibration_baselines_aggregated.csv'}")
+    df_agg.to_csv(TABLES_DIR / "adaptive_calibration_baselines_aggregated.csv", index=False)
+    print(f"[OK] Saved multi-method calibration & FA-TS benchmark to {TABLES_DIR / 'adaptive_calibration_baselines_aggregated.csv'}")
     return df_agg
 
 
@@ -379,7 +379,7 @@ def run_regularized_weighted_conformal() -> pd.DataFrame:
                 })
 
     df_riw = pd.DataFrame(records)
-    df_riw.to_csv(TABLES_DIR / "q1_riw_conformal_per_run.csv", index=False)
+    df_riw.to_csv(TABLES_DIR / "riw_conformal_per_run.csv", index=False)
     df_riw_agg = (
         df_riw.groupby(["task", "model", "condition", "conformal_variant"])[
             ["beta_exponent", "effective_sample_size", "empirical_coverage", "avg_set_size", "trivial_set_rate"]
@@ -388,8 +388,8 @@ def run_regularized_weighted_conformal() -> pd.DataFrame:
         .reset_index()
     )
     df_riw_agg.columns = ["_".join(c).strip("_") if isinstance(c, tuple) else c for c in df_riw_agg.columns.values]
-    df_riw_agg.to_csv(TABLES_DIR / "q1_riw_conformal_aggregated.csv", index=False)
-    print(f"[OK] Saved Novel RIW-CP benchmark to {TABLES_DIR / 'q1_riw_conformal_aggregated.csv'}")
+    df_riw_agg.to_csv(TABLES_DIR / "riw_conformal_aggregated.csv", index=False)
+    print(f"[OK] Saved Novel RIW-CP benchmark to {TABLES_DIR / 'riw_conformal_aggregated.csv'}")
     return df_riw_agg
 
 
@@ -428,7 +428,7 @@ def generate_novel_method_figures(df_cal_agg: pd.DataFrame, df_riw_agg: pd.DataF
         ax.legend(ncol=2, fontsize=8.5)
         ax.grid(axis="y", alpha=0.3)
         plt.tight_layout()
-        plt.savefig(FIGURES_DIR / "q1_fa_ts_vs_baselines.png", dpi=200)
+        plt.savefig(FIGURES_DIR / "fa_ts_calibration_baselines_comparison.png", dpi=200)
         plt.close(fig)
 
     # Figure 2: RIW-CP vs Standard IW-CP Set Size & Trivial Set Collapse
@@ -470,14 +470,14 @@ def generate_novel_method_figures(df_cal_agg: pd.DataFrame, df_riw_agg: pd.DataF
             axes[1].grid(axis="y", alpha=0.3)
 
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "q1_riw_cp_coverage_size.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "riw_cp_coverage_efficiency_comparison.png", dpi=200)
             plt.close(fig)
 
     print(f"[OK] Saved novel method comparison figures to {FIGURES_DIR}")
 
 
 def write_novel_methods_report(df_cal_agg: pd.DataFrame, df_riw_agg: pd.DataFrame) -> None:
-    report_path = TABLES_DIR / "Q1_NOVEL_METHODS_AND_BASELINES.md"
+    report_path = TABLES_DIR / "ADAPTIVE_METHODS_AND_ABLATION_REPORT.md"
     lines = ["# Q1 Novel Methodological Contributions & Post-Hoc Calibration Benchmark\n"]
 
     lines.append("## 1. Multi-Method Post-Hoc Calibration Baselines vs. FA-TS (Ours)\n")
@@ -495,7 +495,7 @@ def write_novel_methods_report(df_cal_agg: pd.DataFrame, df_riw_agg: pd.DataFram
     lines.append(df_to_markdown(df_riw_agg[cols_r].round(4)))
     lines.append("\n")
 
-    llm_path = TABLES_DIR / "q1_llm_zeroshot_calibration.csv"
+    llm_path = TABLES_DIR / "llm_zeroshot_calibration.csv"
     if llm_path.exists():
         lines.append("## 3. 2026 Multilingual LLM Zero-Shot Calibration Baseline (Qwen2.5-Instruct)\n")
         lines.append(df_to_markdown(pd.read_csv(llm_path).round(4)))

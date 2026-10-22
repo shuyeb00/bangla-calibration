@@ -486,7 +486,7 @@ def generate_markdown_summary_report() -> None:
             lines.append(df_to_markdown(s_agg))
             lines.append("\n")
 
-    report_path = TABLES_DIR / "THESIS_RESULTS_SUMMARY.md"
+    report_path = TABLES_DIR / "BENCHMARK_SUMMARY_REPORT.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"Saved master Markdown report to {report_path}")
