@@ -36,12 +36,18 @@ def _read_manifest(run_dir: Path) -> dict:
         return {}
 
 
-def load_cache(run_dir: Path, name: str, fingerprint: Optional[str] = None) -> Optional[pd.DataFrame]:
+def _key(fingerprint: str, version: Optional[str]) -> str:
+    return fingerprint if version is None else f"{fingerprint}|{version}"
+
+
+def load_cache(run_dir: Path, name: str, fingerprint: Optional[str] = None,
+               version: Optional[str] = None) -> Optional[pd.DataFrame]:
+    """version: bump when the computation behind a cache changes, so old results are not reused."""
     path = run_dir / name
     if not path.exists():
         return None
     fingerprint = fingerprint or run_fingerprint(run_dir)
-    if _read_manifest(run_dir).get(name) != fingerprint:
+    if _read_manifest(run_dir).get(name) != _key(fingerprint, version):
         return None
     try:
         return pd.read_csv(path)
@@ -49,8 +55,9 @@ def load_cache(run_dir: Path, name: str, fingerprint: Optional[str] = None) -> O
         return None
 
 
-def save_cache(run_dir: Path, name: str, df: pd.DataFrame, fingerprint: Optional[str] = None) -> None:
+def save_cache(run_dir: Path, name: str, df: pd.DataFrame, fingerprint: Optional[str] = None,
+               version: Optional[str] = None) -> None:
     df.to_csv(run_dir / name, index=False)
     manifest = _read_manifest(run_dir)
-    manifest[name] = fingerprint or run_fingerprint(run_dir)
+    manifest[name] = _key(fingerprint or run_fingerprint(run_dir), version)
     (run_dir / MANIFEST).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")

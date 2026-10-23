@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import softmax
 from scipy.stats import pearsonr, spearmanr
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.covariance import LedoitWolf
 
 from src.calibration import (
@@ -29,6 +30,8 @@ from src.config import (
     TASKS,
 )
 from src.run_cache import load_cache, run_fingerprint, save_cache
+
+MAHA_CACHE_VERSION = "cal-reference-v1"
 
 FIGURES_DIR = BASE_DIR / "thesis" / "figures"
 TABLES_DIR = RESULTS_DIR / "tables"
@@ -188,12 +191,13 @@ def evaluate_conformal_method(
     }
 
 
-class _PrecomputedProbs:
+class _PrecomputedProbs(ClassifierMixin, BaseEstimator):
     """Index-based stand-in classifier so MAPIE can consume precomputed probabilities."""
 
-    def __init__(self, probs: np.ndarray):
+    def __init__(self, probs: np.ndarray = None):
         self.probs = probs
-        self.classes_ = np.arange(probs.shape[1])
+        if probs is not None:
+            self.classes_ = np.arange(probs.shape[1])
 
     def __sklearn_is_fitted__(self) -> bool:
         return True
@@ -229,8 +233,17 @@ def run_mapie_crosscheck() -> None:
         test_labels = np.load(run_dir / "test_labels.npy")
 
         ours = evaluate_conformal(test_probs, test_labels, conformal_calibrate(cal_probs, cal_labels, alpha=0.10))
+        # MAPIE takes np.quantile(scores, (n+1)(1-a)/n, method="higher"); this can select one order
+        # statistic above the textbook ceil((n+1)(1-a))-th score that we use. Both are valid; we also
+        # report ours under MAPIE's rule so the comparison isolates implementation from convention.
+        n_cal = len(cal_labels)
+        cal_scores = 1.0 - cal_probs[np.arange(n_cal), cal_labels]
+        q_rule = float(np.quantile(cal_scores, min(1.0, (n_cal + 1) * 0.90 / n_cal), method="higher"))
+        ours_rule = evaluate_conformal(test_probs, test_labels, q_rule)
         row = {"run_id": run_dir.name, "task": task, "model": model_key, "ft_method": ft_method, "seed": seed,
                "ours_coverage": ours["empirical_coverage"], "ours_set_size": ours["avg_set_size"],
+               "ours_mapie_rule_coverage": ours_rule["empirical_coverage"],
+               "ours_mapie_rule_set_size": ours_rule["avg_set_size"],
                "mapie_version": mapie.__version__}
         try:
             combined = np.vstack([cal_probs, test_probs])
@@ -250,14 +263,18 @@ def run_mapie_crosscheck() -> None:
             row.update({"mapie_coverage": np.nan, "mapie_set_size": np.nan, "status": f"error: {e!r}"[:200]})
         row["abs_coverage_diff"] = abs(row["ours_coverage"] - row["mapie_coverage"])
         row["abs_set_size_diff"] = abs(row["ours_set_size"] - row["mapie_set_size"])
+        row["abs_coverage_diff_same_rule"] = abs(row["ours_mapie_rule_coverage"] - row["mapie_coverage"])
+        row["abs_set_size_diff_same_rule"] = abs(row["ours_mapie_rule_set_size"] - row["mapie_set_size"])
         records.append(row)
 
     if records:
         df = pd.DataFrame(records)
         df.to_csv(out_path, index=False)
         ok = df[df["status"] == "ok"]
-        print(f"[OK] MAPIE cross-check: {len(ok)}/{len(df)} runs, max |coverage diff| = "
-              f"{ok['abs_coverage_diff'].max():.6f}, max |set size diff| = {ok['abs_set_size_diff'].max():.6f}")
+        print(f"[OK] MAPIE cross-check: {len(ok)}/{len(df)} runs | same quantile rule: max |coverage diff| = "
+              f"{ok['abs_coverage_diff_same_rule'].max():.6f}, max |set size diff| = "
+              f"{ok['abs_set_size_diff_same_rule'].max():.6f} | textbook vs MAPIE rule: max |coverage diff| = "
+              f"{ok['abs_coverage_diff'].max():.6f}")
 
 
 def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
@@ -282,8 +299,9 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
     if not force:
         df_c = load_cache(run_dir, "extended_calibration.csv", fp)
         df_cf = load_cache(run_dir, "conformal_lac_aps_raps.csv", fp)
-        if df_c is not None and df_cf is not None:
-            df_m = load_cache(run_dir, "mahalanobis_percentile.csv", fp)
+        df_m = load_cache(run_dir, "mahalanobis_percentile.csv", fp, version=MAHA_CACHE_VERSION)
+        maha_possible = (run_dir / "cal_hidden.npy").exists()
+        if df_c is not None and df_cf is not None and (df_m is not None or not maha_possible):
             m_rec = df_m.to_dict("records") if df_m is not None else []
             return df_c.to_dict("records"), df_cf.to_dict("records"), m_rec
 
@@ -367,18 +385,15 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
                 })
 
     maha_records = []
-    train_hidden_path = run_dir / "train_hidden.npy"
-    train_labels_path = run_dir / "train_labels.npy"
-    maha_reference = "train"
-    if not (train_hidden_path.exists() and train_labels_path.exists()):
-        train_hidden_path = run_dir / "cal_hidden.npy"
-        train_labels_path = run_dir / "cal_labels.npy"
-        maha_reference = "cal"
-    if train_hidden_path.exists() and train_labels_path.exists():
-        train_hidden = np.load(train_hidden_path)
-        train_labels = np.load(train_labels_path)
-        means = np.array([train_hidden[train_labels == c].mean(axis=0) for c in range(n_classes)])
-        centered = np.concatenate([train_hidden[train_labels == c] - means[c] for c in range(n_classes)], axis=0)
+    # Held-out calibration split as the in-distribution reference for every run (see evaluate.py).
+    ref_hidden_path = run_dir / "cal_hidden.npy"
+    ref_labels_path = run_dir / "cal_labels.npy"
+    maha_reference = "cal"
+    if ref_hidden_path.exists() and ref_labels_path.exists():
+        ref_hidden = np.load(ref_hidden_path)
+        ref_labels = np.load(ref_labels_path)
+        means = np.array([ref_hidden[ref_labels == c].mean(axis=0) for c in range(n_classes)])
+        centered = np.concatenate([ref_hidden[ref_labels == c] - means[c] for c in range(n_classes)], axis=0)
         cov_inv = np.linalg.inv(LedoitWolf().fit(centered).covariance_)
 
         def calc_maha(h: np.ndarray) -> np.ndarray:
@@ -388,7 +403,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
                 d_mat[:, c] = np.sum((diff @ cov_inv) * diff, axis=1)
             return np.min(d_mat, axis=1)
 
-        train_ref_sorted = np.sort(calc_maha(train_hidden))
+        ref_sorted = np.sort(calc_maha(ref_hidden))
 
         for cond_name in discovered_conditions:
             h_path = run_dir / f"{cond_name}_hidden.npy"
@@ -400,7 +415,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
             shift_probs = softmax(shift_logits, axis=1)
 
             shift_d = calc_maha(shift_hidden)
-            pct_ranks = (np.searchsorted(train_ref_sorted, shift_d, side="right") / len(train_ref_sorted)) * 100.0
+            pct_ranks = (np.searchsorted(ref_sorted, shift_d, side="right") / len(ref_sorted)) * 100.0
 
             preds = np.argmax(shift_probs, axis=1)
             is_wrong = preds != shift_labels
@@ -421,7 +436,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
                 "mean_raw_maha": float(np.mean(shift_d)),
                 "mean_maha_percentile": float(np.mean(pct_ranks)),
                 "median_maha_percentile": float(np.median(pct_ranks)),
-                "frac_above_95th_train_pct": float(np.mean(pct_ranks > 95.0)),
+                "frac_above_95th_ref_pct": float(np.mean(pct_ranks > 95.0)),
                 "mean_pct_wrong": wrong_pct,
                 "mean_pct_correct": correct_pct,
                 "maha_error_gap_pct": float(wrong_pct - correct_pct)
@@ -436,7 +451,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
     if conf_records:
         save_cache(run_dir, "conformal_lac_aps_raps.csv", pd.DataFrame(conf_records), fp)
     if maha_records:
-        save_cache(run_dir, "mahalanobis_percentile.csv", pd.DataFrame(maha_records), fp)
+        save_cache(run_dir, "mahalanobis_percentile.csv", pd.DataFrame(maha_records), fp, version=MAHA_CACHE_VERSION)
 
     return ext_cal_records, conf_records, maha_records
 
@@ -680,7 +695,7 @@ def write_q1_markdown_report(
         cols = [
             "task", "model", "ft_method", "condition",
             "mean_maha_percentile_mean", "median_maha_percentile_mean",
-            "frac_above_95th_train_pct_mean", "maha_error_gap_pct_mean", "spearman_maha_nll_rho_mean"
+            "frac_above_95th_ref_pct_mean", "maha_error_gap_pct_mean", "spearman_maha_nll_rho_mean"
         ]
         avail = [c for c in cols if c in df_maha_agg.columns]
         lines.append(df_to_markdown(df_maha_agg[avail].round(4)))
@@ -743,7 +758,7 @@ def main():
         df_maha.to_csv(TABLES_DIR / "mahalanobis_percentile_per_run.csv", index=False)
         maha_cols = [
             "mean_raw_maha", "mean_maha_percentile", "median_maha_percentile",
-            "frac_above_95th_train_pct", "mean_pct_wrong", "mean_pct_correct",
+            "frac_above_95th_ref_pct", "mean_pct_wrong", "mean_pct_correct",
             "maha_error_gap_pct", "spearman_maha_nll_rho"
         ]
         df_maha_agg = (

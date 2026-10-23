@@ -33,6 +33,8 @@ from src.calibration import (
 from src.config import FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
 from src.run_cache import load_cache, save_cache
 
+REPR_CACHE_VERSION = "cal-reference-v1"
+
 
 def compute_all_metrics(
     probs: np.ndarray,
@@ -93,19 +95,21 @@ def evaluate_representation_distance(
     seed: int,
     eval_conditions: list,
 ) -> list:
-    cached_df = load_cache(run_dir, "representation_distance.csv")
+    cached_df = load_cache(run_dir, "representation_distance.csv", version=REPR_CACHE_VERSION)
     if cached_df is not None:
         return cached_df.to_dict("records")
 
-    train_hidden_path = run_dir / "train_hidden.npy"
-    train_labels_path = run_dir / "train_labels.npy"
-    if not train_hidden_path.exists() or not train_labels_path.exists():
+    # Class-conditional Gaussians are fit on the held-out calibration split, which every run has
+    # (train_hidden.npy is absent for some runs), so all runs share one reference.
+    ref_hidden_path = run_dir / "cal_hidden.npy"
+    ref_labels_path = run_dir / "cal_labels.npy"
+    if not ref_hidden_path.exists() or not ref_labels_path.exists():
         return []
 
-    train_hidden = np.load(train_hidden_path)
-    train_labels = np.load(train_labels_path)
+    ref_hidden = np.load(ref_hidden_path)
+    ref_labels = np.load(ref_labels_path)
     n_classes = TASKS[task]
-    class_means, cov_inv = fit_class_gaussians(train_hidden, train_labels, n_classes)
+    class_means, cov_inv = fit_class_gaussians(ref_hidden, ref_labels, n_classes)
 
     records = []
     for cond_name in eval_conditions:
@@ -155,7 +159,7 @@ def evaluate_representation_distance(
             )
 
     if records:
-        save_cache(run_dir, "representation_distance.csv", pd.DataFrame(records))
+        save_cache(run_dir, "representation_distance.csv", pd.DataFrame(records), version=REPR_CACHE_VERSION)
     return records
 
 
