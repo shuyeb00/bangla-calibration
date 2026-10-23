@@ -15,3 +15,8 @@ data/for_translation/
 results/lora_lr_sweep/*
 !results/lora_lr_sweep/lora_hparam_sweep_seed42.csv
 !results/lora_lr_sweep/lora_hparam_selection.csv
+results/lora_lr_sweep_pretraining_matched/*
+!results/lora_lr_sweep_pretraining_matched/lora_hparam_sweep_seed42.csv
+!results/lora_lr_sweep_pretraining_matched/lora_hparam_selection.csv
+results/smoke/
+models/

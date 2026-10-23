@@ -37,6 +37,10 @@ TRAIN_HYPERPARAMS = {
 # "autotokenizer_default"; from the 512-token grid onwards inputs are "pretraining_matched".
 INPUT_PIPELINE = "pretraining_matched"
 
+# Private Hugging Face repositories for weights (model repo) and per-run outputs (dataset repo).
+HUB_CHECKPOINT_REPO = "bangla-calibration/encoder-checkpoints"
+HUB_OUTPUT_REPO = "bangla-calibration/run-outputs"
+
 # Per-(task, model) LoRA optimisation settings selected on validation macro-F1
 # (seed 42) by src/select_lora_hparams.py; see results/lora_lr_sweep/.
 LORA_TRAINING = {
