@@ -16,6 +16,7 @@ Outputs
   results/lora_lr_sweep/lora_hparam_selection.csv
 """
 
+import argparse
 from pathlib import Path
 
 import pandas as pd
@@ -33,11 +34,11 @@ def majority_macro_f1(task: str) -> float:
     return (2 * p / (1 + p)) / TASKS[task]
 
 
-def load_sweeps() -> pd.DataFrame:
-    files = sorted(f for f in SWEEP_DIR.glob("*sweep_*.csv")
+def load_sweeps(sweep_dir: Path = SWEEP_DIR) -> pd.DataFrame:
+    files = sorted(f for f in sweep_dir.glob("*sweep_*.csv")
                    if not f.name.startswith("lora_hparam_") and "_gpu" not in f.name)
     if not files:
-        raise FileNotFoundError(f"No sweep CSVs found in {SWEEP_DIR}")
+        raise FileNotFoundError(f"No sweep CSVs found in {sweep_dir}")
     df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
     if "warmup_ratio" not in df.columns:
         df["warmup_ratio"] = 0.0
@@ -48,7 +49,10 @@ def load_sweeps() -> pd.DataFrame:
 
 
 def main() -> None:
-    df = load_sweeps()
+    parser = argparse.ArgumentParser(description="Select LoRA settings from seed-42 validation sweeps.")
+    parser.add_argument("--sweep-dir", type=Path, default=SWEEP_DIR)
+    sweep_dir = parser.parse_args().sweep_dir
+    df = load_sweeps(sweep_dir)
     base = {t: majority_macro_f1(t) for t in df["task"].unique()}
     df["majority_baseline_f1"] = df["task"].map(base).round(4)
     df["collapsed"] = (df["n_pred_classes_at_best"] <= 1) | (
@@ -60,21 +64,26 @@ def main() -> None:
     cols = ["task", "model", "learning_rate", "warmup_ratio", "best_val_macro_f1", "best_epoch",
             "n_pred_classes_at_best", "final_train_loss", "majority_baseline_f1", "collapsed", "lr_stable",
             "val_f1_per_epoch"]
-    df[cols].to_csv(SWEEP_DIR / "lora_hparam_sweep_seed42.csv", index=False)
+    df[cols].to_csv(sweep_dir / "lora_hparam_sweep_seed42.csv", index=False)
 
     picks = []
     for (task, model), g in df.groupby(["task", "model"]):
         pool, fallback = g[g["lr_stable"]], False
         if pool.empty:
             pool, fallback = g[~g["collapsed"]], True
-        best = pool.sort_values(["best_val_macro_f1", "learning_rate", "warmup_ratio"],
-                                ascending=[False, True, True]).iloc[0]
         unrestricted = g.sort_values(["best_val_macro_f1", "learning_rate", "warmup_ratio"],
                                      ascending=[False, True, True]).iloc[0]
+        if pool.empty:
+            print(f"[NO VIABLE SETTING] {task} {model}: every run collapsed")
+            best = {"learning_rate": float("nan"), "warmup_ratio": float("nan"), "best_val_macro_f1": float("nan")}
+        else:
+            best = pool.sort_values(["best_val_macro_f1", "learning_rate", "warmup_ratio"],
+                                    ascending=[False, True, True]).iloc[0]
         picks.append({
             "task": task, "model": model,
             "learning_rate": best["learning_rate"], "warmup_ratio": best["warmup_ratio"],
             "val_macro_f1": best["best_val_macro_f1"],
+            "no_viable_setting": pool.empty,
             "unrestricted_best_lr": unrestricted["learning_rate"],
             "unrestricted_best_warmup": unrestricted["warmup_ratio"],
             "unrestricted_best_f1": unrestricted["best_val_macro_f1"],
@@ -83,7 +92,7 @@ def main() -> None:
             "below_quality_floor": bool(best["best_val_macro_f1"] < 0.5),
         })
     sel = pd.DataFrame(picks)
-    sel.to_csv(SWEEP_DIR / "lora_hparam_selection.csv", index=False)
+    sel.to_csv(sweep_dir / "lora_hparam_selection.csv", index=False)
 
     pd.set_option("display.width", 200)
     print(f"[SWEEP] {len(df)} runs, {int(df['collapsed'].sum())} collapsed")

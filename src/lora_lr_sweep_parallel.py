@@ -12,6 +12,10 @@ Grids
   warmup  learning rates 1e-4 ... 2e-3 with 10% linear warmup, plus 2e-3 without
           warmup for sentiment BanglaBERT, whose base-grid optimum lay at the
           largest rate.
+  indicbert_pretraining_matched
+          base and warmup grids for IndicBERT only, both tasks, re-run because the
+          original sweep fed IndicBERT text whose vowel signs the fast tokenizer had
+          stripped (src/model_inputs.py); one shard, written to its own directory.
 """
 
 import argparse
@@ -60,15 +64,33 @@ PLAN = {
     },
 }
 
-OUT_DIR = Path("results/lora_lr_sweep")
+_INDICBERT_OFFENSIVE = (jobs_for("offensive", "indicbert")
+                        + jobs_for("offensive", "indicbert", LRS_EXTENDED, "0.1"))
+_INDICBERT_SENTIMENT = (jobs_for("sentiment", "indicbert")
+                        + jobs_for("sentiment", "indicbert", LRS_EXTENDED, "0.1"))
+PLAN["indicbert_pretraining_matched"] = {
+    "0": {
+        "0": _INDICBERT_OFFENSIVE[:5],
+        "1": _INDICBERT_OFFENSIVE[5:] + _INDICBERT_SENTIMENT,
+    },
+}
+
+OUT_DIRS = {
+    "base": Path("results/lora_lr_sweep"),
+    "warmup": Path("results/lora_lr_sweep"),
+    "indicbert_pretraining_matched": Path("results/lora_lr_sweep_pretraining_matched"),
+}
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--shard", choices=["0", "1"], required=True)
-    p.add_argument("--grid", choices=["base", "warmup"], default="base")
+    p.add_argument("--grid", choices=list(PLAN), default="base")
     p.add_argument("--dry_run", action="store_true", help="64 training rows per job (pipeline check only).")
     a = p.parse_args()
+    if a.shard not in PLAN[a.grid]:
+        raise SystemExit(f"Grid {a.grid} has no shard {a.shard}")
+    OUT_DIR = OUT_DIRS[a.grid]
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     tag = f"{a.grid}_shard{a.shard}"
 
@@ -102,7 +124,7 @@ def main() -> None:
 
     frames = [pd.read_csv(f) for f in sorted(OUT_DIR.glob(f"sweep_{tag}_gpu*.csv"))]
     if not frames:
-        print("[FATAL] No results were written. Check the log files in results/lora_lr_sweep/.")
+        print(f"[FATAL] No results were written. Check the log files in {OUT_DIR}/.")
         return
     df = pd.concat(frames, ignore_index=True)
     if "warmup_ratio" not in df.columns:

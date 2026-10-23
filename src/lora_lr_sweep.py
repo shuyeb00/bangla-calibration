@@ -16,6 +16,8 @@ Protocol
   load_best_model_at_end uses in src/train.py). Ties go to the smaller LR,
   then to no warmup (final selection: src/select_lora_hparams.py).
 * The calibration, test, and shift splits are never used here.
+* Data encoding, padding and model construction come from src/train.py, so a sweep
+  always uses the current input pipeline and max_length.
 
 Usage
 -----
@@ -38,18 +40,12 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model
 from sklearn.metrics import accuracy_score, f1_score
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    Trainer,
-    TrainingArguments,
-)
+from transformers import Trainer
 
-from src.config import LORA_HYPERPARAMS, MODELS, TASKS, TRAIN_HYPERPARAMS
-from src.train import load_task_splits, set_seed
+from src.config import INPUT_PIPELINE, TRAIN_HYPERPARAMS
+from src.model_inputs import load_tokenizer
+from src.train import build_model, encode, load_task_splits, make_collator, set_seed, training_arguments
 
 SWEEP_SEED = 42
 FIELDS = [
@@ -101,53 +97,19 @@ def run_job(task: str, model_key: str, lr: float, warmup: float = 0.0, max_train
         train_df = train_df.head(max_train_rows)
         val_df = val_df.head(max(32, max_train_rows // 4))
 
-    model_name = MODELS[model_key]
     # Test hook: LRSWEEP_LOCAL_MODELS=/dir points at tiny local copies (dir/<model_key>).
-    if os.environ.get("LRSWEEP_LOCAL_MODELS"):
-        model_name = os.path.join(os.environ["LRSWEEP_LOCAL_MODELS"], model_key)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    base = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=TASKS[task])
-    model = get_peft_model(
-        base,
-        LoraConfig(
-            task_type=TaskType.SEQ_CLS,
-            r=LORA_HYPERPARAMS["r"],
-            lora_alpha=LORA_HYPERPARAMS["lora_alpha"],
-            lora_dropout=LORA_HYPERPARAMS["lora_dropout"],
-            target_modules=LORA_HYPERPARAMS["target_modules"],
-        ),
-    )
-    max_len = TRAIN_HYPERPARAMS["max_length"]
+    source = os.path.join(os.environ["LRSWEEP_LOCAL_MODELS"], model_key) if os.environ.get("LRSWEEP_LOCAL_MODELS") else None
+    tokenizer = load_tokenizer(model_key, INPUT_PIPELINE, source)
+    train_ds, val_ds = encode(tokenizer, model_key, train_df), encode(tokenizer, model_key, val_df)
+    model, _ = build_model(task, model_key, "lora", source)
 
-    def tok(batch):
-        return tokenizer(batch["text_clean"], padding="max_length", truncation=True, max_length=max_len)
-
-    train_ds = Dataset.from_pandas(train_df[["text_clean", "labels"]], preserve_index=False).map(tok, batched=True)
-    val_ds = Dataset.from_pandas(val_df[["text_clean", "labels"]], preserve_index=False).map(tok, batched=True)
-
-    # warmup_ratio was removed in recent transformers; pass the equivalent step count.
-    bs = TRAIN_HYPERPARAMS["per_device_train_batch_size"]
-    total_steps = math.ceil(len(train_ds) / bs) * TRAIN_HYPERPARAMS["num_train_epochs"]
+    epochs = TRAIN_HYPERPARAMS["num_train_epochs"]
+    total_steps = math.ceil(len(train_ds) / TRAIN_HYPERPARAMS["per_device_train_batch_size"]) * epochs
     warmup_steps = int(math.ceil(warmup * total_steps))
-
     tmp_dir = tempfile.mkdtemp(prefix="lrsweep_")
-    args = TrainingArguments(
-        output_dir=tmp_dir,
-        eval_strategy="epoch",
-        save_strategy="no",
-        learning_rate=lr,
-        warmup_steps=warmup_steps,
-        per_device_train_batch_size=TRAIN_HYPERPARAMS["per_device_train_batch_size"],
-        per_device_eval_batch_size=TRAIN_HYPERPARAMS["per_device_eval_batch_size"],
-        num_train_epochs=TRAIN_HYPERPARAMS["num_train_epochs"],
-        weight_decay=TRAIN_HYPERPARAMS["weight_decay"],
-        report_to="none",
-        seed=SWEEP_SEED,
-        fp16=torch.cuda.is_available(),
-        logging_steps=50,
-    )
+    args = training_arguments(Path(tmp_dir), SWEEP_SEED, lr, warmup_steps, epochs, save=False)
     trainer = Trainer(model=model, args=args, train_dataset=train_ds, eval_dataset=val_ds,
-                      compute_metrics=compute_metrics)
+                      data_collator=make_collator(tokenizer), compute_metrics=compute_metrics)
     result = trainer.train()
 
     evals = [h for h in trainer.state.log_history if "eval_f1" in h]
@@ -169,7 +131,7 @@ def run_job(task: str, model_key: str, lr: float, warmup: float = 0.0, max_train
         "val_f1_per_epoch": " ".join(f"{x:.4f}" for x in f1s),
         "runtime_min": round((time.time() - t0) / 60, 2),
     }
-    del trainer, model, base
+    del trainer, model
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
