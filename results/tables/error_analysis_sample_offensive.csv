@@ -1,4 +1,4 @@
-﻿error_id,condition,text,true_label,predicted_label,confidence,annotator_1_category,annotator_2_category,adjudicated_category,ai_k3_category
+﻿error_id,condition,text,true_label,predicted_label,confidence,annotator_1_category,annotator_2_category,adjudicated_category,categorizer_category
 offensive_D0_source_3464,D0_source,প্রেম করলে ঝুলে যায়�,Non-Offensive,Offensive,0.5453,other,other,other,other
 offensive_D0_source_4536,D0_source,ওইশার রক্ত নিয়ে হুলি খেলবো,Non-Offensive,Offensive,0.5398,sarcasm,unclear true label,sarcasm,other
 offensive_D0_source_2772,D0_source,��আর বেশি দিন দূরে নয় যেদিন বাংলার যমিনে ইসলামী অনুশ্বাষন প্রতিষ্ঠিত হবে আলেমরা রাষ্ট্রীয় সম্মানে থাকবে এবং যেই সব ভন্ড রাম বাম নাস্তিক মুরতাদরা ইসলামকে নিয়ে ছিনিমিনি খেলছে তাদের বিচার সেদিন হবেই হবে ইনশাআল্লাহ।,Non-Offensive,Offensive,0.7381,negation,unclear true label,negation,negation

@@ -34,7 +34,8 @@ def majority_macro_f1(task: str) -> float:
 
 
 def load_sweeps() -> pd.DataFrame:
-    files = sorted(set(SWEEP_DIR.glob("lora_sweep_*.csv")) | set(SWEEP_DIR.glob("sweep_account_*.csv")))
+    files = sorted(f for f in SWEEP_DIR.glob("*sweep_*.csv")
+                   if not f.name.startswith("lora_hparam_") and "_gpu" not in f.name)
     if not files:
         raise FileNotFoundError(f"No sweep CSVs found in {SWEEP_DIR}")
     df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)

@@ -402,12 +402,12 @@ def generate_markdown_summary_report() -> None:
         return
 
     agg_df = pd.read_csv(agg_path)
-    lines = ["# Thesis Master Results Summary (60-Run Full Grid)\n"]
+    lines = ["# Benchmark Results (3 Encoders x 2 Fine-Tuning Regimes x 2 Tasks x 5 Seeds)\n"]
 
     shift_path = TABLES_DIR / "shift_quantification.csv"
     if shift_path.exists():
         sq_df = pd.read_csv(shift_path)
-        lines.append("## 1. Shift Quantification (Part D.2)\n")
+        lines.append("## 1. Shift Quantification\n")
         lines.append(df_to_markdown(sq_df))
         lines.append("\n")
 
@@ -439,7 +439,7 @@ def generate_markdown_summary_report() -> None:
     if w_path.exists():
         w_df = pd.read_csv(w_path)
         if not w_df.empty:
-            lines.append("## 3. Importance-Weighted Conformal Prediction (Part I.7)\n")
+            lines.append("## 3. Importance-Weighted Conformal Prediction\n")
             w_agg = (
                 w_df.groupby(["task", "model", "ft_method", "condition"])[
                     ["weighted_coverage", "weighted_avg_set_size", "effective_sample_size"]
@@ -455,7 +455,7 @@ def generate_markdown_summary_report() -> None:
     if rep_path.exists():
         r_df = pd.read_csv(rep_path)
         if not r_df.empty:
-            lines.append("## 4. Representation Distance Misclassification Detection (Part I.6)\n")
+            lines.append("## 4. Misclassification Detection from Representation Distance\n")
             r_agg = (
                 r_df.groupby(["task", "model", "ft_method", "condition", "predictor"])[
                     ["auroc", "auprc"]
@@ -471,7 +471,7 @@ def generate_markdown_summary_report() -> None:
     if sig_path.exists():
         s_df = pd.read_csv(sig_path)
         if not s_df.empty:
-            lines.append("## 5. Statistical Significance Summary (Part J — Holm-Corrected)\n")
+            lines.append("## 5. Statistical Significance (Holm-Corrected)\n")
             s_agg = (
                 s_df.groupby(["task", "model", "ft_method", "comparison", "metric", "endpoint_family"])
                 .agg(
@@ -489,7 +489,7 @@ def generate_markdown_summary_report() -> None:
     report_path = TABLES_DIR / "BENCHMARK_SUMMARY_REPORT.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print(f"Saved master Markdown report to {report_path}")
+    print(f"Saved benchmark report to {report_path}")
 
 
 def main():

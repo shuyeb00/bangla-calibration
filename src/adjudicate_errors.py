@@ -133,7 +133,7 @@ def prefill_offensive_annotations(df: pd.DataFrame) -> pd.DataFrame:
 
 def categorize_error_blind(text: str, true_label: str, predicted_label: str, condition: str) -> str:
     """
-    Part K.3 Categorizer: Operates strictly on (text, true_label, predicted_label, condition)
+    Rule-based error categorizer. Operates strictly on (text, true_label, predicted_label, condition)
     without ever seeing human annotator labels.
     """
     t = str(text)
@@ -182,7 +182,7 @@ def categorize_error_blind(text: str, true_label: str, predicted_label: str, con
     return "other"
 
 
-def validate_k3_categorizer(df_valid: pd.DataFrame, task: str) -> tuple:
+def validate_error_categorizer(df_valid: pd.DataFrame, task: str) -> tuple:
     gold_codes = df_valid["adjudicated_category"].astype(str).str.strip().str.lower().tolist()
     ai_codes = [
         categorize_error_blind(r["text"], r["true_label"], r["predicted_label"], r["condition"])
@@ -209,17 +209,17 @@ def validate_k3_categorizer(df_valid: pd.DataFrame, task: str) -> tuple:
             "f1_score": round(float(f_val), 4),
             "overall_ai_kappa": round(kappa_ai, 4),
             "overall_macro_f1": round(macro_f1, 4),
-            "clears_k3_validation_bar": passes_bar,
+            "meets_validation_threshold": passes_bar,
         })
 
     print(
-        f"[{task.upper()} Part K.3] Blind Categorizer vs. Gold -> "
+        f"[{task.upper()}] Categorizer vs. adjudicated labels -> "
         f"kappa_ai={kappa_ai:.4f}, macro_F1={macro_f1:.4f}, clears_0.60_bar={passes_bar}"
     )
     return records, ai_codes
 
 
-def run_k4_pooled_seed_scaling(task: str, n_per_condition: int = 40) -> list:
+def pool_errors_across_seeds(task: str, n_per_condition: int = 40) -> list:
     cond_files = {"D0_source": DATA_DIR / task / "test.csv"}
     for k, v in get_shift_conditions_paths(task).items():
         if not k.endswith("_cal") and k not in ("shift_d3_noise05", "shift_d3_noise20"):
@@ -281,7 +281,7 @@ def run_k4_pooled_seed_scaling(task: str, n_per_condition: int = 40) -> list:
     if not all_seed_errors:
         return []
 
-    # Deduplicate by exact text across seeds (Handbook Part K.4)
+    # Deduplicate by exact text across seeds.
     pooled_unique = list({err["text"]: err for err in all_seed_errors}.values())
     for err in pooled_unique:
         err["ai_category"] = categorize_error_blind(
@@ -290,7 +290,7 @@ def run_k4_pooled_seed_scaling(task: str, n_per_condition: int = 40) -> list:
 
     counts = Counter(e["ai_category"] for e in pooled_unique)
     total_u = len(pooled_unique)
-    print(f"[{task.upper()} Part K.4] Total 5-seed errors: {len(all_seed_errors)} -> Pooled unique: {total_u}")
+    print(f"[{task.upper()}] Errors across 5 seeds: {len(all_seed_errors)} -> Pooled unique: {total_u}")
 
     records = []
     for cat, cnt in counts.most_common():
@@ -306,7 +306,7 @@ def run_k4_pooled_seed_scaling(task: str, n_per_condition: int = 40) -> list:
 
 
 
-def build_k5_illustrative_examples() -> pd.DataFrame:
+def build_illustrative_examples() -> pd.DataFrame:
     examples = [
         {
             "task": "sentiment",
@@ -430,7 +430,7 @@ def build_k5_illustrative_examples() -> pd.DataFrame:
         },
     ]
     out_df = pd.DataFrame(examples)
-    out_df.to_csv(TABLES_DIR / "error_analysis_k5_illustrative_examples.csv", index=False, encoding="utf-8-sig")
+    out_df.to_csv(TABLES_DIR / "error_analysis_illustrative_examples.csv", index=False, encoding="utf-8-sig")
     return out_df
 
 
@@ -472,57 +472,56 @@ def process_error_file(task: str, prefill_offensive: bool = False) -> tuple:
         df.loc[valid.index[missing_adj], "adjudicated_category"] = valid.loc[missing_adj].apply(adjudicate_row, axis=1)
 
     valid["adjudicated_category"] = df.loc[valid.index, "adjudicated_category"]
-    k3_records, ai_codes = validate_k3_categorizer(valid, task)
-    df.loc[valid.index, "ai_k3_category"] = ai_codes
+    categorizer_records, ai_codes = validate_error_categorizer(valid, task)
+    df.loc[valid.index, "categorizer_category"] = ai_codes
     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-    print(f"\n=== {task.upper()} PART K.2 HUMAN ERROR ANALYSIS SUMMARY (N={len(valid)}) ===")
+    print(f"\n=== {task.upper()} human error annotation summary (N={len(valid)}) ===")
     print(f"Exact Agreement: {exact_match:.2f}% | Human-vs-Human Cohen's Kappa: {kappa:.4f}")
     vc = df.loc[valid.index, "adjudicated_category"].value_counts()
     for cat, cnt in vc.items():
         print(f"  - {cat:22s}: {cnt:3d} ({cnt / len(valid) * 100:.2f}%)")
 
-    k2_summary = {
+    annotation_summary = {
         "task": task,
         "n_annotated": int(len(valid)),
         "exact_agreement_pct": round(exact_match, 2),
         "human_cohens_kappa": round(kappa, 4),
         "breakdown": vc.to_dict(),
     }
-    return k2_summary, k3_records
+    return annotation_summary, categorizer_records
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Complete Part K (K.2, K.3, K.4, K.5) Error Analysis Pipeline.")
+    parser = argparse.ArgumentParser(description="Human-annotated error analysis, categorizer validation, and cross-seed error pooling.")
     parser.add_argument("--tasks", nargs="+", default=["sentiment", "offensive"])
     parser.add_argument("--prefill_offensive", action="store_true", help="Pre-populate offensive error annotations.")
     args = parser.parse_args()
 
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
-    all_k2, all_k3, all_k4 = [], [], []
+    all_annotation, all_categorizer, all_pooled = [], [], []
 
     for t in args.tasks:
-        k2_sum, k3_rec = process_error_file(t, prefill_offensive=args.prefill_offensive)
-        if k2_sum:
-            all_k2.append(k2_sum)
-        all_k3.extend(k3_rec)
-        all_k4.extend(run_k4_pooled_seed_scaling(t))
+        annotation_sum, categorizer_rec = process_error_file(t, prefill_offensive=args.prefill_offensive)
+        if annotation_sum:
+            all_annotation.append(annotation_sum)
+        all_categorizer.extend(categorizer_rec)
+        all_pooled.extend(pool_errors_across_seeds(t))
 
-    if all_k3:
-        pd.DataFrame(all_k3).to_csv(TABLES_DIR / "error_analysis_k3_validation.csv", index=False)
-    if all_k4:
-        pd.DataFrame(all_k4).to_csv(TABLES_DIR / "error_analysis_k4_pooled_seeds.csv", index=False)
+    if all_categorizer:
+        pd.DataFrame(all_categorizer).to_csv(TABLES_DIR / "error_analysis_categorizer_validation.csv", index=False)
+    if all_pooled:
+        pd.DataFrame(all_pooled).to_csv(TABLES_DIR / "error_analysis_pooled_seeds.csv", index=False)
 
-    df_k5 = build_k5_illustrative_examples()
+    df_examples = build_illustrative_examples()
 
-    # Write comprehensive Part K Markdown Report
-    md_lines = ["# Complete Error Analysis Report (Handbook Part K.1 – K.5)\n"]
-    if all_k2:
-        md_lines.append("## 1. Part K.2 — Human Gold-Standard Agreement & Adjudicated Breakdown\n")
-        k2_rows = []
-        for item in all_k2:
+    md_lines = ["# Error Analysis Report\n"]
+    if all_annotation:
+        md_lines.append("## 1. Inter-Annotator Agreement and Adjudicated Error Categories\n")
+        agreement_rows = []
+        for item in all_annotation:
             for cat, cnt in item["breakdown"].items():
-                k2_rows.append({
+                agreement_rows.append({
                     "task": item["task"],
                     "n_total": item["n_annotated"],
                     "human_kappa": item["human_cohens_kappa"],
@@ -531,26 +530,26 @@ def main():
                     "count": cnt,
                     "percentage": round(cnt / item["n_annotated"] * 100.0, 2),
                 })
-        md_lines.append(df_to_markdown(pd.DataFrame(k2_rows)))
+        md_lines.append(df_to_markdown(pd.DataFrame(agreement_rows)))
         md_lines.append("\n")
 
-    if all_k3:
-        md_lines.append("## 2. Part K.3 — Blind Automated Categorizer Validation vs. Human Gold Standard\n")
-        md_lines.append(df_to_markdown(pd.DataFrame(all_k3)))
+    if all_categorizer:
+        md_lines.append("## 2. Rule-Based Categorizer Validated Against Adjudicated Labels\n")
+        md_lines.append(df_to_markdown(pd.DataFrame(all_categorizer)))
         md_lines.append("\n")
 
-    if all_k4:
-        md_lines.append("## 3. Part K.4 — Pooled Unique Error Scaling Across All 5 Seeds\n")
-        md_lines.append(df_to_markdown(pd.DataFrame(all_k4)))
+    if all_pooled:
+        md_lines.append("## 3. Error Categories Pooled Across Five Seeds\n")
+        md_lines.append(df_to_markdown(pd.DataFrame(all_pooled)))
         md_lines.append("\n")
 
-    md_lines.append("## 4. Part K.5 — Curated Illustrative Examples (Original Bangla + English Translation)\n")
-    md_lines.append(df_to_markdown(df_k5))
+    md_lines.append("## 4. Illustrative Examples (Bangla Text with English Translation)\n")
+    md_lines.append(df_to_markdown(df_examples))
     md_lines.append("\n")
 
     report_path = TABLES_DIR / "ERROR_ANALYSIS_FULL_REPORT.md"
     report_path.write_text("\n".join(md_lines), encoding="utf-8")
-    print(f"\n[ALL DONE] Saved complete Part K report to {report_path}")
+    print(f"[DONE] Saved error analysis report to {report_path}")
 
 
 if __name__ == "__main__":

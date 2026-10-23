@@ -1,4 +1,4 @@
-﻿error_id,condition,text,true_label,predicted_label,confidence,annotator_1_category,annotator_2_category,adjudicated_category,ai_k3_category
+﻿error_id,condition,text,true_label,predicted_label,confidence,annotator_1_category,annotator_2_category,adjudicated_category,categorizer_category
 sentiment_D0_source_1141,D0_source,"প্রথম যাকেই সামনে পাবেন , তাকেই",Neutral,Negative,0.534,other,other,other,other
 sentiment_D0_source_663,D0_source,ছাত্র গুলাতো পড়া - লিখা করবে তাদের রাজনীতির কি দরকার,Neutral,Positive,0.5258,other,unclear true label,unclear true label,sarcasm
 sentiment_D0_source_1004,D0_source,তখন তার মাথায় একটায় ঘুরপার খায় যে ভাবেই হোক আমার সমস্ত দেনা বা ঝন অতিদ্রুত পরিশোধ করতে হবে,Positive,Negative,0.4927,other,dialect-specific word,dialect-specific word,dialect-specific word

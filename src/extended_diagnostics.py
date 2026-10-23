@@ -277,7 +277,7 @@ def run_mapie_crosscheck() -> None:
               f"{ok['abs_coverage_diff'].max():.6f}")
 
 
-def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
+def evaluate_run_extended_diagnostics(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
     run_dir = RESULTS_DIR / run_id
     if not run_dir.exists():
@@ -305,7 +305,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
             m_rec = df_m.to_dict("records") if df_m is not None else []
             return df_c.to_dict("records"), df_cf.to_dict("records"), m_rec
 
-    print(f"Computing Q1 extensions for {run_id}...", flush=True)
+    print(f"Computing extended diagnostics for {run_id}...", flush=True)
     cal_logits = np.load(cal_logits_path)
     cal_labels = np.load(cal_labels_path)
     n_classes = TASKS[task]
@@ -528,7 +528,7 @@ def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.D
     return out_df
 
 
-def generate_q1_figures(
+def generate_extended_figures(
     df_cal_agg: pd.DataFrame,
     df_conf_agg: pd.DataFrame,
     df_maha_agg: pd.DataFrame,
@@ -552,11 +552,11 @@ def generate_q1_figures(
             ax.set_xticks(x)
             ax.set_xticklabels(sub["config"])
             ax.set_ylabel("Calibration Error")
-            ax.set_title("Top-Label vs. Adaptive & Classwise ECE across Architectures (Sentiment D0)")
+            ax.set_title("Top-label, adaptive, and classwise ECE on the sentiment test split (uncalibrated)")
             ax.legend()
             ax.grid(axis="y", alpha=0.3)
             plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "lora_calibration_pathology_diagnostic.png", dpi=200)
+            plt.savefig(FIGURES_DIR / "ece_variants_by_architecture_sentiment.png", dpi=200)
             plt.close(fig)
 
     if not df_conf_agg.empty:
@@ -615,60 +615,67 @@ def generate_q1_figures(
                 m_df = sub_m[sub_m["model"] == m_key].set_index("condition").reindex(conds)
                 ax.bar(x + (idx - 1) * w, m_df["mean_maha_percentile_mean"], width=w, label=m_key)
 
-            ax.axhline(50.0, color="gray", linestyle="--", linewidth=1.2, label="In-Domain Reference Median (50%)")
+            ax.axhline(50.0, color="gray", linestyle="--", linewidth=1.2, label="Calibration-split median (50th percentile)")
             ax.set_xticks(x)
             ax.set_xticklabels(conds, rotation=22, ha="right")
             ax.set_ylabel("Mean Mahalanobis Percentile Rank (0-100)")
-            ax.set_title("Cross-Architecture Representation Distance Shift (Offensive Task, Full-FT)")
+            ax.set_title("Mahalanobis percentile relative to the calibration split (offensive, full fine-tuning)")
             ax.legend()
             ax.grid(axis="y", alpha=0.3)
             plt.tight_layout()
             plt.savefig(FIGURES_DIR / "mahalanobis_representation_shift.png", dpi=200)
             plt.close(fig)
 
-    err_path = TABLES_DIR / "error_analysis_sample_sentiment.csv"
-    if err_path.exists():
+    from sklearn.metrics import cohen_kappa_score
+
+    for task in TASKS.keys():
+        err_path = TABLES_DIR / f"error_analysis_sample_{task}.csv"
+        if not err_path.exists():
+            continue
         err_df = pd.read_csv(err_path)
-        if "adjudicated_category" in err_df.columns and err_df["adjudicated_category"].notna().any():
-            counts = err_df["adjudicated_category"].astype(str).str.strip().value_counts().sort_values(ascending=True)
-            fig, ax = plt.subplots(figsize=(7.5, 4.2))
-            bars = ax.barh(counts.index, counts.values, color="#2b5c8f", edgecolor="black", alpha=0.85)
-            ax.set_xlabel("Number of Adjudicated Error Instances (N = 117)")
-            ax.set_title("Human-Adjudicated Error Taxonomy (Sentiment Task, kappa = 0.2829)")
-            for bar in bars:
-                w_val = bar.get_width()
-                ax.text(w_val + 0.6, bar.get_y() + bar.get_height() / 2, f"{int(w_val)} ({w_val/len(err_df)*100:.1f}%)", va="center")
-            ax.set_xlim(0, max(counts.values) * 1.22)
-            ax.grid(axis="x", alpha=0.3)
-            plt.tight_layout()
-            plt.savefig(FIGURES_DIR / "human_adjudicated_error_taxonomy_sentiment.png", dpi=200)
-            plt.close(fig)
+        if "adjudicated_category" not in err_df.columns or not err_df["adjudicated_category"].notna().any():
+            continue
+        kappa = cohen_kappa_score(err_df["annotator_1_category"].astype(str), err_df["annotator_2_category"].astype(str))
+        counts = err_df["adjudicated_category"].astype(str).str.strip().value_counts().sort_values(ascending=True)
+        fig, ax = plt.subplots(figsize=(7.5, 4.2))
+        bars = ax.barh(counts.index, counts.values, color="#2b5c8f", edgecolor="black", alpha=0.85)
+        ax.set_xlabel(f"Adjudicated error instances (N = {len(err_df)})")
+        ax.set_title(f"Adjudicated error categories, {task} (inter-annotator Cohen's kappa = {kappa:.3f})")
+        for bar in bars:
+            w_val = bar.get_width()
+            ax.text(w_val + 0.6, bar.get_y() + bar.get_height() / 2,
+                    f"{int(w_val)} ({w_val / len(err_df) * 100:.1f}%)", va="center")
+        ax.set_xlim(0, max(counts.values) * 1.22)
+        ax.grid(axis="x", alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(FIGURES_DIR / f"error_taxonomy_{task}.png", dpi=200)
+        plt.close(fig)
 
-    print(f"[OK] Saved Q1 extension figures to {FIGURES_DIR}")
+    print(f"[OK] Saved extended diagnostic figures to {FIGURES_DIR}")
 
 
-def write_q1_markdown_report(
+def write_extended_report(
     df_cal_agg: pd.DataFrame,
     df_conf_agg: pd.DataFrame,
     df_maha_agg: pd.DataFrame,
     df_corr: pd.DataFrame,
 ) -> None:
     report_path = TABLES_DIR / "EXTENDED_DIAGNOSTICS_REPORT.md"
-    lines = ["# Q1 Methodological & Analytical Extensions Summary\n"]
+    lines = ["# Extended Calibration, Conformal, and Representation Diagnostics\n"]
 
     if not df_corr.empty:
-        lines.append("## 1. Mechanistic Shift-to-Miscalibration Correlations (Part D.2 & H)\n")
+        lines.append("## 1. Correlation of Shift Statistics with Miscalibration\n")
         lines.append(df_to_markdown(df_corr))
         lines.append("\n")
 
     mapie_path = TABLES_DIR / "conformal_mapie_crosscheck.csv"
     if mapie_path.exists():
-        lines.append("## 2. MAPIE Conformal Verification Cross-Check (Part I.3)\n")
+        lines.append("## 2. Split-Conformal Cross-Check Against MAPIE\n")
         lines.append(df_to_markdown(pd.read_csv(mapie_path)))
         lines.append("\n")
 
     if not df_cal_agg.empty:
-        lines.append("## 3. Extended Calibration Metrics (Adaptive ECE, Classwise ECE, Overconfidence)\n")
+        lines.append("## 3. Extended Calibration Metrics (Adaptive ECE, Classwise ECE, Over/Under-Confidence)\n")
         cols = [
             "task", "model", "ft_method", "condition", "calibration_regime",
             "nll_mean", "top_label_ece_15_mean", "adaptive_ece_15_mean",
@@ -679,7 +686,7 @@ def write_q1_markdown_report(
         lines.append("\n")
 
     if not df_conf_agg.empty:
-        lines.append("## 4. Advanced Conformal Prediction (LAC vs. APS vs. RAPS & Class-Conditional Gap)\n")
+        lines.append("## 4. Conformal Score Functions (LAC, APS, RAPS) and Class-Conditional Coverage\n")
         cols = [
             "task", "model", "ft_method", "condition", "calibration_regime", "conformal_method",
             "empirical_coverage_mean", "avg_set_size_mean", "singleton_rate_mean",
@@ -691,7 +698,7 @@ def write_q1_markdown_report(
         lines.append("\n")
 
     if not df_maha_agg.empty:
-        lines.append("## 5. Cross-Model Mahalanobis Percentile Ranks (Part I.6)\n")
+        lines.append("## 5. Mahalanobis Distance Percentiles Relative to the Calibration Split\n")
         cols = [
             "task", "model", "ft_method", "condition",
             "mean_maha_percentile_mean", "median_maha_percentile_mean",
@@ -703,11 +710,11 @@ def write_q1_markdown_report(
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print(f"[OK] Saved Q1 Markdown summary report to {report_path}")
+    print(f"[OK] Saved extended diagnostics report to {report_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Q1 calibration, conformal, and representation extensions.")
+    parser = argparse.ArgumentParser(description="Extended calibration, conformal, and representation diagnostics for all runs.")
     parser.add_argument("--force", action="store_true", help="Recompute even if per-run caches exist.")
     args = parser.parse_args()
 
@@ -716,7 +723,7 @@ def main():
 
     all_cal, all_conf, all_maha = [], [], []
     for task, model_key, ft_method, seed in itertools.product(TASKS.keys(), MODELS.keys(), FT_METHODS, SEEDS):
-        c_rec, cf_rec, m_rec = evaluate_run_q1_extensions(task, model_key, ft_method, seed, force=args.force)
+        c_rec, cf_rec, m_rec = evaluate_run_extended_diagnostics(task, model_key, ft_method, seed, force=args.force)
         all_cal.extend(c_rec)
         all_conf.extend(cf_rec)
         all_maha.extend(m_rec)
@@ -770,9 +777,9 @@ def main():
         df_maha_agg.to_csv(TABLES_DIR / "mahalanobis_percentile_aggregated.csv", index=False)
 
     df_corr = compute_mechanistic_correlations(df_cal_agg, df_maha_agg)
-    generate_q1_figures(df_cal_agg, df_conf_agg, df_maha_agg)
-    write_q1_markdown_report(df_cal_agg, df_conf_agg, df_maha_agg, df_corr)
-    print("\n[ALL DONE] Pre-emptive patches and Q1 extensions completed successfully!")
+    generate_extended_figures(df_cal_agg, df_conf_agg, df_maha_agg)
+    write_extended_report(df_cal_agg, df_conf_agg, df_maha_agg, df_corr)
+    print("[DONE] Extended diagnostics complete.")
 
 
 if __name__ == "__main__":

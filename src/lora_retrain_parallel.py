@@ -1,11 +1,11 @@
 """
-Kaggle launcher for retraining the 30 LoRA runs with the selected settings
-in src.config.LORA_TRAINING (Phase 2.2). One src.train worker per T4 GPU.
+Retrains the 30 LoRA runs with the validation-selected settings in
+src.config.LORA_TRAINING, one src.train worker per GPU, split into two shards.
 
-    python -m src.run_lora_retrain_kaggle --account A
-    python -m src.run_lora_retrain_kaggle --account B
+    python -m src.lora_retrain_parallel --shard 0 --zip_dir /path/to/output
+    python -m src.lora_retrain_parallel --shard 1 --zip_dir /path/to/output
 
-Outputs one zip per (task, model) in --zip_dir, each holding the five seed
+Writes one zip per (task, model) to --zip_dir, each holding the five seed
 folders exactly as src/train.py writes them under results/.
 """
 
@@ -22,11 +22,11 @@ from pathlib import Path
 from src.config import RESULTS_DIR, SEEDS
 
 PLAN = {
-    "A": {
+    "0": {
         "0": [("offensive", "banglabert")],
         "1": [("offensive", "indicbert")],
     },
-    "B": {
+    "1": {
         "0": [("offensive", "xlmr_base")],
         "1": [("sentiment", "banglabert"), ("sentiment", "indicbert"), ("sentiment", "xlmr_base")],
     },
@@ -36,25 +36,25 @@ KEEP = ("=====", "[SKIP]", "[COLLAPSE]", "Saved ", "Traceback", "[LoRA pre-fligh
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--account", choices=["A", "B"], required=True)
-    p.add_argument("--zip_dir", default="/kaggle/working")
+    p.add_argument("--shard", choices=["0", "1"], required=True)
+    p.add_argument("--zip_dir", default=".")
     a = p.parse_args()
     log_dir = RESULTS_DIR / "lora_retrain_logs"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Stale per-run caches (e.g. representation_distance.csv) from the old LoRA
     # runs would otherwise be reused by src/evaluate.py.
-    for configs in PLAN[a.account].values():
+    for configs in PLAN[a.shard].values():
         for task, model in configs:
             for seed in SEEDS:
                 shutil.rmtree(RESULTS_DIR / f"{task}_{model}_lora_seed{seed}", ignore_errors=True)
 
     procs = []
-    for gpu, configs in PLAN[a.account].items():
+    for gpu, configs in PLAN[a.shard].items():
         env = os.environ.copy()
         env["CUDA_VISIBLE_DEVICES"] = gpu
         env["TOKENIZERS_PARALLELISM"] = "false"
-        log_path = log_dir / f"retrain_{a.account}_gpu{gpu}.txt"
+        log_path = log_dir / f"retrain_shard{a.shard}_gpu{gpu}.txt"
         log = open(log_path, "w", encoding="utf-8")
         cmd = [sys.executable, "-u", "-m", "src.train",
                "--tasks", *sorted({t for t, _ in configs}),
@@ -81,10 +81,10 @@ def main() -> None:
         log.close()
         print(f"[EXIT] GPU {gpu}: return code {pr.returncode}", flush=True)
 
-    print("\n" + "=" * 25 + f" RETRAIN SUMMARY (account {a.account}) " + "=" * 25)
+    print("\n" + "=" * 25 + f" RETRAIN SUMMARY (shard {a.shard}) " + "=" * 25)
     print(f"{'run_id':42s} {'lr':>8s} {'warmup':>6s} {'val_f1':>7s} {'classes':>7s} {'files':>5s}")
     zip_dir = Path(a.zip_dir)
-    for configs in PLAN[a.account].values():
+    for configs in PLAN[a.shard].values():
         for task, model in configs:
             group = []
             for seed in SEEDS:

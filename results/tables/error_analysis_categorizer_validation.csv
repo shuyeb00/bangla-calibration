@@ -1,4 +1,4 @@
-task,category,support_gold,precision,recall,f1_score,overall_ai_kappa,overall_macro_f1,clears_k3_validation_bar
+task,category,support_gold,precision,recall,f1_score,overall_ai_kappa,overall_macro_f1,meets_validation_threshold
 sentiment,dialect-specific word,7,0.4286,0.4286,0.4286,0.6065,0.5512,False
 sentiment,heavy code-mixing,39,0.9512,1.0,0.975,0.6065,0.5512,False
 sentiment,negation,17,0.7895,0.8824,0.8333,0.6065,0.5512,False

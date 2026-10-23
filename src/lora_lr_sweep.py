@@ -1,30 +1,28 @@
 """
-LoRA learning-rate sweep (Phase 2.1).
+LoRA learning-rate sweep.
 
-Why this exists
----------------
-The original grid trained LoRA with the full fine-tuning learning rate (2e-5).
-At that rate several LoRA runs underfit (train accuracy ~= test accuracy) and
-IndicBERT + LoRA on sentiment collapsed to a single predicted class.
+At the full fine-tuning learning rate (2e-5) LoRA runs underfit, with training
+accuracy close to test accuracy, and IndicBERT + LoRA on sentiment collapsed to
+a single predicted class. LoRA optimisation settings are therefore selected
+separately on the validation split.
 
-Protocol (leakage-free)
------------------------
+Protocol
+--------
 * Seed 42 only, every other hyperparameter identical to src/train.py.
-* Stage v1: learning rates 1e-4, 2e-4, 5e-4, 1e-3 with no warmup.
-* Stage v2: the same rates plus 2e-3 with 10% linear warmup, and 2e-3 without
-  warmup where v1 peaked at the grid edge (several v1 runs diverged to a
-  single predicted class at high LR, a typical no-warmup instability).
+* Base grid: learning rates 1e-4, 2e-4, 5e-4, 1e-3 with no warmup.
+* Warmup grid: the same rates plus 2e-3 with 10% linear warmup, and 2e-3 without
+  warmup where the base grid peaked at its largest rate.
 * Selection metric: best per-epoch VALIDATION macro-F1 (the same metric that
   load_best_model_at_end uses in src/train.py). Ties go to the smaller LR,
-  then to no warmup.
-* The cal / test / shift splits are never touched here.
+  then to no warmup (final selection: src/select_lora_hparams.py).
+* The calibration, test, and shift splits are never used here.
 
 Usage
 -----
 python -m src.lora_lr_sweep --jobs sentiment:banglabert:1e-4 sentiment:banglabert:2e-4 \
     --out results/lora_lr_sweep/sweep_gpu0.csv
 
-Each finished job is appended to the CSV immediately, so a Kaggle timeout
+Each finished job is appended to the CSV immediately, so an interrupted session
 never loses completed work, and finished jobs are skipped on a re-run.
 """
 
