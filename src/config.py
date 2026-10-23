@@ -42,13 +42,14 @@ HUB_CHECKPOINT_REPO = "bangla-calibration/encoder-checkpoints"
 HUB_OUTPUT_REPO = "bangla-calibration/run-outputs"
 
 # Per-(task, model) LoRA optimisation settings selected on validation macro-F1
-# (seed 42) by src/select_lora_hparams.py; see results/lora_lr_sweep/.
+# (seed 42) by src/select_lora_hparams.py; see results/lora_lr_sweep/. IndicBERT was
+# re-selected on pretraining_matched inputs: results/lora_lr_sweep_pretraining_matched/.
 LORA_TRAINING = {
     ("offensive", "banglabert"): {"learning_rate": 5e-4, "warmup_ratio": 0.0},
-    ("offensive", "indicbert"): {"learning_rate": 1e-4, "warmup_ratio": 0.0},
+    ("offensive", "indicbert"): {"learning_rate": 1e-3, "warmup_ratio": 0.1},
     ("offensive", "xlmr_base"): {"learning_rate": 2e-4, "warmup_ratio": 0.0},
     ("sentiment", "banglabert"): {"learning_rate": 1e-3, "warmup_ratio": 0.0},
-    ("sentiment", "indicbert"): {"learning_rate": 1e-4, "warmup_ratio": 0.0},
+    ("sentiment", "indicbert"): {"learning_rate": 5e-4, "warmup_ratio": 0.0},
     ("sentiment", "xlmr_base"): {"learning_rate": 5e-4, "warmup_ratio": 0.1},
 }
 
