@@ -1,0 +1,2 @@
+model,n_vocab,uniform_nll,mlm_head_loaded,n_bangla_combining_marks,median_output_bias_bangla_combining_marks,median_embedding_norm_bangla_combining_marks,n_bangla_vowel_marks_only,median_output_bias_bangla_vowel_marks_only,median_embedding_norm_bangla_vowel_marks_only,n_bangla_mark_free,median_output_bias_bangla_mark_free,median_embedding_norm_bangla_mark_free,n_non_bangla,median_output_bias_non_bangla,median_embedding_norm_non_bangla
+indicbert,200000,12.206073,True,9375,-1.902747,1.098906,1828,-1.033538,1.578017,9783,-1.004317,1.545099,179014,-1.368394,1.345191
