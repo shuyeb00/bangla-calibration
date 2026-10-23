@@ -57,7 +57,8 @@ def load_cache(run_dir: Path, name: str, fingerprint: Optional[str] = None,
 
 def save_cache(run_dir: Path, name: str, df: pd.DataFrame, fingerprint: Optional[str] = None,
                version: Optional[str] = None) -> None:
-    df.to_csv(run_dir / name, index=False)
+    # %.17g round-trips float64 exactly, so cached and freshly computed results are bit-identical.
+    df.to_csv(run_dir / name, index=False, float_format="%.17g")
     manifest = _read_manifest(run_dir)
     manifest[name] = _key(fingerprint or run_fingerprint(run_dir), version)
     (run_dir / MANIFEST).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
