@@ -167,6 +167,7 @@ def lexical_statistics(task: str, sets: dict) -> list:
             "p95_char_length": float(np.percentile(char_lengths, 95)),
             "median_word_count": float(np.median(word_counts)),
             **letter_composition(items),
+            "replacement_char_item_rate": float(np.mean(["�" in t for t in items])),
         })
     return rows
 
