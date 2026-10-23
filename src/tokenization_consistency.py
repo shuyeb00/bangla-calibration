@@ -7,7 +7,7 @@ compare  aligns two exports item by item and classifies every difference
     python -m src.tokenization_consistency export --output ids_laptop.npz
     python -m src.tokenization_consistency compare ids_laptop.npz ids_kaggle.npz
 
-The comparison table is written to results/tables/tokenization_consistency.csv.
+The comparison table is written to results/tables/tokenization_consistency_<input pipeline>.csv.
 """
 
 import argparse
@@ -115,7 +115,8 @@ def compare(reference: Path, other: Path, output_dir: Path, show_other: int = 0,
         print(f"WARNING: {len(missing)} sets present in only one export, e.g. {missing[:3]}")
     table = pd.DataFrame(rows)
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / "tokenization_consistency.csv"
+    pipeline = ref_meta.get("input_pipeline", "autotokenizer_default")
+    path = output_dir / f"tokenization_consistency_{pipeline}.csv"
     table.to_csv(path, index=False, float_format="%.6f", lineterminator="\n")
     print(f"Wrote {path} ({len(table)} rows)")
     for model_key in ref_meta["models"]:
