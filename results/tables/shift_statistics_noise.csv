@@ -1,0 +1,7 @@
+task,evaluation_set,nominal_rate,n_items,selected_position_rate,char_edit_rate_micro,char_edit_rate_macro,word_error_rate_micro,unchanged_item_rate,mean_length_change
+sentiment,shift_d3_noise05,0.050000,1360,0.044275,0.035580,0.033989,0.175004,0.044853,0.030147
+sentiment,shift_d3_noise10,0.100000,1360,0.094396,0.073402,0.071825,0.330483,0.005147,-0.061029
+sentiment,shift_d3_noise20,0.200000,1360,0.195001,0.148247,0.146873,0.568334,0.000735,-0.016912
+offensive,shift_d3_noise05,0.050000,4722,0.045529,0.036388,0.038131,0.187809,0.092122,0.036002
+offensive,shift_d3_noise10,0.100000,4722,0.094263,0.074030,0.071328,0.350172,0.036213,-0.040873
+offensive,shift_d3_noise20,0.200000,4722,0.194630,0.148806,0.146030,0.593905,0.005083,0.027742
