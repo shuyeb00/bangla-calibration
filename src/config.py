@@ -32,6 +32,17 @@ TRAIN_HYPERPARAMS = {
     "max_length": 128,
 }
 
+# Per-(task, model) LoRA optimisation settings selected on validation macro-F1
+# (seed 42) by src/select_lora_hparams.py; see results/lora_lr_sweep/.
+LORA_TRAINING = {
+    ("offensive", "banglabert"): {"learning_rate": 5e-4, "warmup_ratio": 0.0},
+    ("offensive", "indicbert"): {"learning_rate": 1e-4, "warmup_ratio": 0.0},
+    ("offensive", "xlmr_base"): {"learning_rate": 2e-4, "warmup_ratio": 0.0},
+    ("sentiment", "banglabert"): {"learning_rate": 1e-3, "warmup_ratio": 0.0},
+    ("sentiment", "indicbert"): {"learning_rate": 1e-4, "warmup_ratio": 0.0},
+    ("sentiment", "xlmr_base"): {"learning_rate": 5e-4, "warmup_ratio": 0.1},
+}
+
 LORA_HYPERPARAMS = {
     "r": 8,
     "lora_alpha": 32,

@@ -1,6 +1,7 @@
 import argparse
 import itertools
 import json
+import math
 import os
 import random
 import shutil
@@ -23,6 +24,7 @@ from transformers import (
 from src.config import (
     FT_METHODS,
     LORA_HYPERPARAMS,
+    LORA_TRAINING,
     MODELS,
     MODELS_DIR,
     RESULTS_DIR,
@@ -215,12 +217,21 @@ def run_single_experiment(
 
     model.to(device)
 
+    learning_rate = TRAIN_HYPERPARAMS["learning_rate"]
+    warmup_ratio = 0.0
+    if ft_method == "lora":
+        learning_rate = LORA_TRAINING[(task, model_key)]["learning_rate"]
+        warmup_ratio = LORA_TRAINING[(task, model_key)]["warmup_ratio"]
+    steps_per_epoch = math.ceil(len(splits["train"]) / TRAIN_HYPERPARAMS["per_device_train_batch_size"])
+    warmup_steps = int(math.ceil(warmup_ratio * steps_per_epoch * TRAIN_HYPERPARAMS["num_train_epochs"]))
+
     training_args = TrainingArguments(
         output_dir=str(model_out_dir),
         eval_strategy="epoch",
         save_strategy="epoch",
         save_total_limit=1,
-        learning_rate=TRAIN_HYPERPARAMS["learning_rate"],
+        learning_rate=learning_rate,
+        warmup_steps=warmup_steps,
         per_device_train_batch_size=TRAIN_HYPERPARAMS["per_device_train_batch_size"],
         per_device_eval_batch_size=TRAIN_HYPERPARAMS["per_device_eval_batch_size"],
         num_train_epochs=TRAIN_HYPERPARAMS["num_train_epochs"],
@@ -243,6 +254,8 @@ def run_single_experiment(
         "num_labels": num_labels,
         "seed": seed,
         "learning_rate": training_args.learning_rate,
+        "warmup_ratio": warmup_ratio,
+        "warmup_steps": warmup_steps,
         "batch_size": training_args.per_device_train_batch_size,
         "num_epochs": training_args.num_train_epochs,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -278,8 +291,14 @@ def run_single_experiment(
     train_result = trainer.train()
     eval_metrics = trainer.evaluate(val_ds)
 
+    val_pred = trainer.predict(val_ds)
+    val_logits = val_pred.predictions[0] if isinstance(val_pred.predictions, tuple) else val_pred.predictions
+    val_n_pred_classes = int(len(np.unique(np.argmax(val_logits, axis=-1))))
+
     train_metrics_payload = {
         "train_runtime": train_result.metrics.get("train_runtime"),
+        "val_n_pred_classes": val_n_pred_classes,
+        "collapsed": val_n_pred_classes <= 1,
         "train_loss": train_result.metrics.get("train_loss"),
         "val_accuracy": eval_metrics.get("eval_accuracy"),
         "val_f1": eval_metrics.get("eval_f1"),
@@ -287,6 +306,8 @@ def run_single_experiment(
     }
     with open(run_dir / "train_metrics.json", "w", encoding="utf-8") as f:
         json.dump(train_metrics_payload, f, indent=2)
+    if val_n_pred_classes <= 1:
+        print(f"  [COLLAPSE] {run_id} predicts a single class on validation.", flush=True)
 
     save_split_outputs(trainer, model, tokenizer, splits["val"], "val", run_dir, device, save_hidden=False)
     for split_name in ["train", "cal", "test"]:
