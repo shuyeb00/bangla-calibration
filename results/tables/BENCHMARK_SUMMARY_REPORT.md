@@ -1,6 +1,6 @@
-# Thesis Master Results Summary (60-Run Full Grid)
+# Benchmark Results (3 Encoders x 2 Fine-Tuning Regimes x 2 Tasks x 5 Seeds)
 
-## 1. Shift Quantification (Part D.2)
+## 1. Shift Quantification
 
 | task | condition | n_samples | vocab_jaccard_overlap | subword_fragmentation | non_bangla_char_ratio | median_char_length | std_char_length |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -236,7 +236,7 @@
 | xlmr_base | lora | test | uncalibrated | 0.9057 | 0.9056 | 0.2611 | 0.0067 | 0.0418 | 0.148 | 0.022 | 0.9057 | 1.0 |
 
 
-## 3. Importance-Weighted Conformal Prediction (Part I.7)
+## 3. Importance-Weighted Conformal Prediction
 
 | task | model | ft_method | condition | weighted_coverage | weighted_avg_set_size | effective_sample_size |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -314,7 +314,7 @@
 | sentiment | xlmr_base | lora | shift_d3_noise20 | 0.9957 | 2.9315 | 43.4973 |
 
 
-## 4. Representation Distance Misclassification Detection (Part I.6)
+## 4. Misclassification Detection from Representation Distance
 
 | task | model | ft_method | condition | predictor | auroc | auprc |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -656,7 +656,7 @@
 | sentiment | xlmr_base | lora | test | maha_plus_confidence | 0.7441 | 0.5378 |
 
 
-## 5. Statistical Significance Summary (Part J — Holm-Corrected)
+## 5. Statistical Significance (Holm-Corrected)
 
 | task | model | ft_method | comparison | metric | endpoint_family | mean_diff | median_raw_p | median_holm_p | seeds_sig_05 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

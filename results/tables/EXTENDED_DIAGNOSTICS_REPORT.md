@@ -1,6 +1,6 @@
-# Q1 Methodological & Analytical Extensions Summary
+# Extended Calibration, Conformal, and Representation Diagnostics
 
-## 1. Mechanistic Shift-to-Miscalibration Correlations (Part D.2 & H)
+## 1. Correlation of Shift Statistics with Miscalibration
 
 | task | model | ft_method | n_conditions | spearman_frag_vs_nll | p_value_frag_vs_nll_exact | pearson_frag_vs_nll | spearman_jaccard_vs_nll | spearman_frag_vs_classwise_ece | spearman_frag_vs_overconfidence | spearman_maha_pct_vs_nll |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -18,7 +18,7 @@
 | sentiment | xlmr_base | lora | 6 | 0.8286 | 0.0583 | 0.8199 | -1.0 | 0.6 | 0.7714 | -0.0857 |
 
 
-## 2. MAPIE Conformal Verification Cross-Check (Part I.3)
+## 2. Split-Conformal Cross-Check Against MAPIE
 
 | run_id | task | model | ft_method | seed | ours_coverage | ours_set_size | ours_mapie_rule_coverage | ours_mapie_rule_set_size | mapie_version | mapie_coverage | mapie_set_size | status | abs_coverage_diff | abs_set_size_diff | abs_coverage_diff_same_rule | abs_set_size_diff_same_rule |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -84,7 +84,7 @@
 | offensive_xlmr_base_lora_seed99 | offensive | xlmr_base | lora | 99 | 0.9080897924608216 | 1.0 | 0.9080897924608216 | 1.0 | 1.1.0 | 0.9080897924608216 | 1.0 | ok | 0.0 | 0.0 | 0.0 | 0.0 |
 
 
-## 3. Extended Calibration Metrics (Adaptive ECE, Classwise ECE, Overconfidence)
+## 3. Extended Calibration Metrics (Adaptive ECE, Classwise ECE, Over/Under-Confidence)
 
 | task | model | ft_method | condition | calibration_regime | nll_mean | top_label_ece_15_mean | adaptive_ece_15_mean | classwise_ece_15_mean | overconfidence_ece_15_mean | underconfidence_ece_15_mean |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -294,7 +294,7 @@
 | sentiment | xlmr_base | lora | test | uncalibrated | 0.7508 | 0.0529 | 0.056 | 0.0563 | 0.0478 | 0.0051 |
 
 
-## 4. Advanced Conformal Prediction (LAC vs. APS vs. RAPS & Class-Conditional Gap)
+## 4. Conformal Score Functions (LAC, APS, RAPS) and Class-Conditional Coverage
 
 | task | model | ft_method | condition | calibration_regime | conformal_method | empirical_coverage_mean | avg_set_size_mean | singleton_rate_mean | trivial_set_rate_mean | worst_class_coverage_mean | class_coverage_gap_mean |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -552,7 +552,7 @@
 | sentiment | xlmr_base | lora | test | source_temp_scaled | raps | 0.9038 | 1.9253 | 0.2275 | 0.1528 | 0.8684 | 0.0417 |
 
 
-## 5. Cross-Model Mahalanobis Percentile Ranks (Part I.6)
+## 5. Mahalanobis Distance Percentiles Relative to the Calibration Split
 
 | task | model | ft_method | condition | mean_maha_percentile_mean | median_maha_percentile_mean | frac_above_95th_ref_pct_mean | maha_error_gap_pct_mean | spearman_maha_nll_rho_mean |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
