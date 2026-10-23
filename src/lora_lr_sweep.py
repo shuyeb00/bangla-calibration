@@ -10,9 +10,13 @@ IndicBERT + LoRA on sentiment collapsed to a single predicted class.
 Protocol (leakage-free)
 -----------------------
 * Seed 42 only, every other hyperparameter identical to src/train.py.
-* Candidate learning rates: 1e-4, 2e-4, 5e-4, 1e-3.
+* Stage v1: learning rates 1e-4, 2e-4, 5e-4, 1e-3 with no warmup.
+* Stage v2: the same rates plus 2e-3 with 10% linear warmup, and 2e-3 without
+  warmup where v1 peaked at the grid edge (several v1 runs diverged to a
+  single predicted class at high LR, a typical no-warmup instability).
 * Selection metric: best per-epoch VALIDATION macro-F1 (the same metric that
-  load_best_model_at_end uses in src/train.py). Ties go to the smaller LR.
+  load_best_model_at_end uses in src/train.py). Ties go to the smaller LR,
+  then to no warmup.
 * The cal / test / shift splits are never touched here.
 
 Usage
@@ -27,6 +31,7 @@ never loses completed work, and finished jobs are skipped on a re-run.
 import argparse
 import csv
 import gc
+import math
 import os
 import shutil
 import tempfile
@@ -50,7 +55,7 @@ from src.train import load_task_splits, set_seed
 
 SWEEP_SEED = 42
 FIELDS = [
-    "task", "model", "learning_rate", "seed", "status",
+    "task", "model", "learning_rate", "warmup_ratio", "seed", "status",
     "best_val_macro_f1", "best_epoch", "val_acc_at_best",
     "n_pred_classes_at_best", "final_train_loss", "val_f1_per_epoch",
     "runtime_min", "error",
@@ -74,7 +79,7 @@ def done_jobs(out_path: Path) -> set:
         return set()
     with open(out_path, newline="", encoding="utf-8") as f:
         return {
-            (r["task"], r["model"], r["learning_rate"])
+            (r["task"], r["model"], r["learning_rate"], r.get("warmup_ratio") or "0")
             for r in csv.DictReader(f)
             if r["status"] == "ok"
         }
@@ -89,7 +94,7 @@ def append_row(out_path: Path, row: dict) -> None:
         w.writerow({k: row.get(k, "") for k in FIELDS})
 
 
-def run_job(task: str, model_key: str, lr: float, max_train_rows: int = 0) -> dict:
+def run_job(task: str, model_key: str, lr: float, warmup: float = 0.0, max_train_rows: int = 0) -> dict:
     set_seed(SWEEP_SEED)
     t0 = time.time()
     splits = load_task_splits(task)
@@ -122,12 +127,18 @@ def run_job(task: str, model_key: str, lr: float, max_train_rows: int = 0) -> di
     train_ds = Dataset.from_pandas(train_df[["text_clean", "labels"]], preserve_index=False).map(tok, batched=True)
     val_ds = Dataset.from_pandas(val_df[["text_clean", "labels"]], preserve_index=False).map(tok, batched=True)
 
+    # warmup_ratio was removed in recent transformers; pass the equivalent step count.
+    bs = TRAIN_HYPERPARAMS["per_device_train_batch_size"]
+    total_steps = math.ceil(len(train_ds) / bs) * TRAIN_HYPERPARAMS["num_train_epochs"]
+    warmup_steps = int(math.ceil(warmup * total_steps))
+
     tmp_dir = tempfile.mkdtemp(prefix="lrsweep_")
     args = TrainingArguments(
         output_dir=tmp_dir,
         eval_strategy="epoch",
         save_strategy="no",
         learning_rate=lr,
+        warmup_steps=warmup_steps,
         per_device_train_batch_size=TRAIN_HYPERPARAMS["per_device_train_batch_size"],
         per_device_eval_batch_size=TRAIN_HYPERPARAMS["per_device_eval_batch_size"],
         num_train_epochs=TRAIN_HYPERPARAMS["num_train_epochs"],
@@ -149,6 +160,7 @@ def run_job(task: str, model_key: str, lr: float, max_train_rows: int = 0) -> di
         "task": task,
         "model": model_key,
         "learning_rate": f"{lr:g}",
+        "warmup_ratio": f"{warmup:g}",
         "seed": SWEEP_SEED,
         "status": "ok",
         "best_val_macro_f1": round(f1s[best_i], 4),
@@ -169,7 +181,7 @@ def run_job(task: str, model_key: str, lr: float, max_train_rows: int = 0) -> di
 
 def main() -> None:
     p = argparse.ArgumentParser(description="LoRA learning-rate sweep on validation macro-F1.")
-    p.add_argument("--jobs", nargs="+", required=True, help="task:model:lr, e.g. sentiment:indicbert:2e-4")
+    p.add_argument("--jobs", nargs="+", required=True, help="task:model:lr[:warmup_ratio], e.g. sentiment:indicbert:2e-4:0.1")
     p.add_argument("--out", required=True)
     p.add_argument("--max_train_rows", type=int, default=0, help="Dry-run only: truncate train/val.")
     a = p.parse_args()
@@ -179,19 +191,21 @@ def main() -> None:
     finished = done_jobs(out_path)
 
     for job in a.jobs:
-        task, model_key, lr_str = job.split(":")
-        lr = float(lr_str)
-        if (task, model_key, f"{lr:g}") in finished:
+        parts = job.split(":")
+        task, model_key, lr = parts[0], parts[1], float(parts[2])
+        warmup = float(parts[3]) if len(parts) > 3 else 0.0
+        if (task, model_key, f"{lr:g}", f"{warmup:g}") in finished:
             print(f"[SKIP] {job} already in {out_path.name}", flush=True)
             continue
         print(f"\n===== [GPU {os.environ.get('CUDA_VISIBLE_DEVICES', 'cpu')}] {job} =====", flush=True)
         try:
-            row = run_job(task, model_key, lr, a.max_train_rows)
+            row = run_job(task, model_key, lr, warmup, a.max_train_rows)
             print(f"[DONE] {job}: best val macro-F1 {row['best_val_macro_f1']} "
                   f"(epoch {row['best_epoch']}, {row['n_pred_classes_at_best']} pred classes, "
                   f"{row['runtime_min']} min)", flush=True)
         except Exception as e:  # keep going: one failed LR must not kill the queue
-            row = {"task": task, "model": model_key, "learning_rate": f"{lr:g}", "seed": SWEEP_SEED,
+            row = {"task": task, "model": model_key, "learning_rate": f"{lr:g}",
+                   "warmup_ratio": f"{warmup:g}", "seed": SWEEP_SEED,
                    "status": "error", "error": repr(e)[:300]}
             print(f"[ERROR] {job}: {e!r}", flush=True)
             if torch.cuda.is_available():
