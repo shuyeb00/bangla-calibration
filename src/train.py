@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import itertools
 import json
 import math
@@ -242,7 +243,9 @@ def run_single_experiment(
         report_to="none",
         seed=seed,
         fp16=torch.cuda.is_available(),
-        save_safetensors=False,
+        # Older transformers needed this for tied ELECTRA/ALBERT weights; removed in v5.
+        **({"save_safetensors": False}
+           if "save_safetensors" in inspect.signature(TrainingArguments.__init__).parameters else {}),
     )
 
     config_payload = {
