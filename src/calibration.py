@@ -76,7 +76,8 @@ def risk_coverage_curve(probs: np.ndarray, labels: np.ndarray):
     confidences = np.max(probs, axis=1)
     predictions = np.argmax(probs, axis=1)
     correct = (predictions == labels).astype(float)
-    order = np.argsort(-confidences)
+    # Stable sort: many confidences tie at saturation, and an unstable order makes AURC machine-dependent.
+    order = np.argsort(-confidences, kind="stable")
     sorted_correct = correct[order]
     n = len(labels)
     coverages = np.arange(1, n + 1) / n

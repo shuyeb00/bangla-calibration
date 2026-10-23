@@ -31,6 +31,7 @@ from src.calibration import (
     risk_coverage_curve,
 )
 from src.config import FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
+from src.run_cache import load_cache, save_cache
 
 
 def compute_all_metrics(
@@ -84,37 +85,6 @@ def mahalanobis_distance(hidden: np.ndarray, class_means: np.ndarray, cov_inv: n
     return np.min(distances, axis=1)
 
 
-def backfill_cached_tables() -> None:
-    tables_dir = RESULTS_DIR / "tables"
-    for fname in [
-        "representation_distance_metrics.csv",
-        "representation_distance_offensive_20.csv",
-    ]:
-        fpath = tables_dir / fname
-        if fpath.exists():
-            try:
-                df_existing = pd.read_csv(fpath)
-                for run_id, grp in df_existing.groupby("run_id"):
-                    run_dir = RESULTS_DIR / str(run_id)
-                    cache_path = run_dir / "representation_distance.csv"
-                    if run_dir.exists() and not cache_path.exists():
-                        grp.to_csv(cache_path, index=False)
-            except Exception as e:
-                print(f"Warning while backfilling {fname}: {e}")
-
-    w_table_path = tables_dir / "weighted_conformal_metrics.csv"
-    if w_table_path.exists():
-        try:
-            df_w = pd.read_csv(w_table_path)
-            for run_id, grp in df_w.groupby("run_id"):
-                run_dir = RESULTS_DIR / str(run_id)
-                cache_path = run_dir / "weighted_conformal.csv"
-                if run_dir.exists() and not cache_path.exists():
-                    grp.to_csv(cache_path, index=False)
-        except Exception as e:
-            print(f"Warning while backfilling weighted conformal cache: {e}")
-
-
 def evaluate_representation_distance(
     run_dir: Path,
     task: str,
@@ -123,11 +93,9 @@ def evaluate_representation_distance(
     seed: int,
     eval_conditions: list,
 ) -> list:
-    cache_path = run_dir / "representation_distance.csv"
-    if cache_path.exists():
-        cached_df = pd.read_csv(cache_path)
-        if set(eval_conditions).issubset(set(cached_df["condition"].unique())):
-            return cached_df.to_dict("records")
+    cached_df = load_cache(run_dir, "representation_distance.csv")
+    if cached_df is not None:
+        return cached_df.to_dict("records")
 
     train_hidden_path = run_dir / "train_hidden.npy"
     train_labels_path = run_dir / "train_labels.npy"
@@ -187,7 +155,7 @@ def evaluate_representation_distance(
             )
 
     if records:
-        pd.DataFrame(records).to_csv(cache_path, index=False)
+        save_cache(run_dir, "representation_distance.csv", pd.DataFrame(records))
     return records
 
 
@@ -216,12 +184,9 @@ def evaluate_weighted_conformal(
     eval_conditions: list,
     alpha: float = 0.10,
 ) -> list:
-    cache_path = run_dir / "weighted_conformal.csv"
-    if cache_path.exists():
-        cached_df = pd.read_csv(cache_path)
-        expected_shift = [c for c in eval_conditions if c != "test"]
-        if set(expected_shift).issubset(set(cached_df["condition"].unique())):
-            return cached_df.to_dict("records")
+    cached_df = load_cache(run_dir, "weighted_conformal.csv")
+    if cached_df is not None:
+        return cached_df.to_dict("records")
 
     cal_logits_path = run_dir / "cal_logits.npy"
     cal_labels_path = run_dir / "cal_labels.npy"
@@ -290,7 +255,7 @@ def evaluate_weighted_conformal(
         )
 
     if records:
-        pd.DataFrame(records).to_csv(cache_path, index=False)
+        save_cache(run_dir, "weighted_conformal.csv", pd.DataFrame(records))
     return records
 
 
@@ -404,8 +369,6 @@ def main():
     parser.add_argument("--ft_methods", nargs="+", default=FT_METHODS, choices=FT_METHODS)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     args = parser.parse_args()
-
-    backfill_cached_tables()
 
     all_metrics, all_rep, all_weighted = [], [], []
     for task, model_key, ft_method, seed in itertools.product(

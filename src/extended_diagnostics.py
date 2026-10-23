@@ -28,109 +28,10 @@ from src.config import (
     SEEDS,
     TASKS,
 )
+from src.run_cache import load_cache, run_fingerprint, save_cache
 
 FIGURES_DIR = BASE_DIR / "thesis" / "figures"
 TABLES_DIR = RESULTS_DIR / "tables"
-
-
-def apply_preemptive_pipeline_patches() -> None:
-    src_dir = BASE_DIR / "src"
-
-    train_path = src_dir / "train.py"
-    if train_path.exists():
-        code = train_path.read_text(encoding="utf-8")
-        old_target = (
-            "def save_split_outputs(\n"
-            "    trainer: Trainer,\n"
-            "    model: torch.nn.Module,\n"
-            "    tokenizer,\n"
-            "    df: pd.DataFrame,\n"
-            "    split_name: str,\n"
-            "    run_dir: Path,\n"
-            "    device: str,\n"
-            "    save_hidden: bool = True,\n"
-            ") -> None:\n"
-            '    max_len = TRAIN_HYPERPARAMS["max_length"]'
-        )
-        new_target = (
-            "def save_split_outputs(\n"
-            "    trainer: Trainer,\n"
-            "    model: torch.nn.Module,\n"
-            "    tokenizer,\n"
-            "    df: pd.DataFrame,\n"
-            "    split_name: str,\n"
-            "    run_dir: Path,\n"
-            "    device: str,\n"
-            "    save_hidden: bool = True,\n"
-            ") -> None:\n"
-            '    logits_out = run_dir / f"{split_name}_logits.npy"\n'
-            '    labels_out = run_dir / f"{split_name}_labels.npy"\n'
-            '    hidden_out = run_dir / f"{split_name}_hidden.npy"\n'
-            "    if logits_out.exists() and labels_out.exists() and (not save_hidden or hidden_out.exists()):\n"
-            '        print(f"  [SKIP SPLIT] {split_name} already exists in {run_dir.name}, preserving frozen outputs.")\n'
-            "        return\n"
-            '    max_len = TRAIN_HYPERPARAMS["max_length"]'
-        )
-        if old_target in code and "[SKIP SPLIT]" not in code:
-            train_path.write_text(code.replace(old_target, new_target), encoding="utf-8")
-            print("[PATCHED] src/train.py -> Frozen split protection enabled for future D1 runs.")
-
-    eval_path = src_dir / "evaluate.py"
-    if eval_path.exists():
-        code = eval_path.read_text(encoding="utf-8")
-        e_old1 = (
-            '    cache_path = run_dir / "representation_distance.csv"\n'
-            "    if cache_path.exists():\n"
-            '        return pd.read_csv(cache_path).to_dict("records")'
-        )
-        e_new1 = (
-            '    cache_path = run_dir / "representation_distance.csv"\n'
-            "    if cache_path.exists():\n"
-            "        cached_df = pd.read_csv(cache_path)\n"
-            '        if set(eval_conditions).issubset(set(cached_df["condition"].unique())):\n'
-            '            return cached_df.to_dict("records")'
-        )
-        e_old2 = (
-            '    cache_path = run_dir / "weighted_conformal.csv"\n'
-            "    if cache_path.exists():\n"
-            '        return pd.read_csv(cache_path).to_dict("records")'
-        )
-        e_new2 = (
-            '    cache_path = run_dir / "weighted_conformal.csv"\n'
-            "    if cache_path.exists():\n"
-            "        cached_df = pd.read_csv(cache_path)\n"
-            '        expected_shift = [c for c in eval_conditions if c != "test"]\n'
-            '        if set(expected_shift).issubset(set(cached_df["condition"].unique())):\n'
-            '            return cached_df.to_dict("records")'
-        )
-        updated = code.replace(e_old1, e_new1).replace(e_old2, e_new2)
-        if updated != code:
-            eval_path.write_text(updated, encoding="utf-8")
-            print("[PATCHED] src/evaluate.py -> Dynamic cache invalidation enabled for new shift conditions.")
-
-    sig_path = src_dir / "significance.py"
-    if sig_path.exists():
-        code = sig_path.read_text(encoding="utf-8")
-        s_old = (
-            '    cache_path = run_dir / "significance_raw.csv"\n'
-            "    if cache_path.exists():\n"
-            '        return pd.read_csv(cache_path).to_dict("records")'
-        )
-        s_new = (
-            '    cache_path = run_dir / "significance_raw.csv"\n'
-            "    expected_comps = {\n"
-            '        f"D0_vs_{f.name[:-len(\'_logits.npy\')]}"\n'
-            '        for f in run_dir.glob("shift_*_logits.npy")\n'
-            '        if not f.name[:-len("_logits.npy")].endswith("_cal")\n'
-            "    }\n"
-            "    if cache_path.exists():\n"
-            "        cached_df = pd.read_csv(cache_path)\n"
-            '        if expected_comps.issubset(set(cached_df["comparison"].unique())):\n'
-            '            return cached_df.to_dict("records")'
-        )
-        if s_old in code and "expected_comps" not in code:
-            sig_path.write_text(code.replace(s_old, s_new), encoding="utf-8")
-            print("[PATCHED] src/significance.py -> Dynamic cache invalidation enabled for new shift conditions.")
 
 
 def df_to_markdown(df: pd.DataFrame) -> str:
@@ -287,71 +188,76 @@ def evaluate_conformal_method(
     }
 
 
+class _PrecomputedProbs:
+    """Index-based stand-in classifier so MAPIE can consume precomputed probabilities."""
+
+    def __init__(self, probs: np.ndarray):
+        self.probs = probs
+        self.classes_ = np.arange(probs.shape[1])
+
+    def __sklearn_is_fitted__(self) -> bool:
+        return True
+
+    def fit(self, X, y):
+        return self
+
+    def predict_proba(self, X):
+        return self.probs[np.asarray(X).ravel().astype(int)]
+
+    def predict(self, X):
+        return self.predict_proba(X).argmax(axis=1)
+
+
 def run_mapie_crosscheck() -> None:
+    """Independent check of our split-conformal (LAC) sets against MAPIE on every run's D0 test split."""
     out_path = TABLES_DIR / "conformal_mapie_crosscheck.csv"
-    records = []
-
     try:
+        import mapie
         from mapie.classification import SplitConformalClassifier
-        mapie_available = True
-    except Exception:
-        mapie_available = False
+    except ImportError:
+        print("[SKIP] MAPIE not installed; conformal cross-check not run (pip install mapie).")
+        return
 
-    for task in TASKS.keys():
-        run_dir = RESULTS_DIR / f"{task}_banglabert_full_ft_seed42"
+    records = []
+    for task, model_key, ft_method, seed in itertools.product(TASKS.keys(), MODELS.keys(), FT_METHODS, SEEDS):
+        run_dir = RESULTS_DIR / f"{task}_{model_key}_{ft_method}_seed{seed}"
         if not (run_dir / "cal_logits.npy").exists() or not (run_dir / "test_logits.npy").exists():
             continue
-
         cal_probs = softmax(np.load(run_dir / "cal_logits.npy"), axis=1)
         cal_labels = np.load(run_dir / "cal_labels.npy")
         test_probs = softmax(np.load(run_dir / "test_logits.npy"), axis=1)
         test_labels = np.load(run_dir / "test_labels.npy")
 
-        q_exact = conformal_calibrate(cal_probs, cal_labels, alpha=0.10)
-        res_exact = evaluate_conformal(test_probs, test_labels, q_exact)
-
-        mapie_cov, mapie_size, status = (
-            res_exact["empirical_coverage"],
-            res_exact["avg_set_size"],
-            "Exact Order-Statistic Verified",
-        )
-        if mapie_available:
-            try:
-                class PrefitProbsWrapper:
-                    def __init__(self, probs_lookup, classes_):
-                        self.probs_lookup = probs_lookup
-                        self.classes_ = classes_
-                    def predict_proba(self, X):
-                        return self.probs_lookup[np.asarray(X).flatten()]
-                    def predict(self, X):
-                        return np.argmax(self.predict_proba(X), axis=1)
-
-                combined_probs = np.vstack([cal_probs, test_probs])
-                wrapper = PrefitProbsWrapper(combined_probs, np.arange(cal_probs.shape[1]))
-                clf = SplitConformalClassifier(estimator=wrapper, confidence_level=0.9, prefit=True)
-                clf.conformalize(np.arange(len(cal_labels)).reshape(-1, 1), cal_labels)
-                _, y_pset = clf.predict_set(np.arange(len(cal_labels), len(combined_probs)).reshape(-1, 1))
-                pset_2d = y_pset[:, :, 0] if y_pset.ndim == 3 else y_pset
-                mapie_cov = float(np.mean(pset_2d[np.arange(len(test_labels)), test_labels]))
-                mapie_size = float(np.mean(pset_2d.sum(axis=1)))
-                status = "MAPIE v1 Cross-Checked"
-            except Exception as e:
-                status = "Exact Order-Statistic Verified (Matches Split Conformal Quantile)"
-
-        records.append({
-            "task": task,
-            "run_id": run_dir.name,
-            "exact_coverage": round(res_exact["empirical_coverage"], 4),
-            "exact_set_size": round(res_exact["avg_set_size"], 4),
-            "mapie_coverage": round(mapie_cov, 4),
-            "mapie_set_size": round(mapie_size, 4),
-            "abs_coverage_diff": round(abs(res_exact["empirical_coverage"] - mapie_cov), 6),
-            "status": status,
-        })
+        ours = evaluate_conformal(test_probs, test_labels, conformal_calibrate(cal_probs, cal_labels, alpha=0.10))
+        row = {"run_id": run_dir.name, "task": task, "model": model_key, "ft_method": ft_method, "seed": seed,
+               "ours_coverage": ours["empirical_coverage"], "ours_set_size": ours["avg_set_size"],
+               "mapie_version": mapie.__version__}
+        try:
+            combined = np.vstack([cal_probs, test_probs])
+            clf = SplitConformalClassifier(estimator=_PrecomputedProbs(combined), confidence_level=0.90,
+                                           conformity_score="lac", prefit=True)
+            clf.conformalize(np.arange(len(cal_labels)).reshape(-1, 1), cal_labels)
+            _, psets = clf.predict_set(np.arange(len(cal_labels), len(combined)).reshape(-1, 1))
+            psets = psets[:, :, 0] if psets.ndim == 3 else psets
+            empty = psets.sum(axis=1) == 0
+            psets[empty, test_probs[empty].argmax(axis=1)] = True
+            row.update({
+                "mapie_coverage": float(psets[np.arange(len(test_labels)), test_labels].mean()),
+                "mapie_set_size": float(psets.sum(axis=1).mean()),
+                "status": "ok",
+            })
+        except Exception as e:
+            row.update({"mapie_coverage": np.nan, "mapie_set_size": np.nan, "status": f"error: {e!r}"[:200]})
+        row["abs_coverage_diff"] = abs(row["ours_coverage"] - row["mapie_coverage"])
+        row["abs_set_size_diff"] = abs(row["ours_set_size"] - row["mapie_set_size"])
+        records.append(row)
 
     if records:
-        pd.DataFrame(records).to_csv(out_path, index=False)
-        print(f"[OK] Saved Part I.3 MAPIE cross-check table to {out_path}")
+        df = pd.DataFrame(records)
+        df.to_csv(out_path, index=False)
+        ok = df[df["status"] == "ok"]
+        print(f"[OK] MAPIE cross-check: {len(ok)}/{len(df)} runs, max |coverage diff| = "
+              f"{ok['abs_coverage_diff'].max():.6f}, max |set size diff| = {ok['abs_set_size_diff'].max():.6f}")
 
 
 def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
@@ -372,19 +278,14 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
             continue
         discovered_conditions.append(prefix)
 
-    cal_cache = run_dir / "extended_calibration.csv"
-    conf_cache = run_dir / "conformal_lac_aps_raps.csv"
-    maha_cache = run_dir / "mahalanobis_percentile.csv"
-
-    if not force and cal_cache.exists() and conf_cache.exists() and maha_cache.exists():
-        try:
-            df_c = pd.read_csv(cal_cache)
-            df_cf = pd.read_csv(conf_cache)
-            df_m = pd.read_csv(maha_cache)
-            if set(df_c["condition"].unique()) == set(discovered_conditions):
-                return df_c.to_dict("records"), df_cf.to_dict("records"), df_m.to_dict("records")
-        except Exception:
-            pass
+    fp = run_fingerprint(run_dir)
+    if not force:
+        df_c = load_cache(run_dir, "extended_calibration.csv", fp)
+        df_cf = load_cache(run_dir, "conformal_lac_aps_raps.csv", fp)
+        if df_c is not None and df_cf is not None:
+            df_m = load_cache(run_dir, "mahalanobis_percentile.csv", fp)
+            m_rec = df_m.to_dict("records") if df_m is not None else []
+            return df_c.to_dict("records"), df_cf.to_dict("records"), m_rec
 
     print(f"Computing Q1 extensions for {run_id}...", flush=True)
     cal_logits = np.load(cal_logits_path)
@@ -468,9 +369,11 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
     maha_records = []
     train_hidden_path = run_dir / "train_hidden.npy"
     train_labels_path = run_dir / "train_labels.npy"
+    maha_reference = "train"
     if not (train_hidden_path.exists() and train_labels_path.exists()):
         train_hidden_path = run_dir / "cal_hidden.npy"
         train_labels_path = run_dir / "cal_labels.npy"
+        maha_reference = "cal"
     if train_hidden_path.exists() and train_labels_path.exists():
         train_hidden = np.load(train_hidden_path)
         train_labels = np.load(train_labels_path)
@@ -514,6 +417,7 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
                 "ft_method": ft_method,
                 "seed": seed,
                 "condition": cond_name,
+                "maha_reference": maha_reference,
                 "mean_raw_maha": float(np.mean(shift_d)),
                 "mean_maha_percentile": float(np.mean(pct_ranks)),
                 "median_maha_percentile": float(np.median(pct_ranks)),
@@ -528,13 +432,33 @@ def evaluate_run_q1_extensions(task: str, model_key: str, ft_method: str, seed: 
             })
 
     if ext_cal_records:
-        pd.DataFrame(ext_cal_records).to_csv(cal_cache, index=False)
+        save_cache(run_dir, "extended_calibration.csv", pd.DataFrame(ext_cal_records), fp)
     if conf_records:
-        pd.DataFrame(conf_records).to_csv(conf_cache, index=False)
+        save_cache(run_dir, "conformal_lac_aps_raps.csv", pd.DataFrame(conf_records), fp)
     if maha_records:
-        pd.DataFrame(maha_records).to_csv(maha_cache, index=False)
+        save_cache(run_dir, "mahalanobis_percentile.csv", pd.DataFrame(maha_records), fp)
 
     return ext_cal_records, conf_records, maha_records
+
+
+def spearman_exact(x, y) -> tuple:
+    """Spearman rho with an exact two-sided permutation p-value for n <= 9 (asymptotic p otherwise)."""
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    rho = float(spearmanr(x, y)[0])
+    n = len(x)
+    if n > 9 or np.isnan(rho):
+        return rho, float(spearmanr(x, y)[1])
+    from itertools import permutations
+    from scipy.stats import rankdata
+    rx, ry = rankdata(x), rankdata(y)
+    rx, ry = rx - rx.mean(), ry - ry.mean()
+    denom = np.sqrt((rx ** 2).sum() * (ry ** 2).sum())
+    hits = total = 0
+    for perm in permutations(range(n)):
+        total += 1
+        if abs(float((rx * ry[list(perm)]).sum() / denom)) >= abs(rho) - 1e-12:
+            hits += 1
+    return rho, hits / total
 
 
 def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.DataFrame) -> pd.DataFrame:
@@ -559,7 +483,7 @@ def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.D
     for (task, model, ft), grp in merged.groupby(["task", "model", "ft_method"]):
         if len(grp) < 4:
             continue
-        rho_frag_nll, p_frag_nll = spearmanr(grp["subword_fragmentation"], grp["nll_mean"])
+        rho_frag_nll, p_frag_nll = spearman_exact(grp["subword_fragmentation"], grp["nll_mean"])
         r_frag_nll, _ = pearsonr(grp["subword_fragmentation"], grp["nll_mean"])
         rho_jac_nll, _ = spearmanr(grp["vocab_jaccard_overlap"], grp["nll_mean"])
         rho_frag_cece, _ = spearmanr(grp["subword_fragmentation"], grp["classwise_ece_15_mean"])
@@ -575,7 +499,7 @@ def compute_mechanistic_correlations(df_cal_agg: pd.DataFrame, df_maha_agg: pd.D
             "ft_method": ft,
             "n_conditions": len(grp),
             "spearman_frag_vs_nll": round(float(rho_frag_nll), 4),
-            "p_value_frag_vs_nll": round(float(p_frag_nll), 4),
+            "p_value_frag_vs_nll_exact": round(float(p_frag_nll), 4),
             "pearson_frag_vs_nll": round(float(r_frag_nll), 4),
             "spearman_jaccard_vs_nll": round(float(rho_jac_nll), 4),
             "spearman_frag_vs_classwise_ece": round(float(rho_frag_cece), 4),
@@ -773,7 +697,6 @@ def main():
     args = parser.parse_args()
 
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
-    apply_preemptive_pipeline_patches()
     run_mapie_crosscheck()
 
     all_cal, all_conf, all_maha = [], [], []

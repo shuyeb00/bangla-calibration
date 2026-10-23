@@ -10,3 +10,8 @@ results/**/*.npy
 results/**/*.bin
 results/**/*.pt
 results/**/*.safetensors
+data/processed/
+data/for_translation/
+results/lora_lr_sweep/*
+!results/lora_lr_sweep/lora_hparam_sweep_seed42.csv
+!results/lora_lr_sweep/lora_hparam_selection.csv

@@ -31,33 +31,6 @@ TABLES_DIR = RESULTS_DIR / "tables"
 FIGURES_DIR = BASE_DIR / "thesis" / "figures"
 
 
-def patch_q1_extensions_mahalanobis() -> None:
-    ext_path = BASE_DIR / "src" / "extended_diagnostics.py"
-    if not ext_path.exists():
-        return
-    code = ext_path.read_text(encoding="utf-8")
-    old_block = (
-        '    train_hidden_path = run_dir / "train_hidden.npy"\n'
-        '    train_labels_path = run_dir / "train_labels.npy"\n'
-        "    if train_hidden_path.exists() and train_labels_path.exists():\n"
-        "        train_hidden = np.load(train_hidden_path)\n"
-        "        train_labels = np.load(train_labels_path)"
-    )
-    new_block = (
-        '    train_hidden_path = run_dir / "train_hidden.npy"\n'
-        '    train_labels_path = run_dir / "train_labels.npy"\n'
-        "    if not (train_hidden_path.exists() and train_labels_path.exists()):\n"
-        '        train_hidden_path = run_dir / "cal_hidden.npy"\n'
-        '        train_labels_path = run_dir / "cal_labels.npy"\n'
-        "    if train_hidden_path.exists() and train_labels_path.exists():\n"
-        "        train_hidden = np.load(train_hidden_path)\n"
-        "        train_labels = np.load(train_labels_path)"
-    )
-    if old_block in code:
-        ext_path.write_text(code.replace(old_block, new_block), encoding="utf-8")
-        print("[PATCHED] src/extended_diagnostics.py -> Enabled cal_hidden.npy fallback for Offensive Mahalanobis.")
-
-
 def fit_vector_scaling(cal_logits: np.ndarray, cal_labels: np.ndarray) -> tuple:
     k = cal_logits.shape[1]
     init_params = np.concatenate([np.ones(k), np.zeros(k)])
@@ -506,7 +479,6 @@ def write_novel_methods_report(df_cal_agg: pd.DataFrame, df_riw_agg: pd.DataFram
 
 
 def main():
-    patch_q1_extensions_mahalanobis()
     df_cal_agg = run_calibration_baselines_and_fats()
     df_riw_agg = run_regularized_weighted_conformal()
     generate_novel_method_figures(df_cal_agg, df_riw_agg)

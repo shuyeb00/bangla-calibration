@@ -9,6 +9,7 @@ from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.multitest import multipletests
 
 from src.config import DATA_DIR, FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
+from src.run_cache import load_cache, save_cache
 
 
 def _sample_nll_losses(probs: np.ndarray, labels: np.ndarray) -> np.ndarray:
@@ -33,15 +34,30 @@ def _precompute_ece_bins(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15
 
 
 def _summarize_diffs(diffs: np.ndarray) -> dict:
+    b = len(diffs)
     lo, hi = np.percentile(diffs, [2.5, 97.5])
-    p_val = 2.0 * min(np.mean(diffs <= 0.0), np.mean(diffs >= 0.0))
+    # Add-one correction: a bootstrap p-value can never be exactly zero.
+    p_le = (np.sum(diffs <= 0.0) + 1) / (b + 1)
+    p_ge = (np.sum(diffs >= 0.0) + 1) / (b + 1)
     return {
         "mean_diff": float(diffs.mean()),
         "ci_lo": float(lo),
         "ci_hi": float(hi),
-        "raw_p": float(min(p_val, 1.0)),
+        "raw_p": float(min(1.0, 2.0 * min(p_le, p_ge))),
         "ci_excludes_zero": bool((lo > 0.0) or (hi < 0.0)),
+        "n_bootstrap": int(b),
     }
+
+
+def _boot_index(rng: np.random.Generator, n: int, rows: int) -> np.ndarray:
+    return rng.integers(0, n, size=(rows, n))
+
+
+def _row_ece(bin_ids: np.ndarray, dac: np.ndarray, idx: np.ndarray, n_bins: int) -> np.ndarray:
+    rows = idx.shape[0]
+    flat = (bin_ids[idx] + n_bins * np.arange(rows)[:, None]).ravel()
+    sums = np.bincount(flat, weights=dac[idx].ravel(), minlength=rows * n_bins).reshape(rows, n_bins)
+    return np.abs(sums).sum(axis=1) / idx.shape[1]
 
 
 def fast_bootstrap_test(
@@ -52,52 +68,36 @@ def fast_bootstrap_test(
     labels_b: np.ndarray,
     is_paired: bool,
     n_classes: int,
-    n_bootstrap: int = 1000,
+    n_bootstrap: int = 10000,
+    chunk: int = 500,
 ) -> dict:
     rng = np.random.default_rng(42)
     n_a, n_b = len(labels_a), len(labels_b)
-    diffs = np.empty(n_bootstrap, dtype=float)
+    n_bins = 15
+    out = []
 
     if metric_name in ("nll", "brier"):
-        loss_a = (
-            _sample_nll_losses(probs_a, labels_a)
-            if metric_name == "nll"
-            else _sample_brier_losses(probs_a, labels_a, n_classes)
-        )
-        loss_b = (
-            _sample_nll_losses(probs_b, labels_b)
-            if metric_name == "nll"
-            else _sample_brier_losses(probs_b, labels_b, n_classes)
-        )
-        if is_paired:
-            delta = loss_a - loss_b
-            for i in range(n_bootstrap):
-                idx = rng.choice(n_a, size=n_a, replace=True)
-                diffs[i] = np.mean(delta[idx])
+        if metric_name == "nll":
+            loss_a, loss_b = _sample_nll_losses(probs_a, labels_a), _sample_nll_losses(probs_b, labels_b)
         else:
-            for i in range(n_bootstrap):
-                idx_a = rng.choice(n_a, size=n_a, replace=True)
-                idx_b = rng.choice(n_b, size=n_b, replace=True)
-                diffs[i] = np.mean(loss_a[idx_a]) - np.mean(loss_b[idx_b])
+            loss_a = _sample_brier_losses(probs_a, labels_a, n_classes)
+            loss_b = _sample_brier_losses(probs_b, labels_b, n_classes)
     else:
-        n_bins = 15
         bin_a, dac_a = _precompute_ece_bins(probs_a, labels_a, n_bins=n_bins)
         bin_b, dac_b = _precompute_ece_bins(probs_b, labels_b, n_bins=n_bins)
-        if is_paired:
-            for i in range(n_bootstrap):
-                idx = rng.choice(n_a, size=n_a, replace=True)
-                ece_a = np.sum(np.abs(np.bincount(bin_a[idx], weights=dac_a[idx], minlength=n_bins))) / n_a
-                ece_b = np.sum(np.abs(np.bincount(bin_b[idx], weights=dac_b[idx], minlength=n_bins))) / n_a
-                diffs[i] = ece_a - ece_b
-        else:
-            for i in range(n_bootstrap):
-                idx_a = rng.choice(n_a, size=n_a, replace=True)
-                idx_b = rng.choice(n_b, size=n_b, replace=True)
-                ece_a = np.sum(np.abs(np.bincount(bin_a[idx_a], weights=dac_a[idx_a], minlength=n_bins))) / n_a
-                ece_b = np.sum(np.abs(np.bincount(bin_b[idx_b], weights=dac_b[idx_b], minlength=n_bins))) / n_b
-                diffs[i] = ece_a - ece_b
 
-    return _summarize_diffs(diffs)
+    done = 0
+    while done < n_bootstrap:
+        rows = min(chunk, n_bootstrap - done)
+        idx_a = _boot_index(rng, n_a, rows)
+        idx_b = idx_a if is_paired else _boot_index(rng, n_b, rows)
+        if metric_name in ("nll", "brier"):
+            out.append(loss_a[idx_a].mean(axis=1) - loss_b[idx_b].mean(axis=1))
+        else:
+            out.append(_row_ece(bin_a, dac_a, idx_a, n_bins) - _row_ece(bin_b, dac_b, idx_b, n_bins))
+        done += rows
+
+    return _summarize_diffs(np.concatenate(out))
 
 
 def mcnemar_test(preds_a: np.ndarray, preds_b: np.ndarray, labels: np.ndarray) -> dict:
@@ -120,23 +120,16 @@ def run_shift_significance_for_run(
     model_key: str,
     ft_method: str,
     seed: int,
-    n_bootstrap: int = 1000,
+    n_bootstrap: int = 10000,
 ) -> list:
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
     run_dir = RESULTS_DIR / run_id
     if not (run_dir / "test_logits.npy").exists():
         return []
 
-    cache_path = run_dir / "significance_raw.csv"
-    expected_comps = {
-        f"D0_vs_{f.name[:-len('_logits.npy')]}"
-        for f in run_dir.glob("shift_*_logits.npy")
-        if not f.name[:-len("_logits.npy")].endswith("_cal")
-    }
-    if cache_path.exists():
-        cached_df = pd.read_csv(cache_path)
-        if expected_comps.issubset(set(cached_df["comparison"].unique())):
-            return cached_df.to_dict("records")
+    cached_df = load_cache(run_dir, "significance_raw.csv")
+    if cached_df is not None and "n_bootstrap" in cached_df and (cached_df["n_bootstrap"] == n_bootstrap).all():
+        return cached_df.to_dict("records")
 
     print(f"Running significance tests for {run_id}...", flush=True)
     d0_probs = softmax(np.load(run_dir / "test_logits.npy"), axis=1)
@@ -213,7 +206,7 @@ def run_shift_significance_for_run(
             )
 
     if records:
-        pd.DataFrame(records).to_csv(cache_path, index=False)
+        save_cache(run_dir, "significance_raw.csv", pd.DataFrame(records))
     return records
 
 
@@ -223,7 +216,7 @@ def main():
     parser.add_argument("--models", nargs="+", default=list(MODELS.keys()), choices=list(MODELS.keys()))
     parser.add_argument("--ft_methods", nargs="+", default=FT_METHODS, choices=FT_METHODS)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
-    parser.add_argument("--n_bootstrap", type=int, default=1000)
+    parser.add_argument("--n_bootstrap", type=int, default=10000)
     args = parser.parse_args()
 
     all_records = []
