@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_barishal_test,0.9280163599182004,1.7353783231083844,215.7884516150581,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_chittagong_test,0.8325828898894801,1.5313139582480557,7.658040861021563,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_noakhali_test,0.9120654396728016,1.7198364008179958,344.9300590806557,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d2_test,1.0,2.0,94.47076727310963,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise05,0.8947479881406184,1.6217704362558238,3551.6900340680527,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise10,0.8989834815756036,1.6368064379500211,2282.213735731231,4718
-offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise20,0.9104193138500636,1.6895383312155867,93.9706161039086,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_barishal_test,0.8813905930470347,1.1934560327198365,579.7679774985974,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_chittagong_test,0.8145722472370037,1.2144903806794924,690.6624170271507,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d1_noakhali_test,0.8773006134969326,1.1987730061349693,545.4004793832623,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d2_test,0.99625,1.98625,13.319242589016923,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise05,0.8877594239728929,1.18000847098687,3995.0505813762607,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise10,0.8850063532401525,1.2024565861922913,3734.1820292709517,4718
+offensive_indicbert_lora_seed42,offensive,indicbert,lora,42,shift_d3_noise20,0.8761118170266836,1.2615417196103347,2680.094920588706,4718

@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_barishal_test,0.8936605316973415,1.0858895705521472,26.114261996120085,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_chittagong_test,0.8137535816618912,1.0900532132623824,287.8095796262574,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_noakhali_test,0.8842535787321063,1.0862985685071576,269.684579012035,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d2_test,1.0,2.0,233.65603599889909,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise05,0.8951715374841169,1.0535789919525624,3350.4593735058647,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise10,0.8924184667513765,1.0885218127911902,2705.9453140313526,4718
-offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise20,0.8725116476069462,1.1285472257518,1445.0665353909765,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_barishal_test,0.8936605316973415,1.0858895705521472,26.763840973807667,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_chittagong_test,0.81498158002456,1.0920998772001638,287.33680175282126,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d1_noakhali_test,0.8842535787321063,1.0862985685071576,268.3848929654935,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d2_test,1.0,2.0,233.6560359832089,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise05,0.8949597628123677,1.053155442609064,3346.389655652905,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise10,0.8924184667513765,1.0887335874629394,2694.774978044092,4718
+offensive_indicbert_full_ft_seed99,offensive,indicbert,full_ft,99,shift_d3_noise20,0.8727234222786955,1.1287590004235493,1432.947906572706,4718

@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_barishal_test,0.9304703476482618,1.243762781186094,36.56305594169771,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_chittagong_test,0.9484240687679084,1.6872697503069995,49.13276792246338,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_noakhali_test,0.912474437627812,1.2482617586912066,4.366193232614087,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d2_test,1.0,2.0,3404.285358357729,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise05,0.8871240999576451,1.0209656925031767,177.5759638723925,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise10,0.9095722151630664,1.2249047013977128,43.08868150823626,4718
-offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise20,0.9483269800931808,1.650571791613723,6.492007469439854,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_barishal_test,0.9292433537832311,1.1226993865030674,12.010940116028499,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_chittagong_test,0.9369627507163324,1.49447400736799,26.460412872011915,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d1_noakhali_test,0.9484662576687116,1.2188139059304703,9.862951115975289,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d2_test,1.0,2.0,3271.8596133718365,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise05,0.9053367217280813,1.0133418043202034,319.3236835732991,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise10,0.9076662431173231,1.1173231681490894,51.59516017249492,4718
+offensive_banglabert_lora_seed99,offensive,banglabert,lora,99,shift_d3_noise20,0.9521389241846675,1.5592969080897925,8.982017957558105,4718

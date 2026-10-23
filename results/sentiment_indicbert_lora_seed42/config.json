@@ -6,8 +6,10 @@
   "task": "sentiment",
   "num_labels": 3,
   "seed": 42,
-  "learning_rate": 2e-05,
+  "learning_rate": 0.0001,
+  "warmup_ratio": 0.0,
+  "warmup_steps": 0,
   "batch_size": 16,
   "num_epochs": 4,
-  "timestamp": "2026-10-18T11:43:09.500446"
+  "timestamp": "2026-10-23T11:54:06.067775+00:00"
 }

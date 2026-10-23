@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_barishal_test,0.9394683026584868,1.2359918200408997,8.7887336759372,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_chittagong_test,0.9611133851821532,1.6958657388456817,12.094842370518318,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_noakhali_test,0.905521472392638,1.2408997955010226,5.082183702347176,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d2_test,1.0,2.0,3668.588875068293,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise05,0.8886065226598899,1.0175772977551885,28.979772382739363,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise10,0.8989834815756036,1.1980093180855569,30.815734195844133,4718
-offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise20,0.9544684455739092,1.69144430326133,11.682496959683265,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_barishal_test,0.934560327198364,1.096523517382413,35.45330529862639,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_chittagong_test,0.937781416291445,1.5018419975440034,17.784145427161363,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d1_noakhali_test,0.9280163599182004,1.189366053169734,20.949749782800048,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d2_test,1.0,2.0,3534.4400926971707,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise05,0.9013130029648454,1.0108005082592122,286.3258499010496,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise10,0.8994070309191021,1.095722151630665,64.0020118524544,4718
+offensive_banglabert_lora_seed123,offensive,banglabert,lora,123,shift_d3_noise20,0.9466327827191868,1.5332486234646336,9.383545574820019,4718

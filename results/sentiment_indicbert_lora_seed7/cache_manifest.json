@@ -1,0 +1,8 @@
+{
+  "conformal_lac_aps_raps.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208",
+  "extended_calibration.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208",
+  "mahalanobis_percentile.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208|cal-reference-v1",
+  "representation_distance.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208|cal-reference-v1",
+  "significance_raw.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208",
+  "weighted_conformal.csv": "3c68e49f6d84c89c553a670cce2aaa95a40cb208"
+}

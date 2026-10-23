@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_barishal_test,0.9083844580777096,1.0044989775051125,304.36106959560516,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_chittagong_test,0.8694228407695457,1.0961932050757266,148.5912528732524,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_noakhali_test,0.8948875255623722,1.0049079754601227,225.76639770405734,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d2_test,1.0,2.0,165.8635553497527,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise05,0.9017365523083439,1.0,2308.2599990630924,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise10,0.891147818720881,1.0084709868699704,398.62253980892393,4718
-offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise20,0.8595933926302414,1.018847945785684,37.31249618930076,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_barishal_test,0.9083844580777096,1.0044989775051125,312.32373319063294,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_chittagong_test,0.8686041751944331,1.0945558739255015,145.46494261590797,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d1_noakhali_test,0.8948875255623722,1.0049079754601227,224.57738923956902,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d2_test,1.0,2.0,165.86355777824036,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise05,0.9017365523083439,1.0,2302.9676968620615,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise10,0.8905124947056332,1.0067767894959763,397.4920599665143,4718
+offensive_xlmr_base_full_ft_seed99,offensive,xlmr_base,full_ft,99,shift_d3_noise20,0.8595933926302414,1.0186361711139347,36.525203689723845,4718

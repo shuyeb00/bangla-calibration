@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_barishal_test,0.9390593047034764,1.23640081799591,8.33178719580444,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_chittagong_test,0.9205894392140812,1.5575112566516578,2.042994705419431,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_noakhali_test,0.9222903885480572,1.321881390593047,34.524178463123135,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d2_test,1.0,2.0,4248.118539074839,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise05,0.8875476493011436,1.0184243964421855,106.87543937834076,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise10,0.8955950868276155,1.1658195679796697,16.434916220845743,4718
-offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise20,0.9515036001694196,1.6501482422702245,5.360815878880685,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_barishal_test,0.9255623721881391,1.0773006134969325,19.64248719734066,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_chittagong_test,0.9426934097421203,1.4572247237003684,10.150920471673103,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d1_noakhali_test,0.9247443762781186,1.168916155419223,49.830399190215836,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d2_test,1.0,2.0,3289.61836335502,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise05,0.9066073697585769,1.0154595510376958,210.30929545644054,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise10,0.9375264718339686,1.1558661584074545,29.519848611047134,4718
+offensive_banglabert_lora_seed2026,offensive,banglabert,lora,2026,shift_d3_noise20,0.9561626429479034,1.524565861922914,7.4839751763096745,4718

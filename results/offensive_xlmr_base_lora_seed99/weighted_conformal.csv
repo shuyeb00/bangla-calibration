@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_barishal_test,0.9259713701431492,1.3226993865030674,19.656347584920436,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_chittagong_test,0.9500613999181334,1.7101923864101514,38.393576404173366,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_noakhali_test,0.9443762781186094,1.4793456032719836,60.478955802638716,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d2_test,1.0,2.0,1805.8913006175496,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise05,0.9112664125370605,1.1952562473528165,696.0063195051845,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise10,0.9013130029648454,1.2352816603134265,85.69276865945643,4718
-offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise20,0.8739940703091911,1.359169843286743,12.446861667869479,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_barishal_test,0.9087934560327199,1.1521472392638037,21.319323538461536,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_chittagong_test,0.9484240687679083,1.5661072451903397,30.930935572724493,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d1_noakhali_test,0.9075664621676892,1.2184049079754602,13.795643064033749,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d2_test,1.0,2.0,496.0016897580986,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise05,0.9155019059720457,1.0432020330368488,995.0829974032445,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise10,0.8964421855146124,1.050825921219822,138.2618075329423,4718
+offensive_xlmr_base_lora_seed99,offensive,xlmr_base,lora,99,shift_d3_noise20,0.9125370605675561,1.2645065650148242,45.10687111329057,4718

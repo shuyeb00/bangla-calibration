@@ -6,8 +6,10 @@
   "task": "offensive",
   "num_labels": 2,
   "seed": 42,
-  "learning_rate": 2e-05,
+  "learning_rate": 0.0002,
+  "warmup_ratio": 0.0,
+  "warmup_steps": 0,
   "batch_size": 16,
   "num_epochs": 4,
-  "timestamp": "2026-10-19T14:02:51.757533+00:00"
+  "timestamp": "2026-10-23T11:31:02.602191+00:00"
 }

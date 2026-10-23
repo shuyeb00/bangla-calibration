@@ -1,5 +1,5 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-sentiment_indicbert_full_ft_seed42,sentiment,indicbert,full_ft,42,shift_d1_test,0.9502487562189055,2.3930348258706466,332.7501050959965,1359
+sentiment_indicbert_full_ft_seed42,sentiment,indicbert,full_ft,42,shift_d1_test,0.9701492537313433,2.517412935323383,305.8114527803508,1359
 sentiment_indicbert_full_ft_seed42,sentiment,indicbert,full_ft,42,shift_d2_test,1.0,3.0,207.80330865421408,1359
 sentiment_indicbert_full_ft_seed42,sentiment,indicbert,full_ft,42,shift_d3_noise05,0.9080882352941176,2.101470588235294,573.9984101255167,1359
 sentiment_indicbert_full_ft_seed42,sentiment,indicbert,full_ft,42,shift_d3_noise10,0.9102941176470588,2.1691176470588234,423.17647988621275,1359

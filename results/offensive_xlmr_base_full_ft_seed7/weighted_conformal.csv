@@ -1,8 +1,8 @@
 run_id,task,model,ft_method,seed,condition,weighted_coverage,weighted_avg_set_size,effective_sample_size,n_calibration
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_barishal_test,0.943558282208589,1.0871165644171779,301.97358700485347,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_chittagong_test,0.9406467458043389,1.3299222267703643,213.03868421613757,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_noakhali_test,0.9141104294478528,1.0658486707566461,245.1382105098961,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d2_test,1.0,2.0,159.61372050564222,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise05,0.9087251164760695,1.0004235493434985,1556.1739742795373,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise10,0.9000423549343498,1.0224481152054214,303.3267410086455,4718
-offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise20,0.9432443879711987,1.2486234646336298,90.119976915028,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_barishal_test,0.943558282208589,1.0867075664621677,305.9937748779136,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_chittagong_test,0.9410560785918952,1.329512893982808,217.21191140640246,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d1_noakhali_test,0.9141104294478528,1.0662576687116565,242.46928062168388,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d2_test,1.0,2.0,159.61372050877867,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise05,0.9087251164760695,1.0004235493434985,1543.451503593829,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise10,0.9004659042778483,1.023718763235917,317.42145801107347,4718
+offensive_xlmr_base_full_ft_seed7,offensive,xlmr_base,full_ft,7,shift_d3_noise20,0.9430326132994494,1.2479881406183821,92.50332360495634,4718
