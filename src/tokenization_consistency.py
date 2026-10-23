@@ -70,10 +70,10 @@ def without_metaspace(seq: np.ndarray, metaspace_id: int) -> np.ndarray:
     return seq[seq != metaspace_id] if metaspace_id >= 0 else seq
 
 
-def compare(reference: Path, other: Path, output_dir: Path) -> None:
+def compare(reference: Path, other: Path, output_dir: Path, show_other: int = 0, overrides: dict = None) -> None:
     ref_meta, ref = load_export(reference)
     oth_meta, oth = load_export(other)
-    rows = []
+    rows, others = [], []
     for key in sorted(set(ref) & set(oth)):
         model_key, task, name = key.split("|")
         a, b = ref[key], oth[key]
@@ -83,13 +83,15 @@ def compare(reference: Path, other: Path, output_dir: Path) -> None:
         ms_b = oth_meta["models"][model_key]["metaspace_id"]
         identical = metaspace_only = 0
         length_gap = []
-        for x, y in zip(a, b):
+        for row, (x, y) in enumerate(zip(a, b)):
             if np.array_equal(x, y):
                 identical += 1
                 continue
             length_gap.append(len(y) - len(x))
             if ms_a == ms_b and np.array_equal(without_metaspace(x, ms_a), without_metaspace(y, ms_b)):
                 metaspace_only += 1
+            else:
+                others.append((model_key, task, name, row, x, y))
         n = len(a)
         rows.append({
             "model": model_key,
@@ -122,6 +124,22 @@ def compare(reference: Path, other: Path, output_dir: Path) -> None:
                            n_other=table.other_difference_rate * table.n_items)
     print(summary.groupby(["model", "task"])[["n_items", "n_identical", "n_metaspace", "n_other"]].sum()
           .astype(int).to_string())
+    if show_other:
+        show_other_differences(others[:show_other], overrides or {})
+
+
+def show_other_differences(others: list, overrides: dict) -> None:
+    tokenizers = {}
+    for model_key, task, name, row, x, y in others:
+        if model_key not in tokenizers:
+            tokenizers[model_key] = load_tokenizer(model_key, overrides)
+        tok = tokenizers[model_key]
+        j = next((i for i in range(min(len(x), len(y))) if x[i] != y[i]), min(len(x), len(y)))
+        text = load_texts(evaluation_sets(task)[name])[row]
+        print(f"\n{model_key} | {task} | {name} | row {row} | lengths {len(x)} vs {len(y)} | first difference at {j}")
+        print("  reference:", ascii(tok.convert_ids_to_tokens([int(i) for i in x[max(0, j - 3):j + 5]])))
+        print("  other:    ", ascii(tok.convert_ids_to_tokens([int(i) for i in y[max(0, j - 3):j + 5]])))
+        print("  text:     ", ascii(text[:400]))
 
 
 def main():
@@ -136,11 +154,14 @@ def main():
     cmp_.add_argument("reference", type=Path)
     cmp_.add_argument("other", type=Path)
     cmp_.add_argument("--output-dir", type=Path, default=RESULTS_DIR / "tables")
+    cmp_.add_argument("--show-other", type=int, default=0, metavar="N",
+                      help="Print the first N differences that are not standalone-metaspace only.")
+    cmp_.add_argument("--tokenizer", action="append", metavar="MODEL=PATH")
     args = parser.parse_args()
     if args.command == "export":
         export(args.models, args.tasks, parse_overrides(args.tokenizer), args.output)
     else:
-        compare(args.reference, args.other, args.output_dir)
+        compare(args.reference, args.other, args.output_dir, args.show_other, parse_overrides(args.tokenizer))
 
 
 if __name__ == "__main__":
