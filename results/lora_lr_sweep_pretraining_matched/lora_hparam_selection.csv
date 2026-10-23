@@ -1,0 +1,3 @@
+task,model,learning_rate,warmup_ratio,val_macro_f1,no_viable_setting,unrestricted_best_lr,unrestricted_best_warmup,unrestricted_best_f1,n_runs,n_collapsed,fallback_no_stable_lr,below_quality_floor
+offensive,indicbert,0.001,0.1,0.9026,False,0.001,0.1,0.9026,9,1,False,False
+sentiment,indicbert,0.0005,0.0,0.5592,False,0.0005,0.0,0.5592,9,2,False,False
