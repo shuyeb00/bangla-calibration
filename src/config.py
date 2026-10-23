@@ -29,8 +29,13 @@ TRAIN_HYPERPARAMS = {
     "per_device_eval_batch_size": 32,
     "num_train_epochs": 4,
     "weight_decay": 0.01,
-    "max_length": 128,
+    "max_length": 512,
+    "pad_to_multiple_of": 8,
 }
+
+# Text preparation per model, see src/model_inputs.py. The max_length-128 grid used
+# "autotokenizer_default"; from the 512-token grid onwards inputs are "pretraining_matched".
+INPUT_PIPELINE = "pretraining_matched"
 
 # Per-(task, model) LoRA optimisation settings selected on validation macro-F1
 # (seed 42) by src/select_lora_hparams.py; see results/lora_lr_sweep/.

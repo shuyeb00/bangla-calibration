@@ -19,7 +19,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import MODELS, RESULTS_DIR, TASKS, TRAIN_HYPERPARAMS
+from src.config import INPUT_PIPELINE, MODELS, RESULTS_DIR, TASKS, TRAIN_HYPERPARAMS
+from src.model_inputs import PIPELINES, prepare_texts
 from src.shift_statistics import evaluation_sets, load_texts, load_tokenizer, parse_overrides
 
 HIDDEN_SIZE = 768
@@ -59,6 +60,7 @@ def main():
     parser.add_argument("--shuffles", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--tokenizer", action="append", metavar="MODEL=PATH")
+    parser.add_argument("--pipeline", default=INPUT_PIPELINE, choices=PIPELINES)
     parser.add_argument("--output-dir", type=Path, default=RESULTS_DIR / "tables")
     args = parser.parse_args()
 
@@ -68,13 +70,15 @@ def main():
     eval_bs = TRAIN_HYPERPARAMS["per_device_eval_batch_size"]
     rows = []
     for model_key in args.models:
-        tokenizer = load_tokenizer(model_key, overrides)
+        tokenizer = load_tokenizer(model_key, overrides, args.pipeline)
         n_special = tokenizer.num_special_tokens_to_add(pair=False)
         for task in args.tasks:
             sets = evaluation_sets(task)
-            lengths = {name: np.array([len(s) + n_special for s in
-                                       tokenizer(load_texts(path), add_special_tokens=False)["input_ids"]])
-                       for name, path in sets.items()}
+            lengths = {}
+            for name, path in sets.items():
+                ids = tokenizer(prepare_texts(model_key, load_texts(path), args.pipeline),
+                                add_special_tokens=False)["input_ids"]
+                lengths[name] = np.array([len(s) + n_special for s in ids])
             output_sets = [name for name in sets if name != "val"]
             settings = [("fixed", L) for L in args.max_lengths] + \
                        [(s, L) for s in ("dynamic", "grouped") for L in args.max_lengths]

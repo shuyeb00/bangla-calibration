@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import (
+    INPUT_PIPELINE,
     MODELS,
     NOISE_LEVELS,
     RESULTS_DIR,
@@ -35,6 +36,7 @@ from src.config import (
     get_shift_conditions_paths,
     get_task_splits_paths,
 )
+from src.model_inputs import PIPELINES, prepare_texts
 
 MAX_LENGTHS = (128, 256, 512)
 FINGERPRINT_ROWS = 256
@@ -206,15 +208,14 @@ def noise_statistics(task: str) -> list:
     return rows
 
 
-def load_tokenizer(model_key: str, overrides: dict):
-    from transformers import AutoTokenizer
-    from transformers.utils import logging as hf_logging
+def load_tokenizer(model_key: str, overrides: dict, pipeline: str = INPUT_PIPELINE):
+    from src.model_inputs import load_tokenizer as load_pipeline_tokenizer
 
-    hf_logging.set_verbosity_error()
-    return AutoTokenizer.from_pretrained(overrides.get(model_key, MODELS[model_key]))
+    return load_pipeline_tokenizer(model_key, pipeline, overrides.get(model_key))
 
 
-def normaliser_mark_deletion(tokenizer, texts: list) -> tuple:
+def normaliser_mark_deletion(tokenizer, texts: list, prepared: list = None) -> tuple:
+    """Share of Bangla non-spacing marks in the raw texts lost by preparation plus the tokenizer normaliser."""
     backend = getattr(tokenizer, "backend_tokenizer", None)
     normaliser = backend.normalizer if backend is not None else None
     if normaliser is None:
@@ -222,8 +223,8 @@ def normaliser_mark_deletion(tokenizer, texts: list) -> tuple:
             return float("nan"), float("nan")
         return 0.0, 0.0
     before = after = altered = 0
-    for t in texts:
-        out = normaliser.normalize_str(t)
+    for t, p in zip(texts, prepared if prepared is not None else texts):
+        out = normaliser.normalize_str(p)
         before += bangla_nonspacing_marks(t)
         after += bangla_nonspacing_marks(out)
         altered += bangla_skeleton(t) != bangla_skeleton(out)
@@ -231,10 +232,10 @@ def normaliser_mark_deletion(tokenizer, texts: list) -> tuple:
     return deletion, altered / len(texts)
 
 
-def input_id_fingerprint(tokenizer, tasks: list) -> str:
+def input_id_fingerprint(tokenizer, tasks: list, model_key: str, pipeline: str) -> str:
     digest = hashlib.sha256()
     for task in tasks:
-        texts = load_texts(get_task_splits_paths(task)["test"])[:FINGERPRINT_ROWS]
+        texts = prepare_texts(model_key, load_texts(get_task_splits_paths(task)["test"])[:FINGERPRINT_ROWS], pipeline)
         ids = tokenizer(texts, truncation=True, max_length=TRAIN_HYPERPARAMS["max_length"])["input_ids"]
         for seq in ids:
             digest.update(np.asarray(seq, dtype=np.int64).tobytes())
@@ -242,22 +243,24 @@ def input_id_fingerprint(tokenizer, tasks: list) -> str:
     return digest.hexdigest()[:16]
 
 
-def tokenization_statistics(task: str, sets: dict, model_key: str, tokenizer, max_lengths: tuple) -> tuple:
+def tokenization_statistics(task: str, sets: dict, model_key: str, tokenizer, max_lengths: tuple,
+                            pipeline: str = INPUT_PIPELINE) -> tuple:
     n_special = tokenizer.num_special_tokens_to_add(pair=False)
     unk_id = tokenizer.unk_token_id
     encoded = {}
     for name, path in sets.items():
         texts = load_texts(path)
-        encoded[name] = (texts, tokenizer(texts, add_special_tokens=False, truncation=False)["input_ids"])
-    train_ids = {i for seq in encoded["train"][1] for i in seq}
+        prepared = prepare_texts(model_key, texts, pipeline)
+        encoded[name] = (texts, prepared, tokenizer(prepared, add_special_tokens=False, truncation=False)["input_ids"])
+    train_ids = {i for seq in encoded["train"][2] for i in seq}
 
     token_rows, truncation_rows = [], []
-    for name, (texts, ids) in encoded.items():
+    for name, (texts, prepared, ids) in encoded.items():
         lengths = np.array([len(seq) for seq in ids])
         words = np.array([len(t.split()) for t in texts])
         flat = np.fromiter((i for seq in ids for i in seq), dtype=np.int64, count=int(lengths.sum()))
         has_words = words > 0
-        deletion, altered = normaliser_mark_deletion(tokenizer, texts)
+        deletion, altered = normaliser_mark_deletion(tokenizer, texts, prepared)
         token_rows.append({
             "task": task,
             "model": model_key,
@@ -310,7 +313,7 @@ def normaliser_spec(tokenizer) -> str:
     return json.dumps(compact(spec), ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
-def tokenizer_record(model_key: str, tokenizer, source: str, tasks: list) -> dict:
+def tokenizer_record(model_key: str, tokenizer, source: str, tasks: list, pipeline: str = INPUT_PIPELINE) -> dict:
     import tokenizers
     import transformers
 
@@ -324,7 +327,8 @@ def tokenizer_record(model_key: str, tokenizer, source: str, tasks: list) -> dic
         "normaliser": normaliser_spec(tokenizer),
         "keep_accents": getattr(tokenizer, "keep_accents", ""),
         "do_lower_case": getattr(tokenizer, "do_lower_case", ""),
-        "input_id_fingerprint": input_id_fingerprint(tokenizer, tasks),
+        "input_pipeline": pipeline,
+        "input_id_fingerprint": input_id_fingerprint(tokenizer, tasks, model_key, pipeline),
         "transformers_version": transformers.__version__,
         "tokenizers_version": tokenizers.__version__,
         "python_version": platform.python_version(),
@@ -382,6 +386,7 @@ def main():
                         help="Load the tokenizer for MODEL from PATH instead of the Hugging Face Hub id.")
     parser.add_argument("--skip-tokenization", action="store_true",
                         help="Only write the model-independent lexical and noise tables.")
+    parser.add_argument("--pipeline", default=INPUT_PIPELINE, choices=PIPELINES)
     parser.add_argument("--output-dir", type=Path, default=RESULTS_DIR / "tables")
     args = parser.parse_args()
 
@@ -398,10 +403,12 @@ def main():
     if not args.skip_tokenization:
         token_rows, truncation_rows, records = [], [], []
         for model_key in args.models:
-            tokenizer = load_tokenizer(model_key, overrides)
-            records.append(tokenizer_record(model_key, tokenizer, overrides.get(model_key, MODELS[model_key]), args.tasks))
+            tokenizer = load_tokenizer(model_key, overrides, args.pipeline)
+            records.append(tokenizer_record(model_key, tokenizer, overrides.get(model_key, MODELS[model_key]),
+                                            args.tasks, args.pipeline))
             for task in args.tasks:
-                t_rows, tr_rows = tokenization_statistics(task, sets[task], model_key, tokenizer, tuple(args.max_lengths))
+                t_rows, tr_rows = tokenization_statistics(task, sets[task], model_key, tokenizer,
+                                                          tuple(args.max_lengths), args.pipeline)
                 token_rows += t_rows
                 truncation_rows += tr_rows
             print(f"Tokenized all evaluation sets with {model_key}")

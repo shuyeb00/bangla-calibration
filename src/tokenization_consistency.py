@@ -17,21 +17,22 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import MODELS, RESULTS_DIR, TASKS, TRAIN_HYPERPARAMS
+from src.config import INPUT_PIPELINE, MODELS, RESULTS_DIR, TASKS, TRAIN_HYPERPARAMS
+from src.model_inputs import PIPELINES, prepare_texts
 from src.shift_statistics import evaluation_sets, load_texts, load_tokenizer, normaliser_spec, parse_overrides
 
 METASPACE = "▁"
 
 
-def export(models: list, tasks: list, overrides: dict, output: Path) -> None:
+def export(models: list, tasks: list, overrides: dict, output: Path, pipeline: str = INPUT_PIPELINE) -> None:
     import tokenizers
     import transformers
 
     arrays = {}
     meta = {"transformers_version": transformers.__version__, "tokenizers_version": tokenizers.__version__,
-            "max_length": TRAIN_HYPERPARAMS["max_length"], "models": {}}
+            "max_length": TRAIN_HYPERPARAMS["max_length"], "input_pipeline": pipeline, "models": {}}
     for model_key in models:
-        tokenizer = load_tokenizer(model_key, overrides)
+        tokenizer = load_tokenizer(model_key, overrides, pipeline)
         vocab = tokenizer.get_vocab()
         meta["models"][model_key] = {
             "tokenizer_class": type(tokenizer).__name__,
@@ -41,7 +42,7 @@ def export(models: list, tasks: list, overrides: dict, output: Path) -> None:
         }
         for task in tasks:
             for name, path in evaluation_sets(task).items():
-                ids = tokenizer(load_texts(path), truncation=True,
+                ids = tokenizer(prepare_texts(model_key, load_texts(path), pipeline), truncation=True,
                                 max_length=TRAIN_HYPERPARAMS["max_length"])["input_ids"]
                 lengths = np.array([len(s) for s in ids], dtype=np.int64)
                 arrays[f"{model_key}|{task}|{name}|ids"] = np.fromiter(
@@ -51,7 +52,8 @@ def export(models: list, tasks: list, overrides: dict, output: Path) -> None:
     arrays["__meta__"] = np.frombuffer(json.dumps(meta).encode("utf-8"), dtype=np.uint8)
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(output, **arrays)
-    print(f"Wrote {output} (transformers {meta['transformers_version']})")
+    print(f"Wrote {output} (transformers {meta['transformers_version']}, pipeline {pipeline}, "
+          f"max_length {meta['max_length']})")
 
 
 def load_export(path: Path) -> tuple:
@@ -73,6 +75,9 @@ def without_metaspace(seq: np.ndarray, metaspace_id: int) -> np.ndarray:
 def compare(reference: Path, other: Path, output_dir: Path, show_other: int = 0, overrides: dict = None) -> None:
     ref_meta, ref = load_export(reference)
     oth_meta, oth = load_export(other)
+    for field in ("input_pipeline", "max_length"):
+        if ref_meta.get(field) != oth_meta.get(field):
+            print(f"WARNING: exports differ in {field}: {ref_meta.get(field)} vs {oth_meta.get(field)}")
     rows, others = [], []
     for key in sorted(set(ref) & set(oth)):
         model_key, task, name = key.split("|")
@@ -125,14 +130,15 @@ def compare(reference: Path, other: Path, output_dir: Path, show_other: int = 0,
     print(summary.groupby(["model", "task"])[["n_items", "n_identical", "n_metaspace", "n_other"]].sum()
           .astype(int).to_string())
     if show_other:
-        show_other_differences(others[:show_other], overrides or {})
+        show_other_differences(others[:show_other], overrides or {},
+                               ref_meta.get("input_pipeline", "autotokenizer_default"))
 
 
-def show_other_differences(others: list, overrides: dict) -> None:
+def show_other_differences(others: list, overrides: dict, ref_pipeline: str) -> None:
     tokenizers = {}
     for model_key, task, name, row, x, y in others:
         if model_key not in tokenizers:
-            tokenizers[model_key] = load_tokenizer(model_key, overrides)
+            tokenizers[model_key] = load_tokenizer(model_key, overrides, ref_pipeline)
         tok = tokenizers[model_key]
         j = next((i for i in range(min(len(x), len(y))) if x[i] != y[i]), min(len(x), len(y)))
         text = load_texts(evaluation_sets(task)[name])[row]
@@ -150,6 +156,7 @@ def main():
     exp.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS))
     exp.add_argument("--tasks", nargs="+", default=list(TASKS), choices=list(TASKS))
     exp.add_argument("--tokenizer", action="append", metavar="MODEL=PATH")
+    exp.add_argument("--pipeline", default=INPUT_PIPELINE, choices=PIPELINES)
     cmp_ = sub.add_parser("compare")
     cmp_.add_argument("reference", type=Path)
     cmp_.add_argument("other", type=Path)
@@ -159,7 +166,7 @@ def main():
     cmp_.add_argument("--tokenizer", action="append", metavar="MODEL=PATH")
     args = parser.parse_args()
     if args.command == "export":
-        export(args.models, args.tasks, parse_overrides(args.tokenizer), args.output)
+        export(args.models, args.tasks, parse_overrides(args.tokenizer), args.output, args.pipeline)
     else:
         compare(args.reference, args.other, args.output_dir, args.show_other, parse_overrides(args.tokenizer))
 
