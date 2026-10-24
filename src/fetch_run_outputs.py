@@ -1,31 +1,23 @@
-"""Download the outputs of the max_length-512 grid from the Hugging Face Hub and audit them.
+"""Download the outputs of the max_length-512 grids from the Hugging Face Hub and audit them.
 
 Files of runs/<run_id>/ in the run-outputs dataset repo are placed in
-results/grid_max_length_512/runs/<run_id>/ (hidden states only with --with-hidden). The audit checks
-that every grid run is complete and consistent and writes
-results/tables/grid_max_length_512_training_summary.csv.
+results/grid_max_length_512/runs/<run_id>/ (hidden states only with --with-hidden). The audit covers
+the base, objectives and scale grids of src/training_grid_parallel.py, checks that every run is
+complete and consistent and writes results/tables/grid_max_length_512_training_summary.csv.
 
     python -m src.fetch_run_outputs
     python -m src.fetch_run_outputs --no-download
 """
 
 import argparse
-import itertools
 import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from src.config import (
-    FT_METHODS,
-    HUB_OUTPUT_REPO,
-    MODELS,
-    RESULTS_DIR,
-    SEEDS,
-    TASKS,
-    get_shift_conditions_paths,
-)
+from src.config import HUB_OUTPUT_REPO, RESULTS_DIR, SEEDS, TASKS, get_shift_conditions_paths, make_run_id
+from src.training_grid_parallel import N_SHARDS, grid_runs
 
 GRID_DIR = RESULTS_DIR / "grid_max_length_512"
 # Same rule as src/select_lora_hparams.py: a single predicted class, or validation macro-F1
@@ -101,18 +93,21 @@ def main():
     parser = argparse.ArgumentParser(description="Download and audit the max_length-512 grid outputs.")
     parser.add_argument("--no-download", action="store_true")
     parser.add_argument("--with-hidden", action="store_true", help="Also download hidden states (several GB).")
+    parser.add_argument("--grids", nargs="+", choices=list(N_SHARDS), default=list(N_SHARDS))
     args = parser.parse_args()
     if not args.no_download:
         download(args.with_hidden)
 
     rows = []
-    for task, model, ft, seed in itertools.product(TASKS, MODELS, FT_METHODS, SEEDS):
-        row = audit_run(GRID_DIR / "runs" / f"{task}_{model}_{ft}_seed{seed}", task)
-        row.update({"task": task, "model": model, "ft_method": ft, "seed": seed})
-        rows.append(row)
+    for grid in args.grids:
+        for task, model, ft, objective, seed in grid_runs(grid):
+            row = audit_run(GRID_DIR / "runs" / make_run_id(task, model, ft, seed, objective), task)
+            row.update({"grid": grid, "task": task, "model": model, "ft_method": ft, "objective": objective,
+                        "seed": seed})
+            rows.append(row)
     table = pd.DataFrame(rows)
     out = RESULTS_DIR / "tables" / "grid_max_length_512_training_summary.csv"
-    lead = ["task", "model", "ft_method", "seed"]
+    lead = ["grid", "task", "model", "ft_method", "objective", "seed"]
     table[lead + [c for c in table.columns if c not in lead]].to_csv(out, index=False, float_format="%.6f",
                                                                      lineterminator="\n")
     print(f"Wrote {out} ({len(table)} rows)")
@@ -121,6 +116,8 @@ def main():
     marker = present.complete_marker.astype(bool)
     problems = present[~marker | (present.missing_files.fillna("") != "") | (present.bad_arrays.fillna("") != "")]
     print(f"\nruns present {len(present)} of {len(table)} | with problems {len(problems)}")
+    print(table.groupby("grid").present.agg(["sum", "size"]).rename(columns={"sum": "present", "size": "expected"})
+          .to_string())
     for r in problems.itertuples():
         print(f"  PROBLEM {r.run_id}: marker={r.complete_marker} missing=[{r.missing_files}] bad=[{r.bad_arrays}]")
     for col in ("max_length", "input_pipeline", "code_commit", "transformers", "torch", "device"):
@@ -145,11 +142,12 @@ def main():
               f"baseline {r.majority_baseline_val_f1:.4f}, test accuracy {r.test_accuracy:.4f}")
 
     pd.set_option("display.width", 200)
-    summary = present.groupby(["task", "model", "ft_method"]).agg(
+    summary = present.groupby(["grid", "task", "model", "ft_method", "objective"]).agg(
         n=("seed", "size"), val_f1_mean=("val_macro_f1", "mean"), val_f1_std=("val_macro_f1", "std"),
         test_acc_mean=("test_accuracy", "mean"), train_min_mean=("train_minutes", "mean")).reset_index()
-    summary["val_f1_max_length_128"] = [previous_val_f1(r.task, r.model, r.ft_method) for r in summary.itertuples()]
-    print("\nValidation macro-F1 by configuration (5 seeds), with the max_length-128 grid for reference")
+    summary["val_f1_max_length_128"] = [previous_val_f1(r.task, r.model, r.ft_method) if r.grid == "base"
+                                        else np.nan for r in summary.itertuples()]
+    print("\nValidation macro-F1 by configuration, with the cross-entropy max_length-128 grid for reference")
     print(summary.round(4).to_string(index=False))
     print(f"\ntotal training time {present.train_minutes.sum() / 60:.2f} h | "
           f"output passes {present.output_minutes.sum() / 60:.2f} h | peak GPU memory {present.peak_gpu_memory_gb.max():.2f} GB")

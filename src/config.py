@@ -94,6 +94,11 @@ LORA_HYPERPARAMS = {
 }
 
 
+def make_run_id(task: str, model_key: str, ft_method: str, seed: int, objective: str = "cross_entropy") -> str:
+    suffix = "" if objective == "cross_entropy" else f"_{objective}"
+    return f"{task}_{model_key}_{ft_method}{suffix}_seed{seed}"
+
+
 def get_task_splits_paths(task_name: str) -> dict:
     task_dir = DATA_DIR / task_name
     return {

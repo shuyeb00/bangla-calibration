@@ -52,6 +52,7 @@ from src.config import (
     TRAIN_HYPERPARAMS,
     get_shift_conditions_paths,
     get_task_splits_paths,
+    make_run_id,
 )
 from src.model_inputs import load_tokenizer, prepare_texts
 
@@ -132,11 +133,6 @@ class FocalLossTrainer(Trainer):
         log_p_true = log_probs.gather(1, labels.unsqueeze(1)).squeeze(1)
         loss = (-(1.0 - log_p_true.exp()) ** self.gamma * log_p_true).mean()
         return (loss, outputs) if return_outputs else loss
-
-
-def make_run_id(task: str, model_key: str, ft_method: str, seed: int, objective: str = "cross_entropy") -> str:
-    suffix = "" if objective == "cross_entropy" else f"_{objective}"
-    return f"{task}_{model_key}_{ft_method}{suffix}_seed{seed}"
 
 
 class EncodedDataset(torch.utils.data.Dataset):
