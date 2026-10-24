@@ -28,7 +28,8 @@ N_ITEMS = {"D0": 60, "D2": 100}
 SOURCES = {"D0": "test.csv", "D2": "d2_codemixed_test.csv"}
 LABELS = {
     "offensive": {0: "Not offensive", 1: "Offensive"},
-    "sentiment": {0: "Negative", 1: "Neutral", 2: "Positive"},
+    # SentNoB/SentMix-3L encoding of notebooks/00_data_preparation.ipynb (SENTIMENT_LABEL_MAP).
+    "sentiment": {0: "Neutral", 1: "Positive", 2: "Negative"},
 }
 CANNOT_JUDGE = "Cannot judge"
 B_BOOTSTRAP = 10_000
@@ -119,6 +120,12 @@ def bootstrap_difference(a: np.ndarray, b: np.ndarray, rng) -> tuple:
 
 def score() -> pd.DataFrame:
     key = pd.read_csv(KEY_PATH, dtype={"source_row": int})
+    # Gold names are re-derived from the data so that the key file cannot carry a stale label mapping.
+    for (task, source), g in key.groupby(["task", "source_file"]):
+        df = pd.read_csv(DATA_DIR / task / source)
+        if not (df["text_clean"].astype(str).iloc[g.source_row].to_numpy() == g.text.astype(str).to_numpy()).all():
+            raise SystemExit(f"{task}/{source}: key texts do not match the data rows")
+        key.loc[g.index, "gold"] = [LABELS[task][int(v)] for v in df["labels"].iloc[g.source_row]]
     annotators = sorted(AUDIT_DIR.glob(WORKBOOK.format("*")))
     if len(annotators) < 2:
         raise SystemExit(f"Expected two filled workbooks in {AUDIT_DIR}")
@@ -184,8 +191,12 @@ def main():
         key = sample_items()
         key.to_csv(KEY_PATH, index=False, lineterminator="\n")
         for i in range(1, args.annotators + 1):
-            write_workbook(key, AUDIT_DIR / WORKBOOK.format(i))
-        print(f"Wrote {KEY_PATH} ({len(key)} items) and {args.annotators} workbooks in {AUDIT_DIR}")
+            path = AUDIT_DIR / WORKBOOK.format(i)
+            if path.exists():
+                print(f"Kept existing {path.name} (never overwritten)")
+            else:
+                write_workbook(key, path)
+        print(f"Wrote {KEY_PATH} ({len(key)} items); workbooks in {AUDIT_DIR}")
         print(key.groupby(["task", "split"]).gold.value_counts().unstack().to_string())
     else:
         pd.set_option("display.width", 220)

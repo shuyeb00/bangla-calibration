@@ -23,7 +23,7 @@ FIGURES_DIR = EVALUATION_FIGURES_DIR
 TABLES_DIR = EVALUATION_TABLES_DIR
 
 LABEL_MAPS = {
-    "sentiment": {0: "Negative", 1: "Neutral", 2: "Positive"},
+    "sentiment": {0: "Neutral", 1: "Positive", 2: "Negative"},
     "offensive": {0: "Non-Offensive", 1: "Offensive"},
 }
 
