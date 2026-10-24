@@ -32,7 +32,7 @@ Each source dataset is split into four disjoint, stratified parts with exact-dup
 - **Conformal prediction:** split conformal with LAC, APS, and RAPS scores at 90% target coverage, plus importance-weighted conformal prediction under covariate shift. The split-conformal implementation is cross-checked against MAPIE.
 - **Representation diagnostics:** Ledoit–Wolf Mahalanobis distances to class-conditional Gaussians fitted on the calibration split.
 - **Statistics:** paired and independent bootstrap tests (B = 10,000) with Holm correction, and McNemar's test.
-- **Error analysis:** a dual-annotator error taxonomy with adjudication, together with a validated rule-based categorizer.
+- **Label audit:** blind relabelling of in-domain and code-mixed test items by two annotators (`src/label_audit.py`).
 
 ### Hyperparameter selection
 
@@ -50,7 +50,8 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/evaluate.py` | Per-run evaluation, Mahalanobis misclassification detection, and importance-weighted conformal prediction |
 | `src/extended_diagnostics.py` | Adaptive and classwise ECE, LAC/APS/RAPS, Mahalanobis percentiles, the MAPIE cross-check, and shift–miscalibration correlations |
 | `src/significance.py` | Bootstrap and McNemar tests with multiplicity correction |
-| `src/adjudicate_errors.py` | Error-analysis pipeline |
+| `src/label_audit.py` | Blind relabelling audit of in-domain and code-mixed test labels |
+| `src/shift_recalibration.py` | Label-free and few-label recalibration, conformal prediction and risk control under shift |
 | `src/analysis_and_plots.py` | Shift quantification, reliability and risk–coverage figures, and the benchmark report |
 | `src/run_cache.py` | Per-run result caches, invalidated automatically when a run's outputs change |
 | `results/tables/` | Aggregated tables and Markdown reports |
