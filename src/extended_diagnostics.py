@@ -1,6 +1,5 @@
 import argparse
 import itertools
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,20 +20,24 @@ from src.calibration import (
     fit_temperature,
 )
 from src.config import (
-    BASE_DIR,
-    DATA_DIR,
+    EVALUATION_FIGURES_DIR,
+    EVALUATION_GRID,
+    EVALUATION_TABLES_DIR,
     FT_METHODS,
     MODELS,
-    RESULTS_DIR,
+    RUNS_DIR,
     SEEDS,
     TASKS,
+    non_converged_runs,
 )
 from src.run_cache import load_cache, run_fingerprint, save_cache
 
 MAHA_CACHE_VERSION = "cal-reference-v1"
+# Bumped when stable sorting made adaptive ECE and APS/RAPS scores platform-independent.
+CALIBRATION_CACHE_VERSION = "stable-sort-1"
 
-FIGURES_DIR = BASE_DIR / "thesis" / "figures"
-TABLES_DIR = RESULTS_DIR / "tables"
+FIGURES_DIR = EVALUATION_FIGURES_DIR
+TABLES_DIR = EVALUATION_TABLES_DIR
 
 
 def df_to_markdown(df: pd.DataFrame) -> str:
@@ -53,7 +56,8 @@ def compute_adaptive_ece(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15
     predictions = np.argmax(probs, axis=1)
     accuracies = (predictions == labels).astype(float)
 
-    order = np.argsort(confidences)
+    # Stable sort: tied confidences must fall into the same equal-mass bins on every platform.
+    order = np.argsort(confidences, kind="stable")
     sorted_conf = confidences[order]
     sorted_acc = accuracies[order]
 
@@ -109,7 +113,7 @@ def aps_raps_scores(
     seed: int = 42,
 ) -> np.ndarray:
     n, k = probs.shape
-    sort_idx = np.argsort(-probs, axis=1)
+    sort_idx = np.argsort(-probs, axis=1, kind="stable")
     sorted_probs = np.take_along_axis(probs, sort_idx, axis=1)
 
     cum_inclusive = np.cumsum(sorted_probs, axis=1)
@@ -224,7 +228,7 @@ def run_mapie_crosscheck() -> None:
 
     records = []
     for task, model_key, ft_method, seed in itertools.product(TASKS.keys(), MODELS.keys(), FT_METHODS, SEEDS):
-        run_dir = RESULTS_DIR / f"{task}_{model_key}_{ft_method}_seed{seed}"
+        run_dir = RUNS_DIR / f"{task}_{model_key}_{ft_method}_seed{seed}"
         if not (run_dir / "cal_logits.npy").exists() or not (run_dir / "test_logits.npy").exists():
             continue
         cal_probs = softmax(np.load(run_dir / "cal_logits.npy"), axis=1)
@@ -279,7 +283,7 @@ def run_mapie_crosscheck() -> None:
 
 def evaluate_run_extended_diagnostics(task: str, model_key: str, ft_method: str, seed: int, force: bool = False):
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
-    run_dir = RESULTS_DIR / run_id
+    run_dir = RUNS_DIR / run_id
     if not run_dir.exists():
         return [], [], []
 
@@ -297,8 +301,8 @@ def evaluate_run_extended_diagnostics(task: str, model_key: str, ft_method: str,
 
     fp = run_fingerprint(run_dir)
     if not force:
-        df_c = load_cache(run_dir, "extended_calibration.csv", fp)
-        df_cf = load_cache(run_dir, "conformal_lac_aps_raps.csv", fp)
+        df_c = load_cache(run_dir, "extended_calibration.csv", fp, version=CALIBRATION_CACHE_VERSION)
+        df_cf = load_cache(run_dir, "conformal_lac_aps_raps.csv", fp, version=CALIBRATION_CACHE_VERSION)
         df_m = load_cache(run_dir, "mahalanobis_percentile.csv", fp, version=MAHA_CACHE_VERSION)
         maha_possible = (run_dir / "cal_hidden.npy").exists()
         if df_c is not None and df_cf is not None and (df_m is not None or not maha_possible):
@@ -447,9 +451,11 @@ def evaluate_run_extended_diagnostics(task: str, model_key: str, ft_method: str,
             })
 
     if ext_cal_records:
-        save_cache(run_dir, "extended_calibration.csv", pd.DataFrame(ext_cal_records), fp)
+        save_cache(run_dir, "extended_calibration.csv", pd.DataFrame(ext_cal_records), fp,
+                   version=CALIBRATION_CACHE_VERSION)
     if conf_records:
-        save_cache(run_dir, "conformal_lac_aps_raps.csv", pd.DataFrame(conf_records), fp)
+        save_cache(run_dir, "conformal_lac_aps_raps.csv", pd.DataFrame(conf_records), fp,
+                   version=CALIBRATION_CACHE_VERSION)
     if maha_records:
         save_cache(run_dir, "mahalanobis_percentile.csv", pd.DataFrame(maha_records), fp, version=MAHA_CACHE_VERSION)
 
@@ -713,12 +719,23 @@ def write_extended_report(
     print(f"[OK] Saved extended diagnostics report to {report_path}")
 
 
+def flag_and_drop(df: pd.DataFrame, excluded: set, per_run_path) -> pd.DataFrame:
+    """Write the per-run table with a non-converged flag, return only converged runs for aggregation."""
+    if excluded:
+        df["non_converged"] = df["run_id"].isin(excluded)
+    df.to_csv(per_run_path, index=False)
+    return df[~df["run_id"].isin(excluded)]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Extended calibration, conformal, and representation diagnostics for all runs.")
     parser.add_argument("--force", action="store_true", help="Recompute even if per-run caches exist.")
     args = parser.parse_args()
 
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    excluded = non_converged_runs()
+    print(f"Evaluation grid {EVALUATION_GRID}: runs in {RUNS_DIR}; excluded from aggregates: {sorted(excluded)}",
+          flush=True)
     run_mapie_crosscheck()
 
     all_cal, all_conf, all_maha = [], [], []
@@ -732,7 +749,7 @@ def main():
 
     if all_cal:
         df_cal = pd.DataFrame(all_cal)
-        df_cal.to_csv(TABLES_DIR / "extended_calibration_per_run.csv", index=False)
+        df_cal = flag_and_drop(df_cal, excluded, TABLES_DIR / "extended_calibration_per_run.csv")
         cal_cols = [
             "nll", "top_label_ece_15", "adaptive_ece_15", "classwise_ece_15",
             "overconfidence_ece_15", "underconfidence_ece_15", "mce_15", "brier"
@@ -747,7 +764,7 @@ def main():
 
     if all_conf:
         df_conf = pd.DataFrame(all_conf)
-        df_conf.to_csv(TABLES_DIR / "conformal_lac_aps_raps_per_run.csv", index=False)
+        df_conf = flag_and_drop(df_conf, excluded, TABLES_DIR / "conformal_lac_aps_raps_per_run.csv")
         conf_cols = [
             "q_hat", "empirical_coverage", "avg_set_size",
             "singleton_rate", "trivial_set_rate", "worst_class_coverage", "class_coverage_gap"
@@ -762,7 +779,7 @@ def main():
 
     if all_maha:
         df_maha = pd.DataFrame(all_maha)
-        df_maha.to_csv(TABLES_DIR / "mahalanobis_percentile_per_run.csv", index=False)
+        df_maha = flag_and_drop(df_maha, excluded, TABLES_DIR / "mahalanobis_percentile_per_run.csv")
         maha_cols = [
             "mean_raw_maha", "mean_maha_percentile", "median_maha_percentile",
             "frac_above_95th_ref_pct", "mean_pct_wrong", "mean_pct_correct",

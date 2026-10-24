@@ -1,6 +1,5 @@
 import argparse
 import itertools
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -8,7 +7,7 @@ from scipy.special import softmax
 from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.multitest import multipletests
 
-from src.config import DATA_DIR, FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
+from src.config import DATA_DIR, EVALUATION_TABLES_DIR, FT_METHODS, MODELS, RUNS_DIR, SEEDS, TASKS, non_converged_runs
 from src.run_cache import load_cache, save_cache
 
 
@@ -123,7 +122,7 @@ def run_shift_significance_for_run(
     n_bootstrap: int = 10000,
 ) -> list:
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
-    run_dir = RESULTS_DIR / run_id
+    run_dir = RUNS_DIR / run_id
     if not (run_dir / "test_logits.npy").exists():
         return []
 
@@ -234,6 +233,10 @@ def main():
         return
 
     df = pd.DataFrame(all_records)
+    excluded = non_converged_runs()
+    if excluded:
+        print(f"Excluded non-converged runs from the test family: {sorted(excluded)}", flush=True)
+        df = df[~df["run_id"].isin(excluded)].reset_index(drop=True)
     df["holm_corrected_p"] = df["raw_p"]
     df["significant_05"] = df["raw_p"] < 0.05
 
@@ -243,7 +246,7 @@ def main():
         df.loc[sec_mask, "holm_corrected_p"] = p_adj
         df.loc[sec_mask, "significant_05"] = reject
 
-    tables_dir = RESULTS_DIR / "tables"
+    tables_dir = EVALUATION_TABLES_DIR
     tables_dir.mkdir(parents=True, exist_ok=True)
     out_path = tables_dir / "significance_results.csv"
     df.to_csv(out_path, index=False)

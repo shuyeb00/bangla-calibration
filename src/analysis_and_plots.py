@@ -10,16 +10,17 @@ from transformers import AutoTokenizer
 
 from src.calibration import apply_temperature, fit_temperature, risk_coverage_curve
 from src.config import (
-    BASE_DIR,
     DATA_DIR,
+    EVALUATION_FIGURES_DIR,
+    EVALUATION_TABLES_DIR,
     MODELS,
-    RESULTS_DIR,
+    RUNS_DIR,
     TASKS,
     get_shift_conditions_paths,
 )
 
-FIGURES_DIR = BASE_DIR / "thesis" / "figures"
-TABLES_DIR = RESULTS_DIR / "tables"
+FIGURES_DIR = EVALUATION_FIGURES_DIR
+TABLES_DIR = EVALUATION_TABLES_DIR
 
 LABEL_MAPS = {
     "sentiment": {0: "Negative", 1: "Neutral", 2: "Positive"},
@@ -189,7 +190,7 @@ def plot_reliability_diagram(
 def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     run_id = f"{task}_banglabert_full_ft_seed{seed}"
-    run_dir = RESULTS_DIR / run_id
+    run_dir = RUNS_DIR / run_id
     if not run_dir.exists():
         print(f"Run directory {run_dir} not found for plotting.")
         return
@@ -313,7 +314,7 @@ def sample_errors_for_annotation(task: str = "sentiment", seed: int = 42, n_per_
             return
 
     run_id = f"{task}_banglabert_full_ft_seed{seed}"
-    run_dir = RESULTS_DIR / run_id
+    run_dir = RUNS_DIR / run_id
     if not run_dir.exists():
         return
 

@@ -30,7 +30,7 @@ from src.calibration import (
     risk_at_coverage,
     risk_coverage_curve,
 )
-from src.config import FT_METHODS, MODELS, RESULTS_DIR, SEEDS, TASKS
+from src.config import EVALUATION_GRID, EVALUATION_TABLES_DIR, FT_METHODS, MODELS, RUNS_DIR, SEEDS, TASKS, non_converged_runs
 from src.run_cache import load_cache, save_cache
 
 REPR_CACHE_VERSION = "cal-reference-v1"
@@ -265,7 +265,7 @@ def evaluate_weighted_conformal(
 
 def evaluate_single_run(task: str, model_key: str, ft_method: str, seed: int):
     run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
-    run_dir = RESULTS_DIR / run_id
+    run_dir = RUNS_DIR / run_id
     if not run_dir.exists():
         return [], [], []
 
@@ -373,6 +373,9 @@ def main():
     parser.add_argument("--ft_methods", nargs="+", default=FT_METHODS, choices=FT_METHODS)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     args = parser.parse_args()
+    excluded = non_converged_runs()
+    print(f"Evaluation grid {EVALUATION_GRID}: runs in {RUNS_DIR}; excluded from aggregates: {sorted(excluded)}",
+          flush=True)
 
     all_metrics, all_rep, all_weighted = [], [], []
     for task, model_key, ft_method, seed in itertools.product(
@@ -383,12 +386,15 @@ def main():
         all_rep.extend(r_rec)
         all_weighted.extend(w_rec)
 
-    tables_dir = RESULTS_DIR / "tables"
+    tables_dir = EVALUATION_TABLES_DIR
     tables_dir.mkdir(parents=True, exist_ok=True)
 
     if all_metrics:
         df_metrics = pd.DataFrame(all_metrics)
+        if excluded:
+            df_metrics["non_converged"] = df_metrics["run_id"].isin(excluded)
         df_metrics.to_csv(tables_dir / "metrics_per_run.csv", index=False)
+        df_metrics = df_metrics[~df_metrics["run_id"].isin(excluded)]
 
         metric_cols = [
             "accuracy",

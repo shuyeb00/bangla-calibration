@@ -6,6 +6,18 @@ DATA_DIR = BASE_DIR / "data" / "processed"
 RESULTS_DIR = BASE_DIR / "results"
 MODELS_DIR = BASE_DIR / "models"
 
+# Which fine-tuning grid the evaluation scripts read and write (environment variable EVALUATION_GRID).
+GRID_LAYOUTS = {
+    "max_length_128": (RESULTS_DIR, RESULTS_DIR / "tables", BASE_DIR / "thesis" / "figures"),
+    "max_length_512": (RESULTS_DIR / "grid_max_length_512" / "runs",
+                       RESULTS_DIR / "tables" / "grid_max_length_512",
+                       BASE_DIR / "thesis" / "figures" / "grid_max_length_512"),
+}
+EVALUATION_GRID = os.environ.get("EVALUATION_GRID", "max_length_128")
+if EVALUATION_GRID not in GRID_LAYOUTS:
+    raise ValueError(f"EVALUATION_GRID must be one of {sorted(GRID_LAYOUTS)}, got {EVALUATION_GRID!r}")
+RUNS_DIR, EVALUATION_TABLES_DIR, EVALUATION_FIGURES_DIR = GRID_LAYOUTS[EVALUATION_GRID]
+
 SEEDS = [42, 123, 2026, 7, 99]
 
 MODELS = {
@@ -103,3 +115,14 @@ def get_shift_conditions_paths(task_name: str) -> dict:
             conditions[f"shift_d3_noise{level:02d}"] = noise_path
 
     return conditions
+
+
+def non_converged_runs() -> set:
+    """Run ids flagged as non-converged in the training summary of the evaluated grid."""
+    path = RESULTS_DIR / "tables" / f"grid_{EVALUATION_GRID}_training_summary.csv"
+    if not path.exists():
+        return set()
+    import pandas as pd
+
+    summary = pd.read_csv(path)
+    return set(summary.loc[summary["non_converged"].astype(bool), "run_id"])
