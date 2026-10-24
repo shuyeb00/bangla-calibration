@@ -20,3 +20,4 @@ results/lora_lr_sweep_pretraining_matched/*
 !results/lora_lr_sweep_pretraining_matched/lora_hparam_selection.csv
 results/smoke/
 models/
+results/grid_max_length_512/
