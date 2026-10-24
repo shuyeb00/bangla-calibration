@@ -28,6 +28,9 @@ from src.config import (
 )
 
 GRID_DIR = RESULTS_DIR / "grid_max_length_512"
+# Same rule as src/select_lora_hparams.py: a single predicted class, or validation macro-F1
+# within COLLAPSE_MARGIN of the majority-class baseline.
+COLLAPSE_MARGIN = 0.02
 
 
 def download(with_hidden: bool) -> None:
@@ -124,8 +127,22 @@ def main():
         print(f"{col}: {sorted(present[col].astype(str).unique())}")
     fingerprints = present.groupby(["task", "model"]).input_fingerprint.nunique()
     print("one input fingerprint per (task, model):", bool((fingerprints == 1).all()))
-    collapsed = present[present.collapsed.astype(bool)]
-    print(f"collapsed runs: {len(collapsed)} {list(collapsed.run_id)}")
+    from src.select_lora_hparams import majority_macro_f1
+
+    baseline = {t: majority_macro_f1(t) for t in TASKS}
+    table["majority_baseline_val_f1"] = table.task.map(baseline)
+    table["non_converged"] = table.present & (
+        table.collapsed.astype("boolean").fillna(False).astype(bool)
+        | (table.val_macro_f1 <= table.majority_baseline_val_f1 + COLLAPSE_MARGIN))
+    table[lead + [c for c in table.columns if c not in lead]].to_csv(out, index=False, float_format="%.6f",
+                                                                     lineterminator="\n")
+    present = table[table.present]
+    flagged = present[present.non_converged]
+    print(f"non-converged runs (single class or val macro-F1 <= majority baseline + {COLLAPSE_MARGIN}): "
+          f"{len(flagged)}")
+    for r in flagged.itertuples():
+        print(f"  {r.run_id}: val macro-F1 {r.val_macro_f1:.4f}, predicted classes {r.val_n_pred_classes}, "
+              f"baseline {r.majority_baseline_val_f1:.4f}, test accuracy {r.test_accuracy:.4f}")
 
     pd.set_option("display.width", 200)
     summary = present.groupby(["task", "model", "ft_method"]).agg(
