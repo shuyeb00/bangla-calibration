@@ -33,15 +33,19 @@ from sklearn.metrics import accuracy_score, f1_score
 from transformers import AutoModelForSequenceClassification, DataCollatorWithPadding, Trainer, TrainingArguments
 
 from src.config import (
+    ALL_MODELS,
     BASE_DIR,
+    FOCAL_LOSS_GAMMA,
     FT_METHODS,
     HUB_CHECKPOINT_REPO,
     HUB_OUTPUT_REPO,
     INPUT_PIPELINE,
+    LABEL_SMOOTHING_FACTOR,
     LORA_HYPERPARAMS,
     LORA_TRAINING,
-    MODELS,
+    MEMORY_SETTINGS,
     MODELS_DIR,
+    OBJECTIVES,
     RESULTS_DIR,
     SEEDS,
     TASKS,
@@ -114,6 +118,27 @@ def load_shift_conditions(task_name: str) -> dict:
             for name, path in get_shift_conditions_paths(task_name).items()}
 
 
+class FocalLossTrainer(Trainer):
+    """Trainer with the focal loss of Lin et al. (2017): -(1 - p_y)^gamma log p_y."""
+
+    def __init__(self, *args, gamma: float = FOCAL_LOSS_GAMMA, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.gamma = gamma
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        log_probs = torch.log_softmax(outputs.logits.float(), dim=-1)
+        log_p_true = log_probs.gather(1, labels.unsqueeze(1)).squeeze(1)
+        loss = (-(1.0 - log_p_true.exp()) ** self.gamma * log_p_true).mean()
+        return (loss, outputs) if return_outputs else loss
+
+
+def make_run_id(task: str, model_key: str, ft_method: str, seed: int, objective: str = "cross_entropy") -> str:
+    suffix = "" if objective == "cross_entropy" else f"_{objective}"
+    return f"{task}_{model_key}_{ft_method}{suffix}_seed{seed}"
+
+
 class EncodedDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels: np.ndarray):
         self.columns = {k: encodings[k] for k in ("input_ids", "attention_mask", "token_type_ids") if k in encodings}
@@ -154,7 +179,7 @@ def newly_initialised_modules(missing_keys: list) -> list:
 
 def build_model(task: str, model_key: str, ft_method: str, source: str = None) -> tuple:
     model, info = AutoModelForSequenceClassification.from_pretrained(
-        source or MODELS[model_key], num_labels=TASKS[task], output_loading_info=True)
+        source or ALL_MODELS[model_key], num_labels=TASKS[task], output_loading_info=True)
     new_modules = newly_initialised_modules(info["missing_keys"])
     if ft_method == "lora":
         # Every module absent from the checkpoint (the classifier, and ALBERT's pooler when the
@@ -184,10 +209,28 @@ def optimisation_settings(task: str, model_key: str, ft_method: str) -> tuple:
     return TRAIN_HYPERPARAMS["learning_rate"], 0.0
 
 
+def memory_settings(model_key: str) -> dict:
+    return MEMORY_SETTINGS.get(model_key, {
+        "per_device_train_batch_size": TRAIN_HYPERPARAMS["per_device_train_batch_size"],
+        "gradient_accumulation_steps": 1,
+        "gradient_checkpointing": False,
+    })
+
+
 def training_arguments(output_dir: Path, seed: int, learning_rate: float, warmup_steps: int,
-                       epochs: int, save: bool = True) -> TrainingArguments:
+                       epochs: int, save: bool = True, model_key: str = None,
+                       objective: str = "cross_entropy") -> TrainingArguments:
     params = inspect.signature(TrainingArguments.__init__).parameters
+    memory = memory_settings(model_key)
+    if memory["gradient_accumulation_steps"] != 1:
+        raise ValueError("Gradient accumulation changes the update size under transformers 5.x; "
+                         "use gradient checkpointing instead.")
     optional = {}
+    if memory["gradient_checkpointing"]:
+        optional["gradient_checkpointing"] = True
+        optional["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
+    if objective == "label_smoothing":
+        optional["label_smoothing_factor"] = LABEL_SMOOTHING_FACTOR
     if "save_only_model" in params:
         optional["save_only_model"] = True
     if "group_by_length" in params:
@@ -205,7 +248,8 @@ def training_arguments(output_dir: Path, seed: int, learning_rate: float, warmup
         greater_is_better=True,
         learning_rate=learning_rate,
         warmup_steps=warmup_steps,
-        per_device_train_batch_size=TRAIN_HYPERPARAMS["per_device_train_batch_size"],
+        per_device_train_batch_size=memory["per_device_train_batch_size"],
+        gradient_accumulation_steps=memory["gradient_accumulation_steps"],
         per_device_eval_batch_size=TRAIN_HYPERPARAMS["per_device_eval_batch_size"],
         num_train_epochs=epochs,
         weight_decay=TRAIN_HYPERPARAMS["weight_decay"],
@@ -307,11 +351,15 @@ def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: 
 
 
 def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, hub: bool = False,
-                          smoke: bool = False, keep_checkpoints: bool = False, source: str = None) -> dict:
-    run_id = f"{task}_{model_key}_{ft_method}_seed{seed}"
+                          smoke: bool = False, keep_checkpoints: bool = False, source: str = None,
+                          objective: str = "cross_entropy") -> dict:
+    if objective not in OBJECTIVES:
+        raise ValueError(f"Unknown objective {objective!r}")
+    run_id = make_run_id(task, model_key, ft_method, seed, objective)
     prefix = "smoke/" if smoke else ""
     run_path = f"{prefix}runs/{run_id}"
-    weights_path = f"{prefix}{task}/{model_key}/{ft_method}/seed{seed}"
+    objective_dir = "" if objective == "cross_entropy" else f"{objective}/"
+    weights_path = f"{prefix}{task}/{model_key}/{ft_method}/{objective_dir}seed{seed}"
     run_dir = RESULTS_DIR / ("smoke" if smoke else "") / run_id
     api = hub_api() if hub else None
     if (run_dir / COMPLETION_MARKER).exists() or (api is not None and hub_run_complete(api, run_path)):
@@ -337,23 +385,32 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
 
     learning_rate, warmup_ratio = optimisation_settings(task, model_key, ft_method)
     epochs = 1 if smoke else TRAIN_HYPERPARAMS["num_train_epochs"]
-    steps_per_epoch = math.ceil(len(datasets["train"]) / TRAIN_HYPERPARAMS["per_device_train_batch_size"])
+    memory = memory_settings(model_key)
+    effective_batch = memory["per_device_train_batch_size"] * memory["gradient_accumulation_steps"]
+    steps_per_epoch = math.ceil(len(datasets["train"]) / effective_batch)
     warmup_steps = int(math.ceil(warmup_ratio * steps_per_epoch * epochs))
     checkpoint_dir = MODELS_DIR / run_id
-    args = training_arguments(checkpoint_dir, seed, learning_rate, warmup_steps, epochs)
+    args = training_arguments(checkpoint_dir, seed, learning_rate, warmup_steps, epochs,
+                              model_key=model_key, objective=objective)
 
     config_payload = {
         "run_id": run_id,
-        "model_name": source or MODELS[model_key],
+        "model_name": source or ALL_MODELS[model_key],
         "model_key": model_key,
         "ft_method": ft_method,
+        "objective": objective,
+        "label_smoothing_factor": LABEL_SMOOTHING_FACTOR if objective == "label_smoothing" else 0.0,
+        "focal_loss_gamma": FOCAL_LOSS_GAMMA if objective == "focal_loss" else None,
         "task": task,
         "num_labels": TASKS[task],
         "seed": seed,
         "learning_rate": learning_rate,
         "warmup_ratio": warmup_ratio,
         "warmup_steps": warmup_steps,
-        "batch_size": TRAIN_HYPERPARAMS["per_device_train_batch_size"],
+        "batch_size": effective_batch,
+        "per_device_train_batch_size": memory["per_device_train_batch_size"],
+        "gradient_accumulation_steps": memory["gradient_accumulation_steps"],
+        "gradient_checkpointing": memory["gradient_checkpointing"],
         "num_epochs": epochs,
         "max_length": TRAIN_HYPERPARAMS["max_length"],
         "padding": "dynamic",
@@ -372,8 +429,9 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
 
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
-    trainer = Trainer(model=model, args=args, train_dataset=datasets["train"], eval_dataset=datasets["val"],
-                      data_collator=collator, compute_metrics=compute_metrics)
+    trainer_class = FocalLossTrainer if objective == "focal_loss" else Trainer
+    trainer = trainer_class(model=model, args=args, train_dataset=datasets["train"], eval_dataset=datasets["val"],
+                            data_collator=collator, compute_metrics=compute_metrics)
     train_result = trainer.train()
     eval_metrics = trainer.evaluate(datasets["val"])
 
@@ -430,20 +488,26 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
 def parse_run_ids(values: list) -> list:
     runs = []
     for value in values:
-        task, model_key, ft_method, seed = value.split(":")
-        if task not in TASKS or model_key not in MODELS or ft_method not in FT_METHODS:
-            raise ValueError(f"Invalid run id {value!r}; expected task:model:ft_method:seed")
-        runs.append((task, model_key, ft_method, int(seed)))
+        parts = value.split(":")
+        if len(parts) == 4:
+            parts.insert(3, "cross_entropy")
+        if len(parts) != 5:
+            raise ValueError(f"Invalid run id {value!r}; expected task:model:ft_method[:objective]:seed")
+        task, model_key, ft_method, objective, seed = parts
+        if task not in TASKS or model_key not in ALL_MODELS or ft_method not in FT_METHODS or objective not in OBJECTIVES:
+            raise ValueError(f"Invalid run id {value!r}; expected task:model:ft_method[:objective]:seed")
+        runs.append((task, model_key, ft_method, objective, int(seed)))
     return runs
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run the fine-tuning grid.")
     parser.add_argument("--tasks", nargs="+", default=["sentiment"], choices=list(TASKS))
-    parser.add_argument("--models", nargs="+", default=["banglabert"], choices=list(MODELS))
+    parser.add_argument("--models", nargs="+", default=["banglabert"], choices=list(ALL_MODELS))
     parser.add_argument("--ft_methods", nargs="+", default=["full_ft"], choices=FT_METHODS)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
-    parser.add_argument("--run-ids", nargs="+", default=None, metavar="TASK:MODEL:FT:SEED",
+    parser.add_argument("--objectives", nargs="+", default=["cross_entropy"], choices=OBJECTIVES)
+    parser.add_argument("--run-ids", nargs="+", default=None, metavar="TASK:MODEL:FT[:OBJECTIVE]:SEED",
                         help="Explicit runs; overrides --tasks/--models/--ft_methods/--seeds.")
     parser.add_argument("--hub", action="store_true", help="Upload weights and outputs to the Hugging Face repos.")
     parser.add_argument("--smoke", action="store_true", help="Tiny subsets and one epoch, under smoke/ paths.")
@@ -454,12 +518,12 @@ def main():
 
     sources = dict(item.split("=", 1) for item in args.model_source or [])
     runs = parse_run_ids(args.run_ids) if args.run_ids else list(
-        itertools.product(args.tasks, args.models, args.ft_methods, args.seeds))
+        itertools.product(args.tasks, args.models, args.ft_methods, args.objectives, args.seeds))
     summary = []
-    for task, model_key, ft_method, seed in runs:
+    for task, model_key, ft_method, objective, seed in runs:
         summary.append(run_single_experiment(task, model_key, ft_method, seed, hub=args.hub, smoke=args.smoke,
                                              keep_checkpoints=args.keep_checkpoints,
-                                             source=sources.get(model_key)))
+                                             source=sources.get(model_key), objective=objective))
     print("\nSUMMARY " + json.dumps(summary), flush=True)
 
 

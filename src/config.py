@@ -26,6 +26,27 @@ MODELS = {
     "xlmr_base": "xlm-roberta-base",
 }
 
+# Larger encoders for the scale comparison (full fine-tuning, cross-entropy, SCALE_SEEDS).
+SCALE_MODELS = {
+    "xlmr_large": "FacebookAI/xlm-roberta-large",
+    "banglabert_large": "csebuetnlp/banglabert_large",
+}
+ALL_MODELS = {**MODELS, **SCALE_MODELS}
+SCALE_SEEDS = [42, 123, 2026]
+
+# Memory settings for a 16 GB T4: full batches of 16 with gradient checkpointing. Gradient
+# accumulation is not used: under transformers 5.x it doubled the update of sequence-classification
+# models in a sandbox check (src/train.py refuses it).
+MEMORY_SETTINGS = {
+    key: {"per_device_train_batch_size": 16, "gradient_accumulation_steps": 1, "gradient_checkpointing": True}
+    for key in SCALE_MODELS
+}
+
+# Training objectives; cross_entropy is the default and keeps the original run ids.
+OBJECTIVES = ["cross_entropy", "label_smoothing", "focal_loss"]
+LABEL_SMOOTHING_FACTOR = 0.1
+FOCAL_LOSS_GAMMA = 2.0
+
 FT_METHODS = ["full_ft", "lora"]
 
 TASKS = {

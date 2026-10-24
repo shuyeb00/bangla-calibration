@@ -15,7 +15,7 @@ Verify the IndicBERT pipeline against the slow ALBERT tokenizer:
 import argparse
 import unicodedata
 
-from src.config import INPUT_PIPELINE, MODELS, TASKS, TRAIN_HYPERPARAMS
+from src.config import ALL_MODELS, INPUT_PIPELINE, MODELS, TASKS, TRAIN_HYPERPARAMS
 
 PIPELINES = ("autotokenizer_default", "pretraining_matched")
 COMBINING_MARK_MODELS = ("indicbert",)
@@ -39,7 +39,7 @@ def load_tokenizer(model_key: str, pipeline: str = INPUT_PIPELINE, source: str =
     from transformers.utils import logging as hf_logging
 
     hf_logging.set_verbosity_error()
-    name = source or MODELS[model_key]
+    name = source or ALL_MODELS[model_key]
     if check_pipeline(pipeline) == "pretraining_matched" and model_key in COMBINING_MARK_MODELS:
         tokenizer = AutoTokenizer.from_pretrained(name, keep_accents=True, from_slow=True)
         if getattr(tokenizer, "keep_accents", True) is not True:
