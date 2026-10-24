@@ -15,7 +15,11 @@ N_RESAMPLES subsets per n, identical across runs):
                 ceil((n + 1)(1 - alpha)); the full label set when it exceeds n)
   conformal risk control (offensive task): threshold on P(offensive) whose miss rate on offensive
                 items satisfies (m + 1) / (n_pos + 1) <= alpha (Angelopoulos et al., 2024)
-Every metric is computed on the target test split; runs of all grids in RUNS_DIR (objectives, scale) are
+Every metric is computed on the target test split (AUROC measures discrimination, which monotone
+recalibration cannot change). A target temperature at the upper bound (at_upper_bound) means the target
+likelihood still improves as T grows, i.e. the logits carry no usable information on that split.
+shift_indicators_per_run.csv holds label-free statistics of source-TS probabilities on the unlabeled
+inputs of each split (confidence, entropy, predicted-label marginal shift) for severity prediction; runs of all grids in RUNS_DIR (objectives, scale) are
 included and identified by model, fine-tuning method and objective. Non-converged runs are excluded.
 
     python -m src.shift_recalibration                      (EVALUATION_GRID selects the grid)
@@ -96,6 +100,32 @@ def metrics(probs: np.ndarray, labels: np.ndarray) -> dict:
         "ece_15": compute_ece(probs, labels, n_bins=15),
         "brier": compute_brier_score(probs, labels, n_classes=probs.shape[1]),
         "aurc": compute_aurc(*risk_coverage_curve(probs, labels)),
+        "auroc": ranking_auroc(probs, labels),
+    }
+
+
+def ranking_auroc(probs: np.ndarray, labels: np.ndarray) -> float:
+    """Discrimination independent of any monotone recalibration: AUROC of P(class 1) for two classes,
+    macro one-vs-rest AUROC otherwise."""
+    if len(np.unique(labels)) < probs.shape[1]:
+        return float("nan")
+    if probs.shape[1] == 2:
+        return float(roc_auc_score(labels, probs[:, 1]))
+    return float(roc_auc_score(labels, probs, multi_class="ovr", average="macro"))
+
+
+def shift_indicators(probs: np.ndarray, source_probs: np.ndarray) -> dict:
+    """Label-free statistics of source-TS probabilities on target inputs, relative to the source calibration split."""
+    k = probs.shape[1]
+    entropy = lambda q: float(np.mean(-np.sum(q * np.log(np.clip(q, 1e-12, 1.0)), axis=1)) / np.log(k))
+    hard = lambda q: np.bincount(q.argmax(axis=1), minlength=k) / len(q)
+    return {
+        "mean_confidence": float(probs.max(axis=1).mean()),
+        "confidence_change": float(probs.max(axis=1).mean() - source_probs.max(axis=1).mean()),
+        "normalised_entropy": entropy(probs),
+        "entropy_change": entropy(probs) - entropy(source_probs),
+        "predicted_marginal_tv": float(0.5 * np.abs(hard(probs) - hard(source_probs)).sum()),
+        "probability_marginal_tv": float(0.5 * np.abs(probs.mean(axis=0) - source_probs.mean(axis=0)).sum()),
     }
 
 
@@ -234,7 +264,7 @@ def main():
     prior_var = {t: second_moment[other[t]] for t in second_moment}
     print(f"prior variance of log T (from the other task): {prior_var}", flush=True)
 
-    label_free, few_label, conformal, risk = [], [], [], []
+    label_free, few_label, conformal, risk, indicators = [], [], [], [], []
     for i, run in enumerate(runs):
         d = run["dir"]
         key = {k: run[k] for k in ("run_id", "task", "model", "ft_method", "objective", "seed")}
@@ -271,6 +301,9 @@ def main():
                 label_free.append({**base, "method": method, "temperature": temps.get(method, np.nan), **metrics(probs, y)})
 
             src_test_probs = softmax(z / t_src, axis=1)
+            indicators.append({**base, **shift_indicators(src_test_probs, src_probs_cal), "accuracy": float(
+                (src_test_probs.argmax(axis=1) == y).mean()), "auroc": ranking_auroc(src_test_probs, y),
+                "source_ts_nll": compute_nll(src_test_probs, y)})
             conformal.append({**base, "method": "source_split_conformal", "n_labels": 0, "resample": -1,
                               **conformal_eval(src_test_probs, y, q_src)})
             if positive is not None:
@@ -291,7 +324,9 @@ def main():
                     log_t_map = fit_log_temperature(sz, sy, prior_mean=log_t_src, prior_var=prior_var[run["task"]])
                     for method, log_t in (("mle_ts", log_t_mle), ("shrinkage_ts", log_t_map)):
                         few_label.append({**base, "method": method, "n_labels": n_label, "resample": r,
-                                          "log_ratio": log_t - log_t_src, **metrics(softmax(z / np.exp(log_t), axis=1), y)})
+                                          "log_ratio": log_t - log_t_src,
+                                          "at_upper_bound": float(log_t >= LOG_T_BOUNDS[1] - 1e-3),
+                                          **metrics(softmax(z / np.exp(log_t), axis=1), y)})
                     scores = 1.0 - tz_src_probs[sel, sy]
                     conformal.append({**base, "method": "target_split_conformal", "n_labels": n_label, "resample": r,
                                       **conformal_eval(src_test_probs, y, conformal_threshold(scores))})
@@ -307,12 +342,14 @@ def main():
     tables = {
         "shift_domain_classifier.csv": pd.DataFrame(domain_rows),
         "shift_recalibration_label_free_per_run.csv": pd.DataFrame(label_free),
+        "shift_indicators_per_run.csv": pd.DataFrame(indicators),
     }
     few = pd.DataFrame(few_label)
     few["n_labels"] = few["n_labels"].astype(str)
     run_group = ["run_id", "task", "model", "ft_method", "objective", "seed", "condition", "method", "n_labels"]
     few_run = few.groupby(run_group).agg(
-        **{c: (c, "mean") for c in ("log_ratio", "accuracy", "macro_f1", "nll", "ece_15", "brier", "aurc")},
+        **{c: (c, "mean") for c in ("log_ratio", "at_upper_bound", "accuracy", "macro_f1", "nll", "ece_15", "brier",
+                                    "aurc", "auroc")},
         nll_resample_sd=("nll", "std")).reset_index()
     tables["shift_recalibration_few_label_per_run.csv"] = few_run
     for name, df, extra in (("conformal_under_shift_per_run.csv", pd.DataFrame(conformal), ["coverage", "set_size"]),
@@ -328,9 +365,9 @@ def main():
         [{"task": t, "prior_from_task": other[t], "prior_variance_log_t": prior_var[t]} for t in prior_var])
 
     lf = tables["shift_recalibration_label_free_per_run.csv"]
-    target_metrics = ["accuracy", "macro_f1", "nll", "ece_15", "brier", "aurc"]
+    target_metrics = ["accuracy", "macro_f1", "nll", "ece_15", "brier", "aurc", "auroc"]
     summary = [lf.assign(n_labels="0").groupby(group + ["n_labels"])[target_metrics].mean().reset_index(),
-               few_run.groupby(group + ["n_labels"])[target_metrics + ["log_ratio"]].mean().reset_index()]
+               few_run.groupby(group + ["n_labels"])[target_metrics + ["log_ratio", "at_upper_bound"]].mean().reset_index()]
     tables["shift_recalibration_summary.csv"] = pd.concat(summary, ignore_index=True)
     for name, df in tables.items():
         df.to_csv(out / name, index=False, float_format="%.6g", lineterminator="\n")
