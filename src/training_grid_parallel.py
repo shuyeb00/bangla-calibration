@@ -3,7 +3,10 @@
 Grids
   base        3 encoders x full FT / LoRA x 5 seeds x 2 tasks, cross-entropy (60 runs, 2 shards)
   objectives  3 encoders x full FT x label smoothing / focal loss x 5 seeds x 2 tasks (60 runs, 2 shards)
-  scale       XLM-R-large, BanglaBERT-large x full FT x 3 seeds x 2 tasks, cross-entropy (12 runs, 1 shard)
+  scale       XLM-R-large, BanglaBERT-large x full FT (large-encoder recipe, config.FULL_FT_TRAINING)
+              x 5 seeds x 2 tasks, cross-entropy (20 runs, 3 shards)
+Audit only (not launchable; trained with the base-model recipe before FULL_FT_TRAINING existed):
+  scale_recipe_base  the same large encoders x 3 seeds (SCALE_SEEDS) at lr 2e-5 without warmup
 
 Runs are assigned to the GPUs of all shards by longest-processing-time scheduling on estimated
 minutes; one src.train process per GPU with --hub. With --smoke-first every GPU first trains the
@@ -22,7 +25,17 @@ import subprocess
 import sys
 import time
 
-from src.config import FT_METHODS, MODELS, RESULTS_DIR, SCALE_MODELS, SCALE_SEEDS, SEEDS, TASKS
+from src.config import (
+    FT_METHODS,
+    MODELS,
+    RESULTS_DIR,
+    SCALE_MODELS,
+    SCALE_SEEDS,
+    SEEDS,
+    TASKS,
+    make_run_id,
+    recipe_tag,
+)
 
 # Minutes per run: training time of the max_length-128 grid (mean over seeds of train_runtime in
 # its train_metrics.json) scaled by the dynamic-padding/512 training compute in
@@ -40,12 +53,12 @@ EST_MINUTES = {
     ("sentiment", "indicbert", "lora"): 3.3,
     ("sentiment", "xlmr_base", "full_ft"): 5.2,
     ("sentiment", "xlmr_base", "lora"): 3.3,
-    # Large encoders: base-model training minutes of the 512 grid x about 4.2 (3.2x compute,
-    # gradient checkpointing, half-size micro-batches), plus outputs and upload.
-    ("offensive", "xlmr_large", "full_ft"): 88.0,
-    ("offensive", "banglabert_large", "full_ft"): 54.0,
-    ("sentiment", "xlmr_large", "full_ft"): 21.0,
-    ("sentiment", "banglabert_large", "full_ft"): 13.0,
+    # Large encoders: measured mean training minutes of the scale_recipe_base runs
+    # (grid_max_length_512_training_summary.csv) plus output pass, loading and upload.
+    ("offensive", "xlmr_large", "full_ft"): 66.0,
+    ("offensive", "banglabert_large", "full_ft"): 48.0,
+    ("sentiment", "xlmr_large", "full_ft"): 16.0,
+    ("sentiment", "banglabert_large", "full_ft"): 12.0,
 }
 GPUS_PER_SHARD = 2
 KEEP = ("=====", "[UPLOADED", "[LOCAL", "[UPLOAD_FAILED", "[UPLOAD RETRY", "[SKIP", "[COLLAPSE",
@@ -59,11 +72,20 @@ def grid_runs(grid: str) -> list:
     if grid == "objectives":
         return list(itertools.product(TASKS, MODELS, ["full_ft"], ["label_smoothing", "focal_loss"], SEEDS))
     if grid == "scale":
+        return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SEEDS))
+    if grid == "scale_recipe_base":
         return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SCALE_SEEDS))
     raise ValueError(f"Unknown grid {grid!r}")
 
 
-N_SHARDS = {"base": 2, "objectives": 2, "scale": 1}
+def grid_run_id(grid: str, run: tuple) -> str:
+    task, model, ft, objective, seed = run
+    recipe = "" if grid == "scale_recipe_base" else recipe_tag(model, ft)
+    return make_run_id(task, model, ft, seed, objective, recipe)
+
+
+N_SHARDS = {"base": 2, "objectives": 2, "scale": 3}
+AUDIT_GRIDS = list(N_SHARDS) + ["scale_recipe_base"]
 
 
 def plan(grid: str) -> list:

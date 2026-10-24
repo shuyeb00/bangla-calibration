@@ -32,7 +32,13 @@ SCALE_MODELS = {
     "banglabert_large": "csebuetnlp/banglabert_large",
 }
 ALL_MODELS = {**MODELS, **SCALE_MODELS}
+# Seeds of the first large-encoder grid, trained with the base-model recipe (lr 2e-5, no warmup).
 SCALE_SEEDS = [42, 123, 2026]
+
+# Full fine-tuning recipe for the large encoders: under the base-model recipe 3 of 6 XLM-R-large runs
+# collapsed to a single class, so they use the standard large-encoder setting (smaller rate, linear
+# warmup; Liu et al., 2019; Mosbach et al., 2021). Run ids and Hub paths carry the recipe.
+FULL_FT_TRAINING = {key: {"learning_rate": 1e-5, "warmup_ratio": 0.1} for key in SCALE_MODELS}
 
 # Memory settings for a 16 GB T4: full batches of 16 with gradient checkpointing. Gradient
 # accumulation is not used: under transformers 5.x it doubled the update of sequence-classification
@@ -94,8 +100,15 @@ LORA_HYPERPARAMS = {
 }
 
 
-def make_run_id(task: str, model_key: str, ft_method: str, seed: int, objective: str = "cross_entropy") -> str:
-    suffix = "" if objective == "cross_entropy" else f"_{objective}"
+def recipe_tag(model_key: str, ft_method: str) -> str:
+    """Identifier of a non-default full fine-tuning recipe, empty for the base-model recipe."""
+    setting = FULL_FT_TRAINING.get(model_key) if ft_method == "full_ft" else None
+    return f"lr{setting['learning_rate']:g}_warmup{setting['warmup_ratio']:g}" if setting else ""
+
+
+def make_run_id(task: str, model_key: str, ft_method: str, seed: int, objective: str = "cross_entropy",
+                recipe: str = "") -> str:
+    suffix = ("" if objective == "cross_entropy" else f"_{objective}") + (f"_{recipe}" if recipe else "")
     return f"{task}_{model_key}_{ft_method}{suffix}_seed{seed}"
 
 

@@ -20,7 +20,8 @@ recalibration cannot change). A target temperature at the upper bound (at_upper_
 likelihood still improves as T grows, i.e. the logits carry no usable information on that split.
 shift_indicators_per_run.csv holds label-free statistics of source-TS probabilities on the unlabeled
 inputs of each split (confidence, entropy, predicted-label marginal shift) for severity prediction; runs of all grids in RUNS_DIR (objectives, scale) are
-included and identified by model, fine-tuning method and objective. Non-converged runs are excluded.
+included and identified by model, fine-tuning method, objective and recipe (learning rate, warmup).
+Non-converged runs are excluded.
 
     python -m src.shift_recalibration                      (EVALUATION_GRID selects the grid)
 """
@@ -72,6 +73,7 @@ def discover_runs() -> list:
             continue
         runs.append({"run_id": run_dir.name, "dir": run_dir, "task": cfg["task"], "model": cfg["model_key"],
                      "ft_method": cfg["ft_method"], "objective": cfg.get("objective", "cross_entropy"),
+                     "recipe": f"lr{cfg['learning_rate']:g}_warmup{cfg.get('warmup_ratio', 0.0):g}",
                      "seed": cfg["seed"]})
     return runs
 
@@ -267,7 +269,7 @@ def main():
     label_free, few_label, conformal, risk, indicators = [], [], [], [], []
     for i, run in enumerate(runs):
         d = run["dir"]
-        key = {k: run[k] for k in ("run_id", "task", "model", "ft_method", "objective", "seed")}
+        key = {k: run[k] for k in ("run_id", "task", "model", "ft_method", "objective", "recipe", "seed")}
         cal_z, cal_y = load_split(d, "cal")
         log_t_src = run["log_t_src"]
         t_src = np.exp(log_t_src)
@@ -338,7 +340,7 @@ def main():
 
     out = EVALUATION_TABLES_DIR
     out.mkdir(parents=True, exist_ok=True)
-    group = ["task", "model", "ft_method", "objective", "condition", "method"]
+    group = ["task", "model", "ft_method", "objective", "recipe", "condition", "method"]
     tables = {
         "shift_domain_classifier.csv": pd.DataFrame(domain_rows),
         "shift_recalibration_label_free_per_run.csv": pd.DataFrame(label_free),
@@ -346,7 +348,8 @@ def main():
     }
     few = pd.DataFrame(few_label)
     few["n_labels"] = few["n_labels"].astype(str)
-    run_group = ["run_id", "task", "model", "ft_method", "objective", "seed", "condition", "method", "n_labels"]
+    run_group = ["run_id", "task", "model", "ft_method", "objective", "recipe", "seed", "condition", "method",
+                 "n_labels"]
     few_run = few.groupby(run_group).agg(
         **{c: (c, "mean") for c in ("log_ratio", "at_upper_bound", "accuracy", "macro_f1", "nll", "ece_15", "brier",
                                     "aurc", "auroc")},

@@ -2,7 +2,7 @@
 
 Files of runs/<run_id>/ in the run-outputs dataset repo are placed in
 results/grid_max_length_512/runs/<run_id>/ (hidden states only with --with-hidden). The audit covers
-the base, objectives and scale grids of src/training_grid_parallel.py, checks that every run is
+every grid of src/training_grid_parallel.py (AUDIT_GRIDS), checks that every run is
 complete and consistent and writes results/tables/grid_max_length_512_training_summary.csv.
 
     python -m src.fetch_run_outputs
@@ -16,8 +16,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import HUB_OUTPUT_REPO, RESULTS_DIR, SEEDS, TASKS, get_shift_conditions_paths, make_run_id
-from src.training_grid_parallel import N_SHARDS, grid_runs
+from src.config import HUB_OUTPUT_REPO, RESULTS_DIR, SEEDS, TASKS, get_shift_conditions_paths
+from src.training_grid_parallel import AUDIT_GRIDS, grid_run_id, grid_runs
 
 GRID_DIR = RESULTS_DIR / "grid_max_length_512"
 # Same rule as src/select_lora_hparams.py: a single predicted class, or validation macro-F1
@@ -93,15 +93,16 @@ def main():
     parser = argparse.ArgumentParser(description="Download and audit the max_length-512 grid outputs.")
     parser.add_argument("--no-download", action="store_true")
     parser.add_argument("--with-hidden", action="store_true", help="Also download hidden states (several GB).")
-    parser.add_argument("--grids", nargs="+", choices=list(N_SHARDS), default=list(N_SHARDS))
+    parser.add_argument("--grids", nargs="+", choices=AUDIT_GRIDS, default=AUDIT_GRIDS)
     args = parser.parse_args()
     if not args.no_download:
         download(args.with_hidden)
 
     rows = []
     for grid in args.grids:
-        for task, model, ft, objective, seed in grid_runs(grid):
-            row = audit_run(GRID_DIR / "runs" / make_run_id(task, model, ft, seed, objective), task)
+        for run in grid_runs(grid):
+            task, model, ft, objective, seed = run
+            row = audit_run(GRID_DIR / "runs" / grid_run_id(grid, run), task)
             row.update({"grid": grid, "task": task, "model": model, "ft_method": ft, "objective": objective,
                         "seed": seed})
             rows.append(row)

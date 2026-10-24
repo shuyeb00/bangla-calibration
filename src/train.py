@@ -37,6 +37,7 @@ from src.config import (
     BASE_DIR,
     FOCAL_LOSS_GAMMA,
     FT_METHODS,
+    FULL_FT_TRAINING,
     HUB_CHECKPOINT_REPO,
     HUB_OUTPUT_REPO,
     INPUT_PIPELINE,
@@ -53,6 +54,7 @@ from src.config import (
     get_shift_conditions_paths,
     get_task_splits_paths,
     make_run_id,
+    recipe_tag,
 )
 from src.model_inputs import load_tokenizer, prepare_texts
 
@@ -201,6 +203,9 @@ def build_model(task: str, model_key: str, ft_method: str, source: str = None) -
 def optimisation_settings(task: str, model_key: str, ft_method: str) -> tuple:
     if ft_method == "lora":
         setting = LORA_TRAINING[(task, model_key)]
+        return setting["learning_rate"], setting["warmup_ratio"]
+    if model_key in FULL_FT_TRAINING:
+        setting = FULL_FT_TRAINING[model_key]
         return setting["learning_rate"], setting["warmup_ratio"]
     return TRAIN_HYPERPARAMS["learning_rate"], 0.0
 
@@ -351,11 +356,13 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
                           objective: str = "cross_entropy") -> dict:
     if objective not in OBJECTIVES:
         raise ValueError(f"Unknown objective {objective!r}")
-    run_id = make_run_id(task, model_key, ft_method, seed, objective)
+    recipe = recipe_tag(model_key, ft_method)
+    run_id = make_run_id(task, model_key, ft_method, seed, objective, recipe)
     prefix = "smoke/" if smoke else ""
     run_path = f"{prefix}runs/{run_id}"
     objective_dir = "" if objective == "cross_entropy" else f"{objective}/"
-    weights_path = f"{prefix}{task}/{model_key}/{ft_method}/{objective_dir}seed{seed}"
+    recipe_dir = f"{recipe}/" if recipe else ""
+    weights_path = f"{prefix}{task}/{model_key}/{ft_method}/{objective_dir}{recipe_dir}seed{seed}"
     run_dir = RESULTS_DIR / ("smoke" if smoke else "") / run_id
     api = hub_api() if hub else None
     if (run_dir / COMPLETION_MARKER).exists() or (api is not None and hub_run_complete(api, run_path)):
@@ -395,6 +402,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
         "model_key": model_key,
         "ft_method": ft_method,
         "objective": objective,
+        "recipe": recipe,
         "label_smoothing_factor": LABEL_SMOOTHING_FACTOR if objective == "label_smoothing" else 0.0,
         "focal_loss_gamma": FOCAL_LOSS_GAMMA if objective == "focal_loss" else None,
         "task": task,
