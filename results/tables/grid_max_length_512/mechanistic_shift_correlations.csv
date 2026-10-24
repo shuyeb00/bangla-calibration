@@ -1,0 +1,13 @@
+task,model,ft_method,n_conditions,spearman_frag_vs_nll,p_value_frag_vs_nll_exact,pearson_frag_vs_nll,spearman_jaccard_vs_nll,spearman_frag_vs_classwise_ece,spearman_frag_vs_overconfidence,spearman_maha_pct_vs_nll
+offensive,banglabert,full_ft,8,0.9048,0.0046,0.7202,-0.6429,0.9524,0.9048,
+offensive,banglabert,lora,8,0.9048,0.0046,0.72,-0.6429,0.9524,0.9048,
+offensive,indicbert,full_ft,8,0.9524,0.0011,0.7204,-0.7381,0.9524,0.9524,
+offensive,indicbert,lora,8,0.9524,0.0011,0.7377,-0.7381,0.9762,0.9524,
+offensive,xlmr_base,full_ft,8,0.9524,0.0011,0.6855,-0.7381,0.9524,0.9286,
+offensive,xlmr_base,lora,8,0.9762,0.0004,0.6823,-0.8095,0.8095,0.9286,
+sentiment,banglabert,full_ft,6,0.9429,0.0167,0.9252,-0.6571,0.9429,0.7714,
+sentiment,banglabert,lora,6,0.9429,0.0167,0.8771,-0.6571,0.7714,0.3143,
+sentiment,indicbert,full_ft,6,0.9429,0.0167,0.8664,-0.9429,0.9429,0.9429,
+sentiment,indicbert,lora,6,0.9429,0.0167,0.8348,-0.9429,0.9429,1.0,
+sentiment,xlmr_base,full_ft,6,0.9429,0.0167,0.8626,-0.9429,0.8286,0.8286,
+sentiment,xlmr_base,lora,6,0.9429,0.0167,0.8406,-0.9429,0.7714,0.8286,
