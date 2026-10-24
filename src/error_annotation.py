@@ -205,8 +205,12 @@ def main():
         key = prepare()
         key.to_csv(KEY_PATH, index=False, lineterminator="\n")
         for i in (1, 2):
-            write_workbook(key, AUDIT_DIR / WORKBOOK.format(i))
-        print(f"Wrote {KEY_PATH} ({len(key)} items) and two workbooks in {AUDIT_DIR}")
+            path = AUDIT_DIR / WORKBOOK.format(i)
+            if path.exists():
+                print(f"Kept existing {path.name} (never overwritten)")
+            else:
+                write_workbook(key, path)
+        print(f"Wrote {KEY_PATH} ({len(key)} items); workbooks in {AUDIT_DIR}")
         print(key.groupby(["task", "condition"]).size().to_string())
     elif args.action == "adjudication":
         adjudication()
