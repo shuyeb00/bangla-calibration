@@ -1,0 +1,21 @@
+task,coding,cause,feature,n_conditions,n_items_with_cause,n_items_other,within_condition_difference,p_value
+offensive,agreed,dialect or non-standard lexicon,oov_word_rate,5,56,30,0.209026,0.00029997
+offensive,agreed,surface corruption,source_edit_rate,1,12,7,0.00659193,0.428757
+offensive,annotator_1,code-mixing or script,non_bangla_letter_share,2,36,42,0.00724034,0.832417
+offensive,annotator_1,dialect or non-standard lexicon,oov_word_rate,6,122,111,0.0635246,0.0247975
+offensive,annotator_1,negation or contrast,negation_or_contrast,2,2,75,-0.240734,1
+offensive,annotator_1,surface corruption,source_edit_rate,1,18,21,0.00495921,0.327567
+offensive,annotator_2,code-mixing or script,non_bangla_letter_share,2,31,46,0.0289196,0.315068
+offensive,annotator_2,dialect or non-standard lexicon,oov_word_rate,5,63,130,0.0911097,0.00509949
+offensive,annotator_2,negation or contrast,negation_or_contrast,5,12,181,0.528846,0.00049995
+offensive,annotator_2,surface corruption,source_edit_rate,1,17,21,0.00240963,0.638436
+sentiment,agreed,dialect or non-standard lexicon,oov_word_rate,1,11,1,0.127834,0.652935
+sentiment,agreed,surface corruption,source_edit_rate,1,13,1,0.0136155,0.513849
+sentiment,annotator_1,code-mixing or script,non_bangla_letter_share,1,38,1,-0.0449905,0.357564
+sentiment,annotator_1,dialect or non-standard lexicon,oov_word_rate,4,40,116,-0.0020669,0.955504
+sentiment,annotator_1,negation or contrast,negation_or_contrast,3,11,106,0.0510753,1
+sentiment,annotator_1,surface corruption,source_edit_rate,2,27,51,0.0174989,0.293971
+sentiment,annotator_2,code-mixing or script,non_bangla_letter_share,1,30,9,-0.0144399,0.389161
+sentiment,annotator_2,dialect or non-standard lexicon,oov_word_rate,1,13,26,0.105891,0.0340966
+sentiment,annotator_2,negation or contrast,negation_or_contrast,3,16,101,0.333333,0.0262974
+sentiment,annotator_2,surface corruption,source_edit_rate,2,19,59,0.0238859,0.0568943
