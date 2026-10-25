@@ -144,12 +144,14 @@ def annotations() -> tuple:
 
 
 def adjudication() -> None:
+    if ADJUDICATION.exists():
+        raise SystemExit(f"{ADJUDICATION.name} already exists and may hold resolved causes; rename it to rebuild")
     key, names = annotations()
-    both = key[key[names[0]].isin(CAUSES) & key[names[1]].isin(CAUSES)]
-    disagree = both[both[names[0]] != both[names[1]]].copy()
+    coded = key[names[0]].isin(CAUSES) & key[names[1]].isin(CAUSES)
+    disagree = key[(key[names[0]] != key[names[1]]) | ~coded].copy()
     disagree["cause"] = None
     write_workbook(key, ADJUDICATION, extra_columns=names, rows=disagree)
-    print(f"Wrote {ADJUDICATION}: {len(disagree)} disagreements of {len(both)} doubly coded items")
+    print(f"Wrote {ADJUDICATION}: {len(disagree)} items to resolve ({int((~coded).sum())} not coded by both)")
 
 
 def bootstrap_kappa(a: np.ndarray, b: np.ndarray, rng) -> tuple:
@@ -160,6 +162,12 @@ def bootstrap_kappa(a: np.ndarray, b: np.ndarray, rng) -> tuple:
     return float(np.nanquantile(stats, 0.025)), float(np.nanquantile(stats, 0.975))
 
 
+def gwet_ac1(a: np.ndarray, b: np.ndarray) -> float:
+    pi = np.array([((a == c).mean() + (b == c).mean()) / 2 for c in CAUSES])
+    pe = float((pi * (1 - pi)).sum() / (len(CAUSES) - 1))
+    return float(((a == b).mean() - pe) / (1 - pe))
+
+
 def score() -> None:
     key, names = annotations()
     if ADJUDICATION.exists():
@@ -167,22 +175,29 @@ def score() -> None:
         key = key.merge(final, on="item_id", how="left")
     else:
         key["adjudicated"] = ""
-    agreed = key[names[0]] == key[names[1]]
+    coded = key[names[0]].isin(CAUSES) & key[names[1]].isin(CAUSES)
+    agreed = coded & (key[names[0]] == key[names[1]])
     key["final_cause"] = np.where(agreed, key[names[0]], key["adjudicated"].fillna(""))
     rng = np.random.default_rng(0)
     rows = []
-    for task, g in key.groupby("task"):
-        g = g[g[names[0]].isin(CAUSES) & g[names[1]].isin(CAUSES)]
+    for task, full in key.groupby("task"):
+        g = full[full[names[0]].isin(CAUSES) & full[names[1]].isin(CAUSES)]
         a, b = g[names[0]].to_numpy(), g[names[1]].to_numpy()
         lo, hi = bootstrap_kappa(a, b, rng)
-        rows.append({"task": task, "condition": "all", "n_items": len(g), "agreement": float((a == b).mean()),
-                     "cohen_kappa": float(cohen_kappa_score(a, b)), "kappa_ci_low": lo, "kappa_ci_high": hi,
-                     "n_adjudicated": int((a != b).sum()),
-                     "n_unresolved": int(((a != b) & ~g["final_cause"].isin(CAUSES).to_numpy()).sum())})
+        rows.append({"task": task, "condition": "all", "n_items": len(g), "n_not_double_coded": len(full) - len(g),
+                     "agreement": float((a == b).mean()), "cohen_kappa": float(cohen_kappa_score(a, b)),
+                     "kappa_ci_low": lo, "kappa_ci_high": hi, "gwet_ac1": gwet_ac1(a, b),
+                     "n_adjudicated": int((~agreed[full.index]).sum()),
+                     "n_unresolved": int((~full["final_cause"].isin(CAUSES)).sum())})
         for cond, h in g.groupby("condition"):
+            ha, hb = h[names[0]].to_numpy(), h[names[1]].to_numpy()
             rows.append({"task": task, "condition": cond, "n_items": len(h),
-                         "agreement": float((h[names[0]] == h[names[1]]).mean())})
+                         "n_not_double_coded": int((full.condition == cond).sum()) - len(h),
+                         "agreement": float((ha == hb).mean()), "cohen_kappa": float(cohen_kappa_score(ha, hb)),
+                         "gwet_ac1": gwet_ac1(ha, hb)})
     agreement = pd.DataFrame(rows)
+    for c in ("n_adjudicated", "n_unresolved"):
+        agreement[c] = agreement[c].astype("Int64")
     resolved = key[key.final_cause.isin(CAUSES)]
     distribution = (resolved.groupby(["task", "condition"]).final_cause.value_counts().rename("n_items")
                     .reset_index().rename(columns={"final_cause": "cause"}))
