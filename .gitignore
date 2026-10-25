@@ -21,5 +21,6 @@ results/lora_lr_sweep_pretraining_matched/*
 results/smoke/
 models/
 results/grid_max_length_512/
+results/llm_runs/
 # Annotation workbooks and key contain dataset texts; kept out of the public repository.
 data/annotation/
