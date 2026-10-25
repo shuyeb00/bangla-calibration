@@ -3,11 +3,12 @@
 The samples (results/tables/grid_max_length_512/error_analysis_sample_{task}.csv) hold misclassified
 test items of BanglaBERT full fine-tuning (seed 42), stratified by confidence within each condition.
 Two annotators code the primary cause of each error independently; the shift condition is hidden and
-the item order is shuffled. Disagreements are resolved by discussion in an adjudication workbook.
+the item order is shuffled. Disagreements can optionally be resolved by discussion in an adjudication
+workbook; without it, the cause distribution is reported per annotator and for the agreed items.
 
     python -m src.error_annotation prepare        one workbook per annotator
-    python -m src.error_annotation adjudication   workbook listing the disagreements
-    python -m src.error_annotation score          agreement and adjudicated cause distribution
+    python -m src.error_annotation adjudication   workbook listing the disagreements (optional)
+    python -m src.error_annotation score          agreement and cause distributions
 """
 
 import argparse
@@ -187,7 +188,7 @@ def score() -> None:
         rows.append({"task": task, "condition": "all", "n_items": len(g), "n_not_double_coded": len(full) - len(g),
                      "agreement": float((a == b).mean()), "cohen_kappa": float(cohen_kappa_score(a, b)),
                      "kappa_ci_low": lo, "kappa_ci_high": hi, "gwet_ac1": gwet_ac1(a, b),
-                     "n_adjudicated": int((~agreed[full.index]).sum()),
+                     "n_disagreed_or_uncoded": int((~agreed[full.index]).sum()),
                      "n_unresolved": int((~full["final_cause"].isin(CAUSES)).sum())})
         for cond, h in g.groupby("condition"):
             ha, hb = h[names[0]].to_numpy(), h[names[1]].to_numpy()
@@ -196,19 +197,33 @@ def score() -> None:
                          "agreement": float((ha == hb).mean()), "cohen_kappa": float(cohen_kappa_score(ha, hb)),
                          "gwet_ac1": gwet_ac1(ha, hb)})
     agreement = pd.DataFrame(rows)
-    for c in ("n_adjudicated", "n_unresolved"):
+    for c in ("n_disagreed_or_uncoded", "n_unresolved"):
         agreement[c] = agreement[c].astype("Int64")
-    resolved = key[key.final_cause.isin(CAUSES)]
-    distribution = (resolved.groupby(["task", "condition"]).final_cause.value_counts().rename("n_items")
-                    .reset_index().rename(columns={"final_cause": "cause"}))
-    distribution["share"] = distribution.n_items / distribution.groupby(["task", "condition"]).n_items.transform("sum")
+    # One row per (task, condition, coding, cause). Shares of each annotator are over the items that annotator
+    # coded; "agreed" and "adjudicated" shares are over all items of the condition.
+    key["agreed"] = np.where(agreed, key[names[0]], "")
+    codings = [*names, "agreed"] + (["adjudicated"] if ADJUDICATION.exists() else [])
+    if "adjudicated" in codings:
+        key["adjudicated"] = key["final_cause"]
+    frames = []
+    for coding in codings:
+        counts = (key.groupby(["task", "condition"])[coding].value_counts().rename("n_items").reset_index()
+                  .rename(columns={coding: "cause"}))
+        totals = key.groupby(["task", "condition"])[coding].agg(
+            lambda s: s.isin(CAUSES).sum() if coding in names else len(s)).rename("denominator").reset_index()
+        counts = counts[counts.cause.isin(CAUSES)].merge(totals, on=["task", "condition"])
+        counts.insert(2, "coding", coding)
+        frames.append(counts)
+    distribution = pd.concat(frames, ignore_index=True)
+    distribution["share"] = distribution.n_items / distribution.denominator
+    distribution = distribution.drop(columns="denominator").sort_values(["task", "condition", "coding", "cause"])
     agreement.to_csv(OUT_DIR / "error_annotation_agreement.csv", index=False, float_format="%.4f", lineterminator="\n")
     distribution.to_csv(OUT_DIR / "error_annotation_cause_distribution.csv", index=False, float_format="%.4f",
                         lineterminator="\n")
     pd.set_option("display.width", 200)
     print(agreement.round(3).to_string(index=False))
-    print(distribution.pivot_table(index=["task", "condition"], columns="cause", values="n_items", fill_value=0)
-          .to_string())
+    print(distribution.pivot_table(index=["task", "condition", "coding"], columns="cause", values="n_items",
+                                   fill_value=0).astype(int).to_string())
 
 
 def main():

@@ -1,0 +1,13 @@
+task,condition,n_items,n_not_double_coded,agreement,cohen_kappa,kappa_ci_low,kappa_ci_high,gwet_ac1,n_disagreed_or_uncoded,n_unresolved
+offensive,all,231,3,0.4848,0.3520,0.2790,0.4270,0.4207,122,122
+offensive,D0_source,38,1,0.2368,0.1033,,,0.1376,,
+offensive,shift_d1_barishal_test,38,1,0.2632,-0.0250,,,0.1864,,
+offensive,shift_d1_chittagong_test,39,0,0.7692,0.1542,,,0.7605,,
+offensive,shift_d1_noakhali_test,39,0,0.4615,0.2041,,,0.4067,,
+offensive,shift_d2_test,39,0,0.6667,-0.0903,,,0.6518,,
+offensive,shift_d3_noise10,38,1,0.5000,0.3078,,,0.4439,,
+sentiment,all,156,0,0.3974,0.3036,0.2250,0.3824,0.3140,94,94
+sentiment,D0_source,39,0,0.1538,-0.0304,,,0.0429,,
+sentiment,shift_d1_test,39,0,0.3077,0.0384,,,0.2349,,
+sentiment,shift_d2_test,39,0,0.7692,0.0787,,,0.7613,,
+sentiment,shift_d3_noise10,39,0,0.3590,0.0580,,,0.2935,,

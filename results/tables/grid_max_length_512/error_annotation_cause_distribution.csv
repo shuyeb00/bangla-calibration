@@ -1,0 +1,132 @@
+task,condition,coding,cause,n_items,share
+offensive,D0_source,agreed,dialect or non-standard lexicon,1,0.0256
+offensive,D0_source,agreed,gold label disputed,2,0.0513
+offensive,D0_source,agreed,implicit meaning,4,0.1026
+offensive,D0_source,agreed,mixed polarity or target,2,0.0513
+offensive,D0_source,annotator_1,dialect or non-standard lexicon,14,0.3590
+offensive,D0_source,annotator_1,gold label disputed,6,0.1538
+offensive,D0_source,annotator_1,implicit meaning,12,0.3077
+offensive,D0_source,annotator_1,mixed polarity or target,4,0.1026
+offensive,D0_source,annotator_1,surface corruption,3,0.0769
+offensive,D0_source,annotator_2,code-mixing or script,1,0.0263
+offensive,D0_source,annotator_2,dialect or non-standard lexicon,1,0.0263
+offensive,D0_source,annotator_2,gold label disputed,11,0.2895
+offensive,D0_source,annotator_2,implicit meaning,9,0.2368
+offensive,D0_source,annotator_2,mixed polarity or target,9,0.2368
+offensive,D0_source,annotator_2,negation or contrast,5,0.1316
+offensive,D0_source,annotator_2,no identifiable cause,2,0.0526
+offensive,shift_d1_barishal_test,agreed,dialect or non-standard lexicon,8,0.2051
+offensive,shift_d1_barishal_test,agreed,gold label disputed,1,0.0256
+offensive,shift_d1_barishal_test,agreed,implicit meaning,1,0.0256
+offensive,shift_d1_barishal_test,annotator_1,dialect or non-standard lexicon,28,0.7368
+offensive,shift_d1_barishal_test,annotator_1,gold label disputed,5,0.1316
+offensive,shift_d1_barishal_test,annotator_1,implicit meaning,2,0.0526
+offensive,shift_d1_barishal_test,annotator_1,negation or contrast,1,0.0263
+offensive,shift_d1_barishal_test,annotator_1,no identifiable cause,2,0.0526
+offensive,shift_d1_barishal_test,annotator_2,dialect or non-standard lexicon,12,0.3077
+offensive,shift_d1_barishal_test,annotator_2,gold label disputed,10,0.2564
+offensive,shift_d1_barishal_test,annotator_2,implicit meaning,9,0.2308
+offensive,shift_d1_barishal_test,annotator_2,mixed polarity or target,4,0.1026
+offensive,shift_d1_barishal_test,annotator_2,negation or contrast,2,0.0513
+offensive,shift_d1_barishal_test,annotator_2,no identifiable cause,1,0.0256
+offensive,shift_d1_barishal_test,annotator_2,surface corruption,1,0.0256
+offensive,shift_d1_chittagong_test,agreed,dialect or non-standard lexicon,29,0.7436
+offensive,shift_d1_chittagong_test,agreed,implicit meaning,1,0.0256
+offensive,shift_d1_chittagong_test,annotator_1,dialect or non-standard lexicon,38,0.9744
+offensive,shift_d1_chittagong_test,annotator_1,implicit meaning,1,0.0256
+offensive,shift_d1_chittagong_test,annotator_2,dialect or non-standard lexicon,29,0.7436
+offensive,shift_d1_chittagong_test,annotator_2,gold label disputed,5,0.1282
+offensive,shift_d1_chittagong_test,annotator_2,implicit meaning,4,0.1026
+offensive,shift_d1_chittagong_test,annotator_2,surface corruption,1,0.0256
+offensive,shift_d1_noakhali_test,agreed,dialect or non-standard lexicon,14,0.3590
+offensive,shift_d1_noakhali_test,agreed,gold label disputed,2,0.0513
+offensive,shift_d1_noakhali_test,agreed,implicit meaning,2,0.0513
+offensive,shift_d1_noakhali_test,annotator_1,code-mixing or script,1,0.0256
+offensive,shift_d1_noakhali_test,annotator_1,dialect or non-standard lexicon,27,0.6923
+offensive,shift_d1_noakhali_test,annotator_1,gold label disputed,7,0.1795
+offensive,shift_d1_noakhali_test,annotator_1,implicit meaning,3,0.0769
+offensive,shift_d1_noakhali_test,annotator_1,negation or contrast,1,0.0256
+offensive,shift_d1_noakhali_test,annotator_2,dialect or non-standard lexicon,16,0.4103
+offensive,shift_d1_noakhali_test,annotator_2,gold label disputed,5,0.1282
+offensive,shift_d1_noakhali_test,annotator_2,implicit meaning,8,0.2051
+offensive,shift_d1_noakhali_test,annotator_2,mixed polarity or target,3,0.0769
+offensive,shift_d1_noakhali_test,annotator_2,negation or contrast,1,0.0256
+offensive,shift_d1_noakhali_test,annotator_2,no identifiable cause,4,0.1026
+offensive,shift_d1_noakhali_test,annotator_2,surface corruption,2,0.0513
+offensive,shift_d2_test,agreed,code-mixing or script,26,0.6667
+offensive,shift_d2_test,annotator_1,code-mixing or script,35,0.8974
+offensive,shift_d2_test,annotator_1,dialect or non-standard lexicon,1,0.0256
+offensive,shift_d2_test,annotator_1,gold label disputed,2,0.0513
+offensive,shift_d2_test,annotator_1,surface corruption,1,0.0256
+offensive,shift_d2_test,annotator_2,code-mixing or script,30,0.7692
+offensive,shift_d2_test,annotator_2,gold label disputed,3,0.0769
+offensive,shift_d2_test,annotator_2,implicit meaning,2,0.0513
+offensive,shift_d2_test,annotator_2,mixed polarity or target,2,0.0513
+offensive,shift_d2_test,annotator_2,negation or contrast,2,0.0513
+offensive,shift_d3_noise10,agreed,dialect or non-standard lexicon,4,0.1026
+offensive,shift_d3_noise10,agreed,gold label disputed,1,0.0256
+offensive,shift_d3_noise10,agreed,implicit meaning,2,0.0513
+offensive,shift_d3_noise10,agreed,surface corruption,12,0.3077
+offensive,shift_d3_noise10,annotator_1,dialect or non-standard lexicon,14,0.3590
+offensive,shift_d3_noise10,annotator_1,gold label disputed,3,0.0769
+offensive,shift_d3_noise10,annotator_1,implicit meaning,2,0.0513
+offensive,shift_d3_noise10,annotator_1,no identifiable cause,2,0.0513
+offensive,shift_d3_noise10,annotator_1,surface corruption,18,0.4615
+offensive,shift_d3_noise10,annotator_2,dialect or non-standard lexicon,5,0.1316
+offensive,shift_d3_noise10,annotator_2,gold label disputed,6,0.1579
+offensive,shift_d3_noise10,annotator_2,implicit meaning,5,0.1316
+offensive,shift_d3_noise10,annotator_2,mixed polarity or target,2,0.0526
+offensive,shift_d3_noise10,annotator_2,negation or contrast,2,0.0526
+offensive,shift_d3_noise10,annotator_2,no identifiable cause,1,0.0263
+offensive,shift_d3_noise10,annotator_2,surface corruption,17,0.4474
+sentiment,D0_source,agreed,implicit meaning,3,0.0769
+sentiment,D0_source,agreed,mixed polarity or target,2,0.0513
+sentiment,D0_source,agreed,no identifiable cause,1,0.0256
+sentiment,D0_source,annotator_1,dialect or non-standard lexicon,3,0.0769
+sentiment,D0_source,annotator_1,gold label disputed,4,0.1026
+sentiment,D0_source,annotator_1,implicit meaning,12,0.3077
+sentiment,D0_source,annotator_1,mixed polarity or target,7,0.1795
+sentiment,D0_source,annotator_1,negation or contrast,7,0.1795
+sentiment,D0_source,annotator_1,no identifiable cause,3,0.0769
+sentiment,D0_source,annotator_1,surface corruption,3,0.0769
+sentiment,D0_source,annotator_2,gold label disputed,10,0.2564
+sentiment,D0_source,annotator_2,implicit meaning,9,0.2308
+sentiment,D0_source,annotator_2,mixed polarity or target,8,0.2051
+sentiment,D0_source,annotator_2,negation or contrast,8,0.2051
+sentiment,D0_source,annotator_2,no identifiable cause,2,0.0513
+sentiment,D0_source,annotator_2,surface corruption,2,0.0513
+sentiment,shift_d1_test,agreed,dialect or non-standard lexicon,11,0.2821
+sentiment,shift_d1_test,agreed,gold label disputed,1,0.0256
+sentiment,shift_d1_test,annotator_1,dialect or non-standard lexicon,29,0.7436
+sentiment,shift_d1_test,annotator_1,gold label disputed,5,0.1282
+sentiment,shift_d1_test,annotator_1,negation or contrast,2,0.0513
+sentiment,shift_d1_test,annotator_1,no identifiable cause,1,0.0256
+sentiment,shift_d1_test,annotator_1,surface corruption,2,0.0513
+sentiment,shift_d1_test,annotator_2,dialect or non-standard lexicon,13,0.3333
+sentiment,shift_d1_test,annotator_2,gold label disputed,6,0.1538
+sentiment,shift_d1_test,annotator_2,implicit meaning,5,0.1282
+sentiment,shift_d1_test,annotator_2,mixed polarity or target,4,0.1026
+sentiment,shift_d1_test,annotator_2,negation or contrast,7,0.1795
+sentiment,shift_d1_test,annotator_2,no identifiable cause,3,0.0769
+sentiment,shift_d1_test,annotator_2,surface corruption,1,0.0256
+sentiment,shift_d2_test,agreed,code-mixing or script,30,0.7692
+sentiment,shift_d2_test,annotator_1,code-mixing or script,38,0.9744
+sentiment,shift_d2_test,annotator_1,dialect or non-standard lexicon,1,0.0256
+sentiment,shift_d2_test,annotator_2,code-mixing or script,30,0.7692
+sentiment,shift_d2_test,annotator_2,gold label disputed,1,0.0256
+sentiment,shift_d2_test,annotator_2,implicit meaning,1,0.0256
+sentiment,shift_d2_test,annotator_2,mixed polarity or target,6,0.1538
+sentiment,shift_d2_test,annotator_2,surface corruption,1,0.0256
+sentiment,shift_d3_noise10,agreed,implicit meaning,1,0.0256
+sentiment,shift_d3_noise10,agreed,surface corruption,13,0.3333
+sentiment,shift_d3_noise10,annotator_1,dialect or non-standard lexicon,7,0.1795
+sentiment,shift_d3_noise10,annotator_1,implicit meaning,3,0.0769
+sentiment,shift_d3_noise10,annotator_1,mixed polarity or target,1,0.0256
+sentiment,shift_d3_noise10,annotator_1,negation or contrast,2,0.0513
+sentiment,shift_d3_noise10,annotator_1,no identifiable cause,1,0.0256
+sentiment,shift_d3_noise10,annotator_1,surface corruption,25,0.6410
+sentiment,shift_d3_noise10,annotator_2,gold label disputed,6,0.1538
+sentiment,shift_d3_noise10,annotator_2,implicit meaning,10,0.2564
+sentiment,shift_d3_noise10,annotator_2,mixed polarity or target,4,0.1026
+sentiment,shift_d3_noise10,annotator_2,negation or contrast,1,0.0256
+sentiment,shift_d3_noise10,annotator_2,surface corruption,18,0.4615
