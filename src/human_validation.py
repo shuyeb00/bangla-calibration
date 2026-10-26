@@ -13,7 +13,7 @@
 Workbooks, key and translations contain dataset texts and stay in data/annotation/ (git-ignored).
 
     python -m src.human_validation sample      key and one workbook per annotator (never overwrites them)
-    python -m src.human_validation score       agreement tables
+    python -m src.human_validation score       agreement, adequacy and diagnostic tables
 """
 
 import argparse
@@ -34,6 +34,7 @@ LABEL_AUDIT_WORKBOOK = "label_audit_annotator_{}.xlsx"
 ERROR_SAMPLE = RESULTS_DIR / "tables" / "grid_max_length_512" / "error_analysis_sample_{}.csv"
 OUT_AGREEMENT = RESULTS_DIR / "tables" / "human_validation_agreement.csv"
 OUT_ADEQUACY = RESULTS_DIR / "tables" / "human_validation_adequacy.csv"
+OUT_DIAGNOSTICS = RESULTS_DIR / "tables" / "human_validation_diagnostics.csv"
 SEED = 2028
 N_ITEMS = 100
 B_BOOTSTRAP = 10_000
@@ -224,6 +225,62 @@ def agreement_rows(name: str, gold: pd.Series, labels: dict, valid: list, rng, r
     return rows
 
 
+def gwet_ac1(a: np.ndarray, b: np.ndarray, categories: list) -> float:
+    pi = np.array([((a == c).mean() + (b == c).mean()) / 2 for c in categories])
+    pe = float((pi * (1 - pi)).sum() / (len(categories) - 1))
+    return float(((a == b).mean() - pe) / (1 - pe))
+
+
+def diagnostic_rows(syl_labels: dict, syl_gold: pd.Series, meaning: dict, cmx_labels: dict, cmx_gold: pd.Series,
+                    ratings: dict, rng) -> list:
+    """Where the disagreement with gold sits: label distribution per gold class, the polar subset, items whose
+    meaning both annotators rated preserved, sensitivity/specificity for offensive, and Gwet's AC1."""
+    rows = []
+    sentiment, offensive = list(LABELS["sentiment"].values()), list(LABELS["offensive"].values())
+    preserved = (meaning["annotator_1"] == "Same meaning") & (meaning["annotator_2"] == "Same meaning")
+    for ann, lab in syl_labels.items():
+        for g in sentiment:
+            sel = syl_gold == g
+            for lv in sentiment + [CANNOT_JUDGE]:
+                rows.append({"part": "sylheti", "annotator": ann, "statistic": "label_share_given_gold",
+                             "subset": f"gold={g}", "level": lv, "n_items": int(sel.sum()),
+                             "value": float((lab[sel] == lv).mean())})
+        judged = lab.isin(sentiment)
+        polar = judged & (lab != "Neutral") & (syl_gold != "Neutral")
+        rows.append({"part": "sylheti", "annotator": ann, "statistic": "agreement_with_gold",
+                     "subset": "gold_and_label_polar", "n_items": int(polar.sum()),
+                     "value": float((lab[polar] == syl_gold[polar]).mean())})
+        hit_p = (lab[judged & preserved] == syl_gold[judged & preserved]).to_numpy().astype(float)
+        hit_c = (lab[judged & ~preserved] == syl_gold[judged & ~preserved]).to_numpy().astype(float)
+        lo, hi = bootstrap_difference(hit_p, hit_c, rng)
+        rows += [{"part": "sylheti", "annotator": ann, "statistic": "agreement_with_gold", "subset": s,
+                  "n_items": len(h), "value": float(h.mean())}
+                 for s, h in (("meaning_preserved_by_both", hit_p), ("meaning_changed_by_either", hit_c))]
+        rows.append({"part": "sylheti", "annotator": ann, "statistic": "agreement_difference_preserved_minus_changed",
+                     "subset": "all", "n_items": len(hit_p) + len(hit_c), "value": float(hit_p.mean() - hit_c.mean()),
+                     "ci_low": lo, "ci_high": hi})
+    for ann, lab in cmx_labels.items():
+        judged = lab.isin(offensive)
+        y, p = cmx_gold[judged] == "Offensive", lab[judged] == "Offensive"
+        rows += [{"part": "codemixed", "annotator": ann, "statistic": s, "subset": "judged", "n_items": int(n),
+                  "value": float(v)}
+                 for s, n, v in (("share_labelled_offensive", judged.sum(), p.mean()),
+                                 ("sensitivity", y.sum(), p[y].mean()), ("specificity", (~y).sum(), (~p[~y]).mean()))]
+    rows.append({"part": "codemixed", "annotator": "gold", "statistic": "share_labelled_offensive", "subset": "all",
+                 "n_items": len(cmx_gold), "value": float((cmx_gold == "Offensive").mean())})
+    for part, labels, cats in (("sylheti", syl_labels, sentiment), ("codemixed", cmx_labels, offensive),
+                               ("sylheti_meaning", {a: r["meaning"] for a, r in ratings.items()}, MEANING),
+                               ("sylheti_naturalness", {a: r["naturalness"] for a, r in ratings.items()}, NATURALNESS)):
+        a, b = labels["annotator_1"], labels["annotator_2"]
+        both = a.isin(cats) & b.isin(cats)
+        x, y = a[both].to_numpy(), b[both].to_numpy()
+        boot = [gwet_ac1(x[i], y[i], cats) for i in (rng.integers(0, len(x), len(x)) for _ in range(B_BOOTSTRAP))]
+        rows.append({"part": part, "annotator": "inter_annotator", "statistic": "gwet_ac1", "subset": "judged_by_both",
+                     "n_items": int(both.sum()), "value": gwet_ac1(x, y, cats),
+                     "ci_low": float(np.quantile(boot, 0.025)), "ci_high": float(np.quantile(boot, 0.975))})
+    return rows
+
+
 def label_audit_reference(task: str, split: str) -> dict:
     """Item-level gold agreement of each annotator in the first label audit (judged items only)."""
     from src.label_audit import KEY_PATH as AUDIT_KEY, read_workbook
@@ -249,17 +306,20 @@ def score() -> None:
     paths = {f"annotator_{i}": ANNOTATION_DIR / WORKBOOK.format(i) for i in (1, 2)}
     rows, adequacy = [], []
     syl = key[key.part == "sylheti"].set_index("item_id")
-    labels = {a: read_sheet(p, "sylheti_sentiment", ["label"]).set_index("item_id").label.reindex(syl.index)
-              for a, p in paths.items()}
-    rows += agreement_rows("sylheti_vs_sentnob_gold", syl.gold, labels, list(LABELS["sentiment"].values()), rng,
+    syl_labels = {a: read_sheet(p, "sylheti_sentiment", ["label"]).set_index("item_id").label.reindex(syl.index)
+                  for a, p in paths.items()}
+    rows += agreement_rows("sylheti_vs_sentnob_gold", syl.gold, syl_labels, list(LABELS["sentiment"].values()), rng,
                            label_audit_reference("sentiment", "D0"))
     cmx = key[key.part == "codemixed"].set_index("item_id")
-    labels = {a: read_sheet(p, "codemixed_offensive", ["label"]).set_index("item_id").label.reindex(cmx.index)
-              for a, p in paths.items()}
-    rows += agreement_rows("translated_codemixed_vs_offmix_gold", cmx.gold, labels,
+    cmx_labels = {a: read_sheet(p, "codemixed_offensive", ["label"]).set_index("item_id").label.reindex(cmx.index)
+                  for a, p in paths.items()}
+    rows += agreement_rows("translated_codemixed_vs_offmix_gold", cmx.gold, cmx_labels,
                            list(LABELS["offensive"].values()), rng, label_audit_reference("offensive", "D2"))
     ratings = {a: read_sheet(p, "sylheti_adequacy", ["meaning", "naturalness"]).set_index("item_id").reindex(syl.index)
                for a, p in paths.items()}
+    diagnostics = pd.DataFrame(diagnostic_rows(syl_labels, syl.gold, {a: r["meaning"] for a, r in ratings.items()},
+                                               cmx_labels, cmx.gold, ratings, rng))
+    diagnostics.to_csv(OUT_DIAGNOSTICS, index=False, float_format="%.4f", lineterminator="\n")
     for scale, levels in (("meaning", MEANING), ("naturalness", NATURALNESS)):
         for a, r in ratings.items():
             counts = r[scale].value_counts()
@@ -279,6 +339,10 @@ def score() -> None:
     pd.set_option("display.width", 220)
     print(agreement.round(3).to_string(index=False))
     print(pd.DataFrame(adequacy).round(3).to_string(index=False))
+    view = diagnostics[diagnostics.statistic != "label_share_given_gold"]
+    print(view.round(3).to_string(index=False))
+    shares = diagnostics[diagnostics.statistic == "label_share_given_gold"]
+    print(shares.pivot_table(index=["annotator", "subset"], columns="level", values="value").round(2).to_string())
 
 
 def main():

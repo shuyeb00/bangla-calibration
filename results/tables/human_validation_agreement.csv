@@ -1,0 +1,7 @@
+comparison,annotator,n_items,n_judged,cannot_judge_rate,agreement_with_gold,kappa_with_gold,agreement_between,kappa_between,kappa_ci_low,kappa_ci_high,n_consensus,consensus_agreement_with_gold
+sylheti_vs_sentnob_gold,annotator_1,100,100,0.0000,0.6500,0.4976,,,,,,
+sylheti_vs_sentnob_gold,annotator_2,100,99,0.0100,0.6162,0.4224,,,,,,
+sylheti_vs_sentnob_gold,inter_annotator,100,99,,,,0.7273,0.5893,0.4555,0.7127,72.0000,0.7083
+translated_codemixed_vs_offmix_gold,annotator_1,100,100,0.0000,0.4900,0.0185,,,,,,
+translated_codemixed_vs_offmix_gold,annotator_2,100,96,0.0200,0.6771,0.3592,,,,,,
+translated_codemixed_vs_offmix_gold,inter_annotator,100,96,,,,0.6042,0.0303,0.0000,0.1031,58.0000,0.6379

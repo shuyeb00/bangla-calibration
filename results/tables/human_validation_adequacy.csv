@@ -1,0 +1,15 @@
+scale,annotator,level,n_items,share,exact_agreement,weighted_kappa,kappa_ci_low,kappa_ci_high
+meaning,annotator_1,Same meaning,76,0.7600,,,,
+meaning,annotator_1,Partly changed,23,0.2300,,,,
+meaning,annotator_1,Different meaning,1,0.0100,,,,
+meaning,annotator_2,Same meaning,87,0.8700,,,,
+meaning,annotator_2,Partly changed,10,0.1000,,,,
+meaning,annotator_2,Different meaning,3,0.0300,,,,
+meaning,inter_annotator,all,100,,0.7200,0.2439,-0.0669,0.5036
+naturalness,annotator_1,Natural Sylheti,45,0.4500,,,,
+naturalness,annotator_1,Partly natural,53,0.5300,,,,
+naturalness,annotator_1,Not natural,2,0.0200,,,,
+naturalness,annotator_2,Natural Sylheti,66,0.6600,,,,
+naturalness,annotator_2,Partly natural,30,0.3000,,,,
+naturalness,annotator_2,Not natural,4,0.0400,,,,
+naturalness,inter_annotator,all,100,,0.4900,0.1049,-0.1080,0.3033
