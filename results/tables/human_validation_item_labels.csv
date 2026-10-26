@@ -1,0 +1,201 @@
+item_id,part,source_file,source_row,annotator_1_label,annotator_1_meaning,annotator_2_label,annotator_2_meaning
+syl_001,sylheti,d1_dialectal.csv,171,Positive,Same meaning,Positive,Same meaning
+syl_002,sylheti,d1_dialectal.csv,39,Neutral,Same meaning,Neutral,Same meaning
+syl_003,sylheti,d1_dialectal.csv,353,Negative,Same meaning,Negative,Same meaning
+syl_004,sylheti,d1_dialectal.csv,83,Neutral,Same meaning,Negative,Same meaning
+syl_005,sylheti,d1_dialectal.csv,374,Neutral,Partly changed,Neutral,Same meaning
+syl_006,sylheti,d1_dialectal.csv,105,Neutral,Same meaning,Neutral,Same meaning
+syl_007,sylheti,d1_dialectal.csv,62,Neutral,Same meaning,Positive,Partly changed
+syl_008,sylheti,d1_dialectal.csv,120,Neutral,Partly changed,Negative,Same meaning
+syl_009,sylheti,d1_dialectal.csv,55,Neutral,Same meaning,Neutral,Same meaning
+syl_010,sylheti,d1_dialectal.csv,275,Neutral,Partly changed,Neutral,Partly changed
+syl_011,sylheti,d1_dialectal.csv,379,Neutral,Same meaning,Cannot judge,Same meaning
+syl_012,sylheti,d1_dialectal.csv,243,Neutral,Different meaning,Neutral,Different meaning
+syl_013,sylheti,d1_dialectal.csv,285,Neutral,Same meaning,Neutral,Same meaning
+syl_014,sylheti,d1_dialectal.csv,52,Positive,Same meaning,Positive,Same meaning
+syl_015,sylheti,d1_dialectal.csv,336,Neutral,Partly changed,Neutral,Partly changed
+syl_016,sylheti,d1_dialectal.csv,212,Positive,Partly changed,Positive,Same meaning
+syl_017,sylheti,d1_dialectal.csv,143,Negative,Partly changed,Negative,Same meaning
+syl_018,sylheti,d1_dialectal.csv,195,Neutral,Same meaning,Positive,Same meaning
+syl_019,sylheti,d1_dialectal.csv,357,Negative,Same meaning,Negative,Same meaning
+syl_020,sylheti,d1_dialectal.csv,346,Negative,Same meaning,Negative,Same meaning
+syl_021,sylheti,d1_dialectal.csv,51,Negative,Same meaning,Negative,Same meaning
+syl_022,sylheti,d1_dialectal.csv,27,Positive,Same meaning,Neutral,Same meaning
+syl_023,sylheti,d1_dialectal.csv,132,Positive,Partly changed,Positive,Same meaning
+syl_024,sylheti,d1_dialectal.csv,363,Neutral,Partly changed,Neutral,Same meaning
+syl_025,sylheti,d1_dialectal.csv,388,Negative,Partly changed,Negative,Same meaning
+syl_026,sylheti,d1_dialectal.csv,308,Positive,Same meaning,Positive,Same meaning
+syl_027,sylheti,d1_dialectal.csv,113,Neutral,Same meaning,Positive,Same meaning
+syl_028,sylheti,d1_dialectal.csv,197,Positive,Same meaning,Neutral,Same meaning
+syl_029,sylheti,d1_dialectal.csv,307,Negative,Same meaning,Negative,Same meaning
+syl_030,sylheti,d1_dialectal.csv,236,Negative,Partly changed,Positive,Same meaning
+syl_031,sylheti,d1_dialectal.csv,68,Negative,Same meaning,Negative,Same meaning
+syl_032,sylheti,d1_dialectal.csv,385,Negative,Same meaning,Negative,Same meaning
+syl_033,sylheti,d1_dialectal.csv,160,Negative,Same meaning,Negative,Same meaning
+syl_034,sylheti,d1_dialectal.csv,67,Neutral,Same meaning,Neutral,Same meaning
+syl_035,sylheti,d1_dialectal.csv,315,Negative,Partly changed,Negative,Same meaning
+syl_036,sylheti,d1_dialectal.csv,324,Neutral,Same meaning,Positive,Same meaning
+syl_037,sylheti,d1_dialectal.csv,49,Negative,Partly changed,Positive,Same meaning
+syl_038,sylheti,d1_dialectal.csv,145,Neutral,Partly changed,Positive,Same meaning
+syl_039,sylheti,d1_dialectal.csv,155,Negative,Same meaning,Negative,Same meaning
+syl_040,sylheti,d1_dialectal.csv,0,Positive,Same meaning,Positive,Same meaning
+syl_041,sylheti,d1_dialectal.csv,232,Neutral,Same meaning,Neutral,Different meaning
+syl_042,sylheti,d1_dialectal.csv,93,Negative,Partly changed,Negative,Same meaning
+syl_043,sylheti,d1_dialectal.csv,224,Neutral,Partly changed,Neutral,Same meaning
+syl_044,sylheti,d1_dialectal.csv,74,Neutral,Same meaning,Negative,Same meaning
+syl_045,sylheti,d1_dialectal.csv,245,Neutral,Partly changed,Neutral,Same meaning
+syl_046,sylheti,d1_dialectal.csv,12,Negative,Partly changed,Neutral,Same meaning
+syl_047,sylheti,d1_dialectal.csv,158,Positive,Same meaning,Positive,Same meaning
+syl_048,sylheti,d1_dialectal.csv,118,Positive,Same meaning,Positive,Same meaning
+syl_049,sylheti,d1_dialectal.csv,82,Positive,Same meaning,Positive,Same meaning
+syl_050,sylheti,d1_dialectal.csv,356,Negative,Same meaning,Negative,Same meaning
+syl_051,sylheti,d1_dialectal.csv,154,Negative,Same meaning,Negative,Same meaning
+syl_052,sylheti,d1_dialectal.csv,91,Neutral,Same meaning,Neutral,Partly changed
+syl_053,sylheti,d1_dialectal.csv,351,Positive,Same meaning,Positive,Same meaning
+syl_054,sylheti,d1_dialectal.csv,326,Neutral,Same meaning,Neutral,Same meaning
+syl_055,sylheti,d1_dialectal.csv,166,Neutral,Same meaning,Positive,Same meaning
+syl_056,sylheti,d1_dialectal.csv,223,Positive,Same meaning,Positive,Same meaning
+syl_057,sylheti,d1_dialectal.csv,45,Neutral,Partly changed,Neutral,Same meaning
+syl_058,sylheti,d1_dialectal.csv,345,Positive,Partly changed,Neutral,Same meaning
+syl_059,sylheti,d1_dialectal.csv,69,Neutral,Same meaning,Positive,Same meaning
+syl_060,sylheti,d1_dialectal.csv,316,Neutral,Same meaning,Negative,Same meaning
+syl_061,sylheti,d1_dialectal.csv,108,Neutral,Same meaning,Neutral,Same meaning
+syl_062,sylheti,d1_dialectal.csv,72,Neutral,Same meaning,Neutral,Same meaning
+syl_063,sylheti,d1_dialectal.csv,64,Negative,Same meaning,Negative,Same meaning
+syl_064,sylheti,d1_dialectal.csv,30,Neutral,Same meaning,Neutral,Same meaning
+syl_065,sylheti,d1_dialectal.csv,289,Negative,Same meaning,Negative,Same meaning
+syl_066,sylheti,d1_dialectal.csv,35,Neutral,Same meaning,Negative,Same meaning
+syl_067,sylheti,d1_dialectal.csv,260,Negative,Same meaning,Negative,Same meaning
+syl_068,sylheti,d1_dialectal.csv,327,Negative,Same meaning,Negative,Same meaning
+syl_069,sylheti,d1_dialectal.csv,370,Neutral,Same meaning,Neutral,Partly changed
+syl_070,sylheti,d1_dialectal.csv,71,Neutral,Same meaning,Positive,Same meaning
+syl_071,sylheti,d1_dialectal.csv,313,Neutral,Same meaning,Neutral,Same meaning
+syl_072,sylheti,d1_dialectal.csv,46,Neutral,Partly changed,Positive,Same meaning
+syl_073,sylheti,d1_dialectal.csv,104,Neutral,Same meaning,Negative,Same meaning
+syl_074,sylheti,d1_dialectal.csv,332,Negative,Same meaning,Negative,Same meaning
+syl_075,sylheti,d1_dialectal.csv,63,Neutral,Same meaning,Positive,Same meaning
+syl_076,sylheti,d1_dialectal.csv,18,Negative,Same meaning,Negative,Same meaning
+syl_077,sylheti,d1_dialectal.csv,214,Neutral,Same meaning,Neutral,Partly changed
+syl_078,sylheti,d1_dialectal.csv,258,Neutral,Same meaning,Neutral,Same meaning
+syl_079,sylheti,d1_dialectal.csv,376,Negative,Same meaning,Negative,Same meaning
+syl_080,sylheti,d1_dialectal.csv,58,Negative,Same meaning,Positive,Partly changed
+syl_081,sylheti,d1_dialectal.csv,123,Positive,Same meaning,Positive,Same meaning
+syl_082,sylheti,d1_dialectal.csv,252,Negative,Same meaning,Negative,Same meaning
+syl_083,sylheti,d1_dialectal.csv,75,Positive,Same meaning,Neutral,Same meaning
+syl_084,sylheti,d1_dialectal.csv,241,Negative,Same meaning,Negative,Partly changed
+syl_085,sylheti,d1_dialectal.csv,310,Negative,Same meaning,Negative,Same meaning
+syl_086,sylheti,d1_dialectal.csv,341,Negative,Same meaning,Negative,Same meaning
+syl_087,sylheti,d1_dialectal.csv,76,Neutral,Same meaning,Neutral,Same meaning
+syl_088,sylheti,d1_dialectal.csv,338,Neutral,Same meaning,Negative,Same meaning
+syl_089,sylheti,d1_dialectal.csv,194,Positive,Same meaning,Positive,Same meaning
+syl_090,sylheti,d1_dialectal.csv,6,Negative,Partly changed,Negative,Different meaning
+syl_091,sylheti,d1_dialectal.csv,176,Negative,Partly changed,Negative,Partly changed
+syl_092,sylheti,d1_dialectal.csv,165,Neutral,Partly changed,Neutral,Same meaning
+syl_093,sylheti,d1_dialectal.csv,294,Positive,Same meaning,Positive,Same meaning
+syl_094,sylheti,d1_dialectal.csv,347,Negative,Same meaning,Negative,Same meaning
+syl_095,sylheti,d1_dialectal.csv,7,Neutral,Same meaning,Negative,Same meaning
+syl_096,sylheti,d1_dialectal.csv,81,Positive,Same meaning,Positive,Partly changed
+syl_097,sylheti,d1_dialectal.csv,9,Positive,Same meaning,Positive,Same meaning
+syl_098,sylheti,d1_dialectal.csv,256,Neutral,Same meaning,Neutral,Same meaning
+syl_099,sylheti,d1_dialectal.csv,146,Neutral,Same meaning,Neutral,Same meaning
+syl_100,sylheti,d1_dialectal.csv,117,Neutral,Same meaning,Positive,Same meaning
+cmx_001,codemixed,d2_codemixed_test.csv,589,Not offensive,,Not offensive,
+cmx_002,codemixed,d2_codemixed_test.csv,635,Not offensive,,Offensive,
+cmx_003,codemixed,d2_codemixed_test.csv,95,Not offensive,,Not offensive,
+cmx_004,codemixed,d2_codemixed_test.csv,111,Not offensive,,Not offensive,
+cmx_005,codemixed,d2_codemixed_test.csv,213,Not offensive,,Offensive,
+cmx_006,codemixed,d2_codemixed_test.csv,687,Not offensive,,Not offensive,
+cmx_007,codemixed,d2_codemixed_test.csv,56,Not offensive,,Not offensive,
+cmx_008,codemixed,d2_codemixed_test.csv,342,Not offensive,,Not offensive,
+cmx_009,codemixed,d2_codemixed_test.csv,597,Not offensive,,Not offensive,
+cmx_010,codemixed,d2_codemixed_test.csv,211,Not offensive,,Not offensive,
+cmx_011,codemixed,d2_codemixed_test.csv,536,Not offensive,,Not offensive,
+cmx_012,codemixed,d2_codemixed_test.csv,204,Not offensive,,Not offensive,
+cmx_013,codemixed,d2_codemixed_test.csv,43,Not offensive,,Not offensive,
+cmx_014,codemixed,d2_codemixed_test.csv,554,Not offensive,,Not offensive,
+cmx_015,codemixed,d2_codemixed_test.csv,594,Not offensive,,Not offensive,
+cmx_016,codemixed,d2_codemixed_test.csv,150,Not offensive,,Offensive,
+cmx_017,codemixed,d2_codemixed_test.csv,262,Not offensive,,Not offensive,
+cmx_018,codemixed,d2_codemixed_test.csv,647,Not offensive,,Not offensive,
+cmx_019,codemixed,d2_codemixed_test.csv,495,Not offensive,,Not offensive,
+cmx_020,codemixed,d2_codemixed_test.csv,252,Not offensive,,Not offensive,
+cmx_021,codemixed,d2_codemixed_test.csv,162,Not offensive,,Not offensive,
+cmx_022,codemixed,d2_codemixed_test.csv,424,Not offensive,,Offensive,
+cmx_023,codemixed,d2_codemixed_test.csv,267,Not offensive,,Not offensive,
+cmx_024,codemixed,d2_codemixed_test.csv,638,Not offensive,,Offensive,
+cmx_025,codemixed,d2_codemixed_test.csv,145,Not offensive,,Not offensive,
+cmx_026,codemixed,d2_codemixed_test.csv,331,Not offensive,,Offensive,
+cmx_027,codemixed,d2_codemixed_test.csv,141,Not offensive,,Not offensive,
+cmx_028,codemixed,d2_codemixed_test.csv,625,Not offensive,,Offensive,
+cmx_029,codemixed,d2_codemixed_test.csv,461,Not offensive,,Not offensive,
+cmx_030,codemixed,d2_codemixed_test.csv,190,Not offensive,,Not offensive,
+cmx_031,codemixed,d2_codemixed_test.csv,520,Not offensive,,,
+cmx_032,codemixed,d2_codemixed_test.csv,327,Not offensive,,,
+cmx_033,codemixed,d2_codemixed_test.csv,366,Not offensive,,Not offensive,
+cmx_034,codemixed,d2_codemixed_test.csv,7,Not offensive,,Offensive,
+cmx_035,codemixed,d2_codemixed_test.csv,14,Not offensive,,Not offensive,
+cmx_036,codemixed,d2_codemixed_test.csv,473,Not offensive,,Not offensive,
+cmx_037,codemixed,d2_codemixed_test.csv,52,Not offensive,,Offensive,
+cmx_038,codemixed,d2_codemixed_test.csv,773,Not offensive,,Offensive,
+cmx_039,codemixed,d2_codemixed_test.csv,363,Not offensive,,Not offensive,
+cmx_040,codemixed,d2_codemixed_test.csv,343,Not offensive,,Offensive,
+cmx_041,codemixed,d2_codemixed_test.csv,281,Not offensive,,Offensive,
+cmx_042,codemixed,d2_codemixed_test.csv,83,Not offensive,,Not offensive,
+cmx_043,codemixed,d2_codemixed_test.csv,390,Not offensive,,Offensive,
+cmx_044,codemixed,d2_codemixed_test.csv,13,Not offensive,,Not offensive,
+cmx_045,codemixed,d2_codemixed_test.csv,110,Offensive,,Offensive,
+cmx_046,codemixed,d2_codemixed_test.csv,314,Not offensive,,Not offensive,
+cmx_047,codemixed,d2_codemixed_test.csv,766,Not offensive,,Not offensive,
+cmx_048,codemixed,d2_codemixed_test.csv,580,Not offensive,,Not offensive,
+cmx_049,codemixed,d2_codemixed_test.csv,533,Not offensive,,Not offensive,
+cmx_050,codemixed,d2_codemixed_test.csv,497,Not offensive,,Not offensive,
+cmx_051,codemixed,d2_codemixed_test.csv,584,Not offensive,,Offensive,
+cmx_052,codemixed,d2_codemixed_test.csv,519,Not offensive,,Not offensive,
+cmx_053,codemixed,d2_codemixed_test.csv,540,Not offensive,,Not offensive,
+cmx_054,codemixed,d2_codemixed_test.csv,640,Not offensive,,Not offensive,
+cmx_055,codemixed,d2_codemixed_test.csv,179,Not offensive,,Cannot judge,
+cmx_056,codemixed,d2_codemixed_test.csv,91,Not offensive,,Offensive,
+cmx_057,codemixed,d2_codemixed_test.csv,194,Not offensive,,Not offensive,
+cmx_058,codemixed,d2_codemixed_test.csv,388,Not offensive,,Not offensive,
+cmx_059,codemixed,d2_codemixed_test.csv,61,Not offensive,,Not offensive,
+cmx_060,codemixed,d2_codemixed_test.csv,283,Not offensive,,Offensive,
+cmx_061,codemixed,d2_codemixed_test.csv,578,Not offensive,,Offensive,
+cmx_062,codemixed,d2_codemixed_test.csv,478,Not offensive,,Not offensive,
+cmx_063,codemixed,d2_codemixed_test.csv,303,Not offensive,,Offensive,
+cmx_064,codemixed,d2_codemixed_test.csv,504,Not offensive,,Offensive,
+cmx_065,codemixed,d2_codemixed_test.csv,136,Not offensive,,Offensive,
+cmx_066,codemixed,d2_codemixed_test.csv,525,Not offensive,,Not offensive,
+cmx_067,codemixed,d2_codemixed_test.csv,544,Not offensive,,Not offensive,
+cmx_068,codemixed,d2_codemixed_test.csv,86,Not offensive,,Offensive,
+cmx_069,codemixed,d2_codemixed_test.csv,592,Not offensive,,Offensive,
+cmx_070,codemixed,d2_codemixed_test.csv,319,Not offensive,,Offensive,
+cmx_071,codemixed,d2_codemixed_test.csv,794,Not offensive,,Offensive,
+cmx_072,codemixed,d2_codemixed_test.csv,173,Not offensive,,Not offensive,
+cmx_073,codemixed,d2_codemixed_test.csv,5,Not offensive,,Not offensive,
+cmx_074,codemixed,d2_codemixed_test.csv,49,Not offensive,,Not offensive,
+cmx_075,codemixed,d2_codemixed_test.csv,263,Not offensive,,Offensive,
+cmx_076,codemixed,d2_codemixed_test.csv,39,Not offensive,,Offensive,
+cmx_077,codemixed,d2_codemixed_test.csv,106,Not offensive,,Not offensive,
+cmx_078,codemixed,d2_codemixed_test.csv,160,Not offensive,,Offensive,
+cmx_079,codemixed,d2_codemixed_test.csv,223,Not offensive,,Not offensive,
+cmx_080,codemixed,d2_codemixed_test.csv,119,Not offensive,,Not offensive,
+cmx_081,codemixed,d2_codemixed_test.csv,172,Not offensive,,Offensive,
+cmx_082,codemixed,d2_codemixed_test.csv,731,Not offensive,,Not offensive,
+cmx_083,codemixed,d2_codemixed_test.csv,21,Not offensive,,Not offensive,
+cmx_084,codemixed,d2_codemixed_test.csv,255,Not offensive,,Offensive,
+cmx_085,codemixed,d2_codemixed_test.csv,340,Not offensive,,Offensive,
+cmx_086,codemixed,d2_codemixed_test.csv,285,Not offensive,,Not offensive,
+cmx_087,codemixed,d2_codemixed_test.csv,156,Not offensive,,Offensive,
+cmx_088,codemixed,d2_codemixed_test.csv,202,Not offensive,,Offensive,
+cmx_089,codemixed,d2_codemixed_test.csv,55,Not offensive,,Offensive,
+cmx_090,codemixed,d2_codemixed_test.csv,335,Not offensive,,Not offensive,
+cmx_091,codemixed,d2_codemixed_test.csv,490,Not offensive,,Not offensive,
+cmx_092,codemixed,d2_codemixed_test.csv,678,Not offensive,,Cannot judge,
+cmx_093,codemixed,d2_codemixed_test.csv,348,Not offensive,,Offensive,
+cmx_094,codemixed,d2_codemixed_test.csv,603,Not offensive,,Offensive,
+cmx_095,codemixed,d2_codemixed_test.csv,528,Not offensive,,Offensive,
+cmx_096,codemixed,d2_codemixed_test.csv,382,Not offensive,,Offensive,
+cmx_097,codemixed,d2_codemixed_test.csv,547,Not offensive,,Not offensive,
+cmx_098,codemixed,d2_codemixed_test.csv,26,Not offensive,,Offensive,
+cmx_099,codemixed,d2_codemixed_test.csv,354,Not offensive,,Not offensive,
+cmx_100,codemixed,d2_codemixed_test.csv,234,Not offensive,,Not offensive,

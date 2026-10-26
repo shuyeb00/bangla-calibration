@@ -58,7 +58,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/training_grid_parallel.py`, `src/fetch_run_outputs.py` | Multi-GPU launcher for the max_length-512 grids (base, training objectives, large encoders) and download and audit of their outputs |
 | `src/shift_statistics.py`, `src/subset_robustness.py`, `src/contrast_statistics.py` | Label-free shift statistics, data-integrity subsets, and Holm-corrected contrasts between training objectives and scales |
 | `src/error_annotation.py`, `src/error_correlates.py`, `src/human_validation.py` | Two-annotator error-cause coding, measurable correlates of misclassification, and the second human validation round |
-| `src/llm_inference.py`, `src/llm_evaluation.py` | Zero- and few-shot scoring with open instruction-tuned LLMs and their comparison with the encoders |
+| `src/llm_inference.py`, `src/llm_evaluation.py`, `src/llm_human_agreement.py` | Zero- and few-shot scoring with open instruction-tuned LLMs, their comparison with the encoders, and agreement of both with the human validation labels |
 | `thesis/figures/` | Figures |
 
 Model outputs (`*.npy`) and processed datasets are not tracked. Dataset sources are listed in `data/DATA_SOURCES.md`.

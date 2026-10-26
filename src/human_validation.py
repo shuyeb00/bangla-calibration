@@ -10,7 +10,8 @@
     (data/annotation/codemixed_translation.csv). Compared with the untranslated label-audit D2 items, this
     tests whether human agreement with the gold labels rises once the Hindi parts can be read.
 
-Workbooks, key and translations contain dataset texts and stay in data/annotation/ (git-ignored).
+Workbooks, key and translations contain dataset texts and stay in data/annotation/ (git-ignored). The annotators'
+labels per item (item id and dataset row, no text) are written to results/tables/human_validation_item_labels.csv.
 
     python -m src.human_validation sample      key and one workbook per annotator (never overwrites them)
     python -m src.human_validation score       agreement, adequacy and diagnostic tables
@@ -35,6 +36,7 @@ ERROR_SAMPLE = RESULTS_DIR / "tables" / "grid_max_length_512" / "error_analysis_
 OUT_AGREEMENT = RESULTS_DIR / "tables" / "human_validation_agreement.csv"
 OUT_ADEQUACY = RESULTS_DIR / "tables" / "human_validation_adequacy.csv"
 OUT_DIAGNOSTICS = RESULTS_DIR / "tables" / "human_validation_diagnostics.csv"
+OUT_ITEM_LABELS = RESULTS_DIR / "tables" / "human_validation_item_labels.csv"
 LABEL_AUDIT_TABLE = RESULTS_DIR / "tables" / "label_audit_agreement.csv"
 SEED = 2028
 N_ITEMS = 100
@@ -337,6 +339,11 @@ def score() -> None:
     diagnostics = pd.DataFrame(diagnostic_rows(syl_labels, syl.gold, {a: r["meaning"] for a, r in ratings.items()},
                                                cmx_labels, cmx.gold, ratings, rng))
     diagnostics.to_csv(OUT_DIAGNOSTICS, index=False, float_format="%.4f", lineterminator="\n")
+    items = key[["item_id", "part", "source_file", "source_row"]].set_index("item_id")
+    for a in paths:
+        items[f"{a}_label"] = pd.concat([syl_labels[a], cmx_labels[a]]).reindex(items.index)
+        items[f"{a}_meaning"] = ratings[a]["meaning"].reindex(items.index)
+    items.reset_index().to_csv(OUT_ITEM_LABELS, index=False, lineterminator="\n")
     for scale, levels in (("meaning", MEANING), ("naturalness", NATURALNESS)):
         for a, r in ratings.items():
             counts = r[scale].value_counts()
