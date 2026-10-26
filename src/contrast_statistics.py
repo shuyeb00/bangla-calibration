@@ -11,6 +11,15 @@ Family "scale": large against base encoder of the same family (BanglaBERT, XLM-R
   runs only. Effect = mean over the two families of the difference in means (large minus base); exact
   two-sided permutation test with labels permuted within family; bootstrap CI resampling runs within
   model. Per-family differences are reported as descriptive columns.
+Family "recalibration_label_free": vector scaling, matrix scaling, isotonic regression and importance-
+  weighted TS against source TS on the same run (cross-entropy base-grid runs, both regimes), NLL and
+  ECE-15 on the target test split.
+Family "recalibration_few_label": NLL of empirical-Bayes shrinkage TS with n target labels against source
+  TS and against MLE TS on the same run (mean over the resamples of each run), n in N_LABELS.
+In both recalibration families the effect is the mean paired difference over runs; the p-value is a
+  Monte Carlo sign-flip test over runs (B_SIGN_FLIP random sign vectors, add-one); the CI is a
+  hierarchical bootstrap that resamples configurations (model, fine-tuning method) and then seeds within
+  them, since runs of one configuration are not independent.
 Holm-Bonferroni is applied within each family over all its (contrast, task, condition, metric) tests.
 
     python -m src.contrast_statistics                     (EVALUATION_GRID selects the grid)
@@ -35,6 +44,9 @@ SCALE_ENDPOINTS = [("macro_f1", "uncalibrated"), ("auroc", "uncalibrated"), ("ec
                    ("nll", "temperature_scaling")]
 SCALE_PAIRS = [("banglabert", "banglabert_large"), ("xlmr_base", "xlmr_large")]
 LARGE_RECIPE = "lr1e-05_warmup0.1"
+LABEL_FREE_METHODS = ["vector_scaling", "matrix_scaling", "isotonic", "importance_weighted_ts"]
+N_LABELS = ["10", "25", "50", "100"]
+B_SIGN_FLIP = 100_000
 
 
 def sign_flip_p(d: np.ndarray) -> float:
@@ -114,10 +126,79 @@ def scale_contrasts(lf: pd.DataFrame, rng) -> list:
     return rows
 
 
+def monte_carlo_sign_flip_p(d: np.ndarray, rng) -> float:
+    signs = rng.choice([-1.0, 1.0], size=(B_SIGN_FLIP, len(d)))
+    stats = np.abs(signs @ d) / len(d)
+    return float((1 + np.sum(stats >= abs(d.mean()) - 1e-12)) / (B_SIGN_FLIP + 1))
+
+
+def hierarchical_bootstrap(d: np.ndarray, clusters: np.ndarray, rng) -> tuple:
+    groups = [d[clusters == c] for c in np.unique(clusters)]
+    means = np.empty(B_BOOTSTRAP)
+    for b in range(B_BOOTSTRAP):
+        picked = [groups[i] for i in rng.integers(0, len(groups), len(groups))]
+        means[b] = np.concatenate([g[rng.integers(0, len(g), len(g))] for g in picked]).mean()
+    return float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
+
+
+def paired_row(family: str, contrast: str, task: str, condition: str, metric: str, method: str,
+               treated: pd.Series, reference: pd.Series, rng) -> dict:
+    """treated and reference are indexed by (model, ft_method, seed)."""
+    d = (treated - reference).dropna()
+    clusters = np.array([f"{m}|{f}" for m, f, _ in d.index])
+    lo, hi = hierarchical_bootstrap(d.to_numpy(), clusters, rng)
+    return {"family": family, "contrast": contrast, "task": task, "condition": condition, "metric": metric,
+            "method": method, "n": len(d), "effect": float(d.mean()), "ci_low": lo, "ci_high": hi,
+            "share_runs_lower": float((d < 0).mean()), "p_exact": monte_carlo_sign_flip_p(d.to_numpy(), rng)}
+
+
+def base_grid(df: pd.DataFrame) -> pd.DataFrame:
+    return df[df.model.isin(MODELS) & (df.objective == "cross_entropy")]
+
+
+def recalibration_label_free_contrasts(lf: pd.DataFrame, rng) -> list:
+    lf = base_grid(lf)
+    key = ["model", "ft_method", "seed"]
+    rows = []
+    for task, conditions in CONDITIONS.items():
+        for condition in conditions:
+            s = lf[(lf.task == task) & (lf.condition == condition)]
+            for metric in ("nll", "ece_15"):
+                ref = s[s.method == "temperature_scaling"].set_index(key)[metric]
+                for method in LABEL_FREE_METHODS:
+                    t = s[s.method == method].set_index(key)[metric]
+                    if len(t):
+                        rows.append(paired_row("recalibration_label_free", f"{method} - temperature_scaling", task,
+                                               condition, metric, method, t, ref, rng))
+    return rows
+
+
+def recalibration_few_label_contrasts(lf: pd.DataFrame, fl: pd.DataFrame, rng) -> list:
+    lf, fl = base_grid(lf), base_grid(fl)
+    fl = fl.assign(n_labels=fl.n_labels.astype(str))
+    key = ["model", "ft_method", "seed"]
+    rows = []
+    for (task, condition), s in fl.groupby(["task", "condition"]):
+        source = lf[(lf.task == task) & (lf.condition == condition)
+                    & (lf.method == "temperature_scaling")].set_index(key)["nll"]
+        for n in N_LABELS:
+            shrink = s[(s.method == "shrinkage_ts") & (s.n_labels == n)].set_index(key)["nll"]
+            mle = s[(s.method == "mle_ts") & (s.n_labels == n)].set_index(key)["nll"]
+            rows.append(paired_row("recalibration_few_label", f"shrinkage_ts - temperature_scaling (n={n})", task,
+                                   condition, "nll", f"shrinkage_ts_n{n}", shrink, source, rng))
+            rows.append(paired_row("recalibration_few_label", f"shrinkage_ts - mle_ts (n={n})", task, condition,
+                                   "nll", f"shrinkage_ts_n{n}", shrink, mle, rng))
+    return rows
+
+
 def main():
     lf = pd.read_csv(EVALUATION_TABLES_DIR / "shift_recalibration_label_free_per_run.csv")
+    fl = pd.read_csv(EVALUATION_TABLES_DIR / "shift_recalibration_few_label_per_run.csv")
     rng = np.random.default_rng(0)
-    table = pd.DataFrame(objective_contrasts(lf, rng) + scale_contrasts(lf, rng))
+    rows = objective_contrasts(lf, rng) + scale_contrasts(lf, rng)
+    rng_recal = np.random.default_rng(1)
+    rows += recalibration_label_free_contrasts(lf, rng_recal) + recalibration_few_label_contrasts(lf, fl, rng_recal)
+    table = pd.DataFrame(rows)
     table["p_holm"] = table.groupby("family", group_keys=False).p_exact.apply(holm)
     table["significant_holm_05"] = table.p_holm < 0.05
     out = EVALUATION_TABLES_DIR / "contrast_statistics.csv"
