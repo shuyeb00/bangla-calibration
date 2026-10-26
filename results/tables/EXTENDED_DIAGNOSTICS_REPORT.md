@@ -356,7 +356,7 @@
 | offensive | indicbert | full_ft | shift_d1_noakhali_test | source_temp_scaled | lac | 0.8734 | 1.041 | 0.959 | 0.041 | 0.8558 | 0.0442 |
 | offensive | indicbert | full_ft | shift_d1_noakhali_test | source_temp_scaled | raps | 0.9037 | 1.1416 | 0.8584 | 0.1416 | 0.8923 | 0.0171 |
 | offensive | indicbert | full_ft | shift_d2_test | source_temp_scaled | aps | 0.7108 | 1.375 | 0.625 | 0.375 | 0.4425 | 0.4575 |
-| offensive | indicbert | full_ft | shift_d2_test | source_temp_scaled | lac | 0.5775 | 1.0988 | 0.9012 | 0.0988 | 0.2074 | 0.6926 |
+| offensive | indicbert | full_ft | shift_d2_test | source_temp_scaled | lac | 0.5775 | 1.0988 | 0.9012 | 0.0987 | 0.2074 | 0.6926 |
 | offensive | indicbert | full_ft | shift_d2_test | source_temp_scaled | raps | 0.6855 | 1.3268 | 0.6732 | 0.3268 | 0.398 | 0.502 |
 | offensive | indicbert | full_ft | shift_d3_noise05 | source_temp_scaled | aps | 0.9172 | 1.1426 | 0.8574 | 0.1426 | 0.8895 | 0.0428 |
 | offensive | indicbert | full_ft | shift_d3_noise05 | source_temp_scaled | lac | 0.8856 | 1.0346 | 0.9654 | 0.0346 | 0.8548 | 0.0452 |
@@ -427,9 +427,9 @@
 | offensive | xlmr_base | lora | shift_d1_noakhali_test | source_temp_scaled | aps | 0.9345 | 1.1907 | 0.8093 | 0.1907 | 0.9146 | 0.0548 |
 | offensive | xlmr_base | lora | shift_d1_noakhali_test | source_temp_scaled | lac | 0.8757 | 1.0 | 1.0 | 0.0 | 0.8417 | 0.0583 |
 | offensive | xlmr_base | lora | shift_d1_noakhali_test | source_temp_scaled | raps | 0.929 | 1.1665 | 0.8335 | 0.1665 | 0.9082 | 0.0503 |
-| offensive | xlmr_base | lora | shift_d2_test | source_temp_scaled | aps | 0.5893 | 1.125 | 0.875 | 0.125 | 0.1482 | 0.7518 |
+| offensive | xlmr_base | lora | shift_d2_test | source_temp_scaled | aps | 0.5892 | 1.125 | 0.875 | 0.125 | 0.1482 | 0.7518 |
 | offensive | xlmr_base | lora | shift_d2_test | source_temp_scaled | lac | 0.5232 | 1.0 | 1.0 | 0.0 | 0.0267 | 0.8733 |
-| offensive | xlmr_base | lora | shift_d2_test | source_temp_scaled | raps | 0.5752 | 1.0947 | 0.9052 | 0.0948 | 0.1209 | 0.7791 |
+| offensive | xlmr_base | lora | shift_d2_test | source_temp_scaled | raps | 0.5752 | 1.0947 | 0.9052 | 0.0947 | 0.1209 | 0.7791 |
 | offensive | xlmr_base | lora | shift_d3_noise05 | source_temp_scaled | aps | 0.943 | 1.1584 | 0.8416 | 0.1584 | 0.937 | 0.0486 |
 | offensive | xlmr_base | lora | shift_d3_noise05 | source_temp_scaled | lac | 0.8962 | 1.0 | 1.0 | 0.0 | 0.8876 | 0.0124 |
 | offensive | xlmr_base | lora | shift_d3_noise05 | source_temp_scaled | raps | 0.938 | 1.1344 | 0.8656 | 0.1344 | 0.932 | 0.0436 |
@@ -575,7 +575,7 @@
 | offensive | indicbert | full_ft | shift_d1_barishal_test | 54.6349 | 55.9093 | 0.0861 | 14.7481 | 0.2497 |
 | offensive | indicbert | full_ft | shift_d1_chittagong_test | 55.4954 | 57.5074 | 0.0977 | 11.7601 | 0.2755 |
 | offensive | indicbert | full_ft | shift_d1_noakhali_test | 55.2303 | 57.3591 | 0.0898 | 15.2869 | 0.261 |
-| offensive | indicbert | full_ft | shift_d2_test | 73.3247 | 75.9517 | 0.3223 | 1.4524 | 0.079 |
+| offensive | indicbert | full_ft | shift_d2_test | 73.3247 | 75.9517 | 0.3222 | 1.4524 | 0.079 |
 | offensive | indicbert | full_ft | shift_d3_noise05 | 54.1146 | 55.5935 | 0.0891 | 14.9223 | 0.2174 |
 | offensive | indicbert | full_ft | shift_d3_noise10 | 54.9629 | 57.0941 | 0.0964 | 13.0411 | 0.2366 |
 | offensive | indicbert | full_ft | shift_d3_noise20 | 56.4225 | 58.8279 | 0.1069 | 12.4614 | 0.2833 |
@@ -599,7 +599,7 @@
 | offensive | xlmr_base | lora | shift_d1_barishal_test | 49.4208 | 48.2026 | 0.078 | -6.3805 | -0.1295 |
 | offensive | xlmr_base | lora | shift_d1_chittagong_test | 46.5808 | 44.3832 | 0.0709 | -3.8859 | -0.1731 |
 | offensive | xlmr_base | lora | shift_d1_noakhali_test | 48.8016 | 47.872 | 0.0696 | -4.927 | -0.106 |
-| offensive | xlmr_base | lora | shift_d2_test | 63.4173 | 66.2293 | 0.0723 | -3.2316 | -0.0894 |
+| offensive | xlmr_base | lora | shift_d2_test | 63.4173 | 66.2293 | 0.0722 | -3.2316 | -0.0894 |
 | offensive | xlmr_base | lora | shift_d3_noise05 | 54.3307 | 55.195 | 0.1096 | -5.7762 | -0.1333 |
 | offensive | xlmr_base | lora | shift_d3_noise10 | 52.5373 | 53.1984 | 0.0972 | -5.1187 | -0.1537 |
 | offensive | xlmr_base | lora | shift_d3_noise20 | 49.296 | 48.7643 | 0.0742 | -3.9327 | -0.1894 |
