@@ -1,12 +1,14 @@
 """Download the outputs of the max_length-512 grids from the Hugging Face Hub and audit them.
 
 Files of runs/<run_id>/ in the run-outputs dataset repo are placed in
-results/grid_max_length_512/runs/<run_id>/ (hidden states only with --with-hidden). The audit covers
+results/grid_max_length_512/runs/<run_id>/ (hidden states of every split with --with-hidden, or only of the
+base-grid source and target calibration/test splits with --hidden-target-splits). The audit covers
 every grid of src/training_grid_parallel.py (AUDIT_GRIDS), checks that every run is
 complete and consistent and writes results/tables/grid_max_length_512_training_summary.csv.
 
     python -m src.fetch_run_outputs
     python -m src.fetch_run_outputs --no-download
+    python -m src.fetch_run_outputs --hidden-target-splits
 """
 
 import argparse
@@ -25,12 +27,24 @@ GRID_DIR = RESULTS_DIR / "grid_max_length_512"
 COLLAPSE_MARGIN = 0.02
 
 
-def download(with_hidden: bool) -> None:
+def target_hidden_patterns() -> list:
+    """Hidden states of the base-grid runs on the source and target calibration and test splits."""
+    patterns = []
+    for run in grid_runs("base"):
+        task = run[0]
+        splits = ["cal", "test"] + [k for k in get_shift_conditions_paths(task) if k.endswith(("_cal", "_test"))]
+        patterns += [f"runs/{grid_run_id('base', run)}/{split}_hidden.npy" for split in splits]
+    return patterns
+
+
+def download(with_hidden: bool, hidden_target_splits: bool = False) -> None:
     from huggingface_hub import snapshot_download
 
     patterns = ["runs/*/*.json", "runs/*/*_logits.npy", "runs/*/*_labels.npy"]
     if with_hidden:
         patterns.append("runs/*/*_hidden.npy")
+    elif hidden_target_splits:
+        patterns += target_hidden_patterns()
     snapshot_download(HUB_OUTPUT_REPO, repo_type="dataset", local_dir=str(GRID_DIR), allow_patterns=patterns)
 
 
@@ -93,10 +107,12 @@ def main():
     parser = argparse.ArgumentParser(description="Download and audit the max_length-512 grid outputs.")
     parser.add_argument("--no-download", action="store_true")
     parser.add_argument("--with-hidden", action="store_true", help="Also download hidden states (several GB).")
+    parser.add_argument("--hidden-target-splits", action="store_true",
+                        help="Also download base-grid hidden states of the source and target cal/test splits only.")
     parser.add_argument("--grids", nargs="+", choices=AUDIT_GRIDS, default=AUDIT_GRIDS)
     args = parser.parse_args()
     if not args.no_download:
-        download(args.with_hidden)
+        download(args.with_hidden, args.hidden_target_splits)
 
     rows = []
     for grid in args.grids:
