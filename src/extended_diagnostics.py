@@ -17,6 +17,7 @@ from src.calibration import (
     compute_nll,
     conformal_calibrate,
     evaluate_conformal,
+    TEMPERATURE_BOUNDS,
     fit_temperature,
 )
 from src.config import (
@@ -749,10 +750,15 @@ def main():
 
     if all_cal:
         df_cal = pd.DataFrame(all_cal)
+        # A fitted temperature at the search bound means the optimum lies outside it (e.g. offensive D2, where
+        # the likelihood keeps improving as T grows); such temperatures must not be reported as estimates.
+        lo, hi = TEMPERATURE_BOUNDS
+        df_cal["temperature_at_bound"] = ((df_cal["calibration_regime"] != "uncalibrated")
+                                          & ((df_cal["temperature"] >= hi - 1e-3) | (df_cal["temperature"] <= lo + 1e-3)))
         df_cal = flag_and_drop(df_cal, excluded, TABLES_DIR / "extended_calibration_per_run.csv")
         cal_cols = [
             "nll", "top_label_ece_15", "adaptive_ece_15", "classwise_ece_15",
-            "overconfidence_ece_15", "underconfidence_ece_15", "mce_15", "brier"
+            "overconfidence_ece_15", "underconfidence_ece_15", "mce_15", "brier", "temperature_at_bound"
         ]
         df_cal_agg = (
             df_cal.groupby(["task", "model", "ft_method", "condition", "calibration_regime"])[cal_cols]

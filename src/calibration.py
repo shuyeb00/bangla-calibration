@@ -1,7 +1,4 @@
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
 from scipy.special import softmax
 
 
@@ -45,13 +42,7 @@ def compute_brier_score(probs: np.ndarray, labels: np.ndarray, n_classes: int) -
     return float(np.mean(np.sum((probs - one_hot) ** 2, axis=1)))
 
 
-class TemperatureScaler(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.temperature = nn.Parameter(torch.ones(1) * 1.5)
-
-    def forward(self, logits: torch.Tensor) -> torch.Tensor:
-        return logits / self.temperature
+TEMPERATURE_BOUNDS = (0.05, 10.0)
 
 
 def fit_temperature(logits: np.ndarray, labels: np.ndarray, max_iter: int = 50) -> float:
@@ -64,8 +55,8 @@ def fit_temperature(logits: np.ndarray, labels: np.ndarray, max_iter: int = 50) 
         log_probs = log_softmax(logits_f / max(t, 1e-3), axis=1)
         return float(-np.mean(log_probs[np.arange(len(labels_i)), labels_i]))
 
-    res = minimize_scalar(nll_obj, bounds=(0.05, 10.0), method='bounded', options={'maxiter': max_iter})
-    return float(np.clip(res.x, 0.05, 10.0))
+    res = minimize_scalar(nll_obj, bounds=TEMPERATURE_BOUNDS, method='bounded', options={'maxiter': max_iter})
+    return float(np.clip(res.x, *TEMPERATURE_BOUNDS))
 
 
 def apply_temperature(logits: np.ndarray, temperature: float) -> np.ndarray:
