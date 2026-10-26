@@ -143,9 +143,10 @@ def label_sequences(tokenizer, prompt: str, labels: dict, chat: bool) -> list:
     return seqs
 
 
-def build_jobs(models: list, tasks: list, seeds: list, cap: int) -> list:
+def build_jobs(models: list, tasks: list, seeds: list, cap: int, few_shot_remainders: bool = True) -> list:
     """Priority order: per model, core (zero shot, first few-shot seed) on the primary subsets; then for every
-    model the remainders of zero shot; then extra seeds and few-shot remainders."""
+    model the remainders of zero shot; then extra seeds (one seed complete before the next) and few-shot
+    remainders."""
     tiers = []
     for model in models:
         core, rest, extra = [], [], []
@@ -156,9 +157,11 @@ def build_jobs(models: list, tasks: list, seeds: list, cap: int) -> list:
                 for s_i, setting in enumerate(["zero_shot"] + [f"few_shot_seed{s}" for s in seeds]):
                     job = {"model": model, "task": task, "setting": setting, "split": split, "part": "primary"}
                     (core if s_i <= 1 else extra).append(job)
-                    if len(remainder):
+                    if len(remainder) and (s_i == 0 or few_shot_remainders):
                         tier = rest if s_i == 0 else extra
                         tier.append({**job, "part": "remainder"})
+        settings = ["zero_shot"] + [f"few_shot_seed{s}" for s in seeds]
+        extra.sort(key=lambda j: (j["part"] == "remainder", settings.index(j["setting"])))
         tiers.append((core, rest, extra))
     order = [j for t in tiers for j in t[0]] + [j for t in tiers for j in t[1]] + [j for t in tiers for j in t[2]]
     for j in order:
@@ -472,7 +475,7 @@ def gpu_count() -> int:
 def launcher(args) -> None:
     t_start = time.time()
     deadline = t_start + args.deadline_hours * 3600
-    jobs = build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap)
+    jobs = build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders)
     print(f"{len(jobs)} jobs for models {args.models}; deadline in {args.deadline_hours} h", flush=True)
     local_paths = dict(p.split("=", 1) for p in args.model_path)
     phases = []
@@ -538,6 +541,8 @@ def main():
     parser.add_argument("--tasks", nargs="+", default=list(TASKS), choices=list(TASKS))
     parser.add_argument("--few-shot-seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--cap", type=int, default=CAP)
+    parser.add_argument("--skip-few-shot-remainders", action="store_true",
+                        help="score few-shot prompts on the primary subsets only")
     parser.add_argument("--deadline-hours", type=float, default=11.0)
     parser.add_argument("--store", default="hub", help="'hub' or 'local:<dir>' (dry runs)")
     parser.add_argument("--model-path", action="append", default=[], help="model_key=local_dir (dry runs)")
@@ -552,7 +557,7 @@ def main():
     if args.worker:
         worker(args)
     elif args.show_plan:
-        for j in build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap):
+        for j in build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders):
             print(j["job_id"])
     else:
         launcher(args)
