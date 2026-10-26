@@ -20,6 +20,13 @@ In both recalibration families the effect is the mean paired difference over run
   Monte Carlo sign-flip test over runs (B_SIGN_FLIP random sign vectors, add-one); the CI is a
   hierarchical bootstrap that resamples configurations (model, fine-tuning method) and then seeds within
   them, since runs of one configuration are not independent.
+Family "llm_recalibration": for the general LLM systems (FORMAT_FAILURE excluded; every model with zero
+  shot and each few-shot seed), MAP bias-corrected TS with n target labels against source TS and against
+  shrinkage TS with the same n (llm_recalibration_per_system.csv, mean over the resamples of each system),
+  NLL and macro-F1 against source TS and NLL against shrinkage TS on the target test subset, n in
+  LLM_N_LABELS. Effect = mean paired difference over
+  systems; exact two-sided sign-flip test over systems; hierarchical bootstrap CI over models, then
+  prompting settings within model.
 Holm-Bonferroni is applied within each family over all its (contrast, task, condition, metric) tests.
 
     python -m src.contrast_statistics                     (EVALUATION_GRID selects the grid)
@@ -47,6 +54,9 @@ LARGE_RECIPE = "lr1e-05_warmup0.1"
 LABEL_FREE_METHODS = ["vector_scaling", "matrix_scaling", "isotonic", "importance_weighted_ts"]
 N_LABELS = ["10", "25", "50", "100"]
 B_SIGN_FLIP = 100_000
+LLM_N_LABELS = ["25", "50"]
+LLM_REFERENCES = ["temperature_scaling", "shrinkage_ts"]
+FORMAT_FAILURE = {"tigerllm_1b_instruct"}
 
 
 def sign_flip_p(d: np.ndarray) -> float:
@@ -191,6 +201,29 @@ def recalibration_few_label_contrasts(lf: pd.DataFrame, fl: pd.DataFrame, rng) -
     return rows
 
 
+def llm_recalibration_contrasts(per_system: pd.DataFrame, rng) -> list:
+    s = per_system[(per_system.kind == "llm") & ~per_system.model.isin(FORMAT_FAILURE)]
+    s = s.assign(n_labels=s.n_labels.astype(str))
+    key = ["model", "setting"]
+    rows = []
+    for (task, condition), c in s.groupby(["task", "condition"]):
+        source = c[c.method == "temperature_scaling"].set_index(key)
+        for n in LLM_N_LABELS:
+            treated = c[(c.method == "map_bcts") & (c.n_labels == n)].set_index(key)
+            references = {"temperature_scaling": source,
+                          "shrinkage_ts": c[(c.method == "shrinkage_ts") & (c.n_labels == n)].set_index(key)}
+            for reference in LLM_REFERENCES:
+                # TS leaves the argmax unchanged, so macro-F1 against shrinkage TS would duplicate the source-TS test.
+                for metric in ("nll", "macro_f1") if reference == "temperature_scaling" else ("nll",):
+                    d = (treated[metric] - references[reference][metric]).dropna()
+                    lo, hi = hierarchical_bootstrap(d.to_numpy(), np.array([m for m, _ in d.index]), rng)
+                    rows.append({"family": "llm_recalibration", "contrast": f"map_bcts - {reference} (n={n})",
+                                 "task": task, "condition": condition, "metric": metric, "method": f"map_bcts_n{n}",
+                                 "n": len(d), "effect": float(d.mean()), "ci_low": lo, "ci_high": hi,
+                                 "share_runs_lower": float((d < 0).mean()), "p_exact": sign_flip_p(d.to_numpy())})
+    return rows
+
+
 def main():
     lf = pd.read_csv(EVALUATION_TABLES_DIR / "shift_recalibration_label_free_per_run.csv")
     fl = pd.read_csv(EVALUATION_TABLES_DIR / "shift_recalibration_few_label_per_run.csv")
@@ -198,6 +231,9 @@ def main():
     rows = objective_contrasts(lf, rng) + scale_contrasts(lf, rng)
     rng_recal = np.random.default_rng(1)
     rows += recalibration_label_free_contrasts(lf, rng_recal) + recalibration_few_label_contrasts(lf, fl, rng_recal)
+    llm_path = EVALUATION_TABLES_DIR / "llm_recalibration_per_system.csv"
+    if llm_path.exists():
+        rows += llm_recalibration_contrasts(pd.read_csv(llm_path, dtype={"n_labels": str}), np.random.default_rng(2))
     table = pd.DataFrame(rows)
     table["p_holm"] = table.groupby("family", group_keys=False).p_exact.apply(holm)
     table["significant_holm_05"] = table.p_holm < 0.05
