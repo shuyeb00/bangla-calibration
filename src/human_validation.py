@@ -35,6 +35,7 @@ ERROR_SAMPLE = RESULTS_DIR / "tables" / "grid_max_length_512" / "error_analysis_
 OUT_AGREEMENT = RESULTS_DIR / "tables" / "human_validation_agreement.csv"
 OUT_ADEQUACY = RESULTS_DIR / "tables" / "human_validation_adequacy.csv"
 OUT_DIAGNOSTICS = RESULTS_DIR / "tables" / "human_validation_diagnostics.csv"
+LABEL_AUDIT_TABLE = RESULTS_DIR / "tables" / "label_audit_agreement.csv"
 SEED = 2028
 N_ITEMS = 100
 B_BOOTSTRAP = 10_000
@@ -285,18 +286,34 @@ def label_audit_reference(task: str, split: str) -> dict:
     """Item-level gold agreement of each annotator in the first label audit (judged items only)."""
     from src.label_audit import KEY_PATH as AUDIT_KEY, read_workbook
 
-    if not AUDIT_KEY.exists():
-        return {}
-    key = pd.read_csv(AUDIT_KEY)
-    key = key[(key.task == task) & (key.split == split)]
+    out = {}
+    if AUDIT_KEY.exists():
+        key = pd.read_csv(AUDIT_KEY)
+        key = key[(key.task == task) & (key.split == split)]
+        for i in (1, 2):
+            path = ANNOTATION_DIR / LABEL_AUDIT_WORKBOOK.format(i)
+            if path.exists():
+                lab = key.merge(read_workbook(path), on="item_id")
+                lab = lab[lab.label.isin(LABELS[task].values())]
+                out[f"annotator_{i}"] = (lab.label == lab.gold).to_numpy().astype(float)
+    if len(out) < 2 and LABEL_AUDIT_TABLE.exists():
+        out = {**audit_table_reference(task, split), **out}
+    return out
+
+
+def audit_table_reference(task: str, split: str) -> dict:
+    """Item-level hit vectors rebuilt from the committed label-audit table (the bootstrap of a mean depends only
+    on the number of judged items and hits); used when the label-audit workbooks are not available."""
+    row = pd.read_csv(LABEL_AUDIT_TABLE).query("task == @task and split == @split").iloc[0]
     out = {}
     for i in (1, 2):
-        path = ANNOTATION_DIR / LABEL_AUDIT_WORKBOOK.format(i)
-        if not path.exists():
+        p, cj = row[f"annotator_{i}_agreement_with_gold"], row[f"annotator_{i}_cannot_judge_rate"]
+        fits = [(n, round(p * n)) for n in range(1, int(row.n_items) + 1)
+                if abs(round(p * n) / n - p) < 5e-5 and n <= round(row.n_items * (1 - cj)) + 1]
+        if not fits:
             continue
-        lab = key.merge(read_workbook(path), on="item_id")
-        lab = lab[lab.label.isin(LABELS[task].values())]
-        out[f"annotator_{i}"] = (lab.label == lab.gold).to_numpy().astype(float)
+        n, hits = max(fits)
+        out[f"annotator_{i}"] = np.r_[np.ones(hits), np.zeros(n - hits)]
     return out
 
 
