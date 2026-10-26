@@ -59,6 +59,8 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/shift_statistics.py`, `src/subset_robustness.py`, `src/contrast_statistics.py` | Label-free shift statistics, data-integrity subsets, and Holm-corrected contrasts between training objectives and scales |
 | `src/error_annotation.py`, `src/error_correlates.py`, `src/human_validation.py` | Two-annotator error-cause coding, measurable correlates of misclassification, and the second human validation round |
 | `src/llm_inference.py`, `src/llm_evaluation.py`, `src/llm_human_agreement.py` | Zero- and few-shot scoring with open instruction-tuned LLMs, their comparison with the encoders, and agreement of both with the human validation labels |
+| `src/shift_aware_routing.py`, `src/llm_shift_recalibration.py` | Shift detection, few-label routing between encoders and LLMs, and few-label recalibration, conformal prediction and risk control of both on identical items |
+| `src/convergence_sensitivity.py` | Base-grid aggregates with and without the non-converged run |
 | `thesis/figures/` | Figures |
 
 Model outputs (`*.npy`) and processed datasets are not tracked. Dataset sources are listed in `data/DATA_SOURCES.md`.
