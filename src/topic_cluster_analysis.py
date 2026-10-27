@@ -11,6 +11,8 @@ clusters (data only):
   topic_cluster_label_dependence.csv: on the LLM item subset of the test split,
     nmi / adjusted_nmi   mutual information of cluster and label over the label entropy, and the same minus
                          its mean under N_PERMUTATIONS label permutations
+    within_pair_share    share of positive-negative pairs inside one cluster (the support of within-cluster
+                         AUROC)
     cluster_prior_*      a predictor that knows only the cluster: P(y | c) estimated from n labelled cal items
                          (subsets of src/shift_recalibration.py; add-one smoothing towards the labelled class
                          prior), AUROC and macro-F1 on test
@@ -79,6 +81,18 @@ def within_cluster_auroc(scores: np.ndarray, labels: np.ndarray, clusters: np.nd
     return float(np.nanmean(values))
 
 
+def within_pair_share(labels: np.ndarray, clusters: np.ndarray, k: int) -> float:
+    """Share of the positive-negative pairs (one-vs-rest mean for more than two classes) that share a cluster,
+    i.e. the share of pairs on which within_cluster_auroc rests."""
+    shares = []
+    for c in ([1] if k == 2 else range(k)):
+        total = (labels == c).sum() * (labels != c).sum()
+        within = sum(((clusters == g) & (labels == c)).sum() * ((clusters == g) & (labels != c)).sum()
+                     for g in np.unique(clusters))
+        shares.append(within / total if total else np.nan)
+    return float(np.nanmean(shares))
+
+
 def entropy(p: np.ndarray) -> float:
     p = p[p > 0]
     return float(-(p * np.log(p)).sum())
@@ -122,6 +136,7 @@ def run_clusters():
                     base = {"task": task, "condition": test_split, "representation": rep, "k": n_clusters,
                             "n_items": len(items), "nmi": nmi, "adjusted_nmi": nmi - null,
                             "largest_cluster_share": float(np.bincount(c_t).max() / len(c_t)),
+                            "within_pair_share": within_pair_share(y_t, c_t, k),
                             "char_ngram_auroc": ranking_auroc(p_char, y_t),
                             "char_ngram_within_cluster_auroc": within_cluster_auroc(p_char, y_t, c_t)}
                     sizes = [(n, r, subset_indices(len(y_cal), n, r)) for n in N_LABELS if n < len(y_cal)
