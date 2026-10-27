@@ -64,6 +64,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/batch_calibration.py`, `src/last_layer_retraining.py`, `src/surface_feature_baseline.py` | Label-free batch calibration, few-label last-layer retraining on frozen encoder features, and few-label surface-feature baselines, on the same items as the LLM comparison |
 | `src/topic_cluster_analysis.py` | Label-free topic clusters of every target split, how much of each label they explain, and within-cluster discrimination of encoders and LLMs |
 | `src/label_free_severity.py` | Label-free severity indicators from encoder–LLM agreement, validated leave-one-condition-out |
+| `src/prepare_natural_codemixed.py` | Natural code-mixed offensive targets (Code-mixed Chaos in Banglish and Bangla script, MixTox-SA) prepared like the other shift sets |
 | `thesis/figures/` | Figures |
 
 Model outputs (`*.npy`) and processed datasets are not tracked. Dataset sources are listed in `data/DATA_SOURCES.md`.
