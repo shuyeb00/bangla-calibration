@@ -40,6 +40,14 @@ VERIFY_MIN_AGREEMENT = 0.99
 VERIFY_MAX_DIFF = 0.25
 
 
+def describe_error(e: Exception) -> str:
+    response = getattr(e, "response", None)
+    server = ""
+    if response is not None:
+        server = f" [HTTP {getattr(response, 'status_code', '?')}] {str(getattr(response, 'text', ''))[:500]}"
+    return f"{type(e).__name__}: {str(e)[:300]}{server}"
+
+
 class HubStore:
     def __init__(self):
         from huggingface_hub import HfApi
@@ -77,7 +85,7 @@ class HubStore:
                                        commit_message=f"Add natural code-mixed outputs for {run_id}")
                 return True
             except Exception as e:
-                print(f"  [UPLOAD RETRY {attempt + 1}/6] {run_id}: {type(e).__name__}: {str(e)[:200]}", flush=True)
+                print(f"  [UPLOAD RETRY {attempt + 1}/6] {run_id}: {describe_error(e)}", flush=True)
                 time.sleep(min(300, 15 * 2 ** attempt))
         return False
 
@@ -131,7 +139,7 @@ def read_split(path: Path) -> pd.DataFrame:
 
 
 def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataFrame, work: Path, device: str,
-              sources: dict) -> str:
+              sources: dict, failed_dir: Path = None) -> str:
     task, model_key, ft_method, objective, seed = run
     run_id = grid_run_id(grid, run)
     if store.done(run_id):
@@ -178,6 +186,11 @@ def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataF
     del model
     if device == "cuda":
         torch.cuda.empty_cache()
+    if not ok and failed_dir is not None:
+        failed_dir.mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(failed_dir / run_id, ignore_errors=True)
+        shutil.move(str(out_dir), str(failed_dir / run_id))
+        print(f"  outputs of {run_id} kept in {failed_dir / run_id}", flush=True)
     shutil.rmtree(run_work, ignore_errors=True)
     return "uploaded" if ok else "upload_failed"
 
@@ -192,6 +205,8 @@ def main():
     parser.add_argument("--model-source", action="append", default=[], metavar="MODEL=PATH")
     parser.add_argument("--limit-rows", type=int, default=0, help="score only the first rows of each split (tests)")
     parser.add_argument("--work-dir", default=None)
+    parser.add_argument("--failed-upload-dir", default="failed_uploads",
+                        help="outputs whose upload failed are moved here instead of being deleted")
     args = parser.parse_args()
 
     store = HubStore() if args.store == "hub" else LocalStore(args.store.split(":", 1)[1])
@@ -213,7 +228,8 @@ def main():
           f"splits {', '.join(f'{k}:{len(v)}' for k, v in splits.items())}", flush=True)
     status = {}
     for run in mine:
-        result = score_run(store, args.grid, run, splits, verify_frame, work, device, sources)
+        result = score_run(store, args.grid, run, splits, verify_frame, work, device, sources,
+                           Path(args.failed_upload_dir))
         status[result] = status.get(result, 0) + 1
     print(f"Finished shard {args.shard}: {status}", flush=True)
 

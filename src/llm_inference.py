@@ -193,6 +193,15 @@ class HubStore:
             print(f"  marker check failed ({type(e).__name__}); treating {job['job_id']} as not done", flush=True)
             return False
 
+    def stored_indices(self, job: dict):
+        from huggingface_hub import hf_hub_download
+
+        try:
+            return np.load(hf_hub_download(self.repo, f"{HUB_PREFIX}/{job['run_id']}/{job['name']}_indices.npy",
+                                           repo_type="dataset", token=os.environ.get("HF_TOKEN")))
+        except Exception:
+            return None
+
     def commit(self, job: dict, files: dict) -> bool:
         from huggingface_hub import CommitOperationAdd
 
@@ -204,8 +213,7 @@ class HubStore:
                                        commit_message=f"Add LLM outputs {job['job_id']}")
                 return True
             except Exception as e:
-                print(f"  [UPLOAD RETRY {attempt + 1}/6] {job['job_id']}: {type(e).__name__}: {str(e)[:200]}",
-                      flush=True)
+                print(f"  [UPLOAD RETRY {attempt + 1}/6] {job['job_id']}: {describe_error(e)}", flush=True)
                 time.sleep(min(300, 15 * 2 ** attempt))
         return False
 
@@ -217,12 +225,35 @@ class LocalStore:
     def done(self, job: dict) -> bool:
         return (self.root / HUB_PREFIX / job["run_id"] / f"{job['name']}_complete.json").exists()
 
+    def stored_indices(self, job: dict):
+        path = self.root / HUB_PREFIX / job["run_id"] / f"{job['name']}_indices.npy"
+        return np.load(path) if path.exists() else None
+
     def commit(self, job: dict, files: dict) -> bool:
         target = self.root / HUB_PREFIX / job["run_id"]
         target.mkdir(parents=True, exist_ok=True)
         for name, path in files.items():
             (target / name).write_bytes(Path(path).read_bytes())
         return True
+
+
+def describe_error(e: Exception) -> str:
+    response = getattr(e, "response", None)
+    server = ""
+    if response is not None:
+        server = f" [HTTP {getattr(response, 'status_code', '?')}] {str(getattr(response, 'text', ''))[:500]}"
+    return f"{type(e).__name__}: {str(e)[:300]}{server}"
+
+
+def expected_indices(job: dict, cap: int) -> np.ndarray:
+    n = len(pd.read_csv(split_files(job["task"])[job["split"]], usecols=["labels"]))
+    primary, remainder = subset_indices(job["task"], job["split"], n, cap)
+    return primary if job["part"] == "primary" else remainder
+
+
+def subset_mismatch(store, job: dict, cap: int) -> bool:
+    stored = store.stored_indices(job)
+    return stored is None or not np.array_equal(np.asarray(stored), expected_indices(job, cap))
 
 
 def make_store(spec: str):
@@ -424,8 +455,10 @@ def worker(args) -> None:
         except FileExistsError:
             continue
         if store.done(job):
-            log(f"skip {job['job_id']} (already complete)")
-            continue
+            if not (args.rescore_mismatched_subsets and subset_mismatch(store, job, args.cap)):
+                log(f"skip {job['job_id']} (already complete)")
+                continue
+            log(f"rescore {job['job_id']} (stored item subset differs from the current one)")
         if current != model:
             net = tok = None
             gc.collect()
@@ -519,7 +552,8 @@ def launcher(args) -> None:
             env = dict(os.environ, CUDA_VISIBLE_DEVICES=",".join(gpus), TOKENIZERS_PARALLELISM="false")
             cmd = [sys.executable, "-m", "src.llm_inference", "--worker", "--phase-file", str(phase_file),
                    "--worker-index", str(w), "--store", args.store, "--cap", str(args.cap),
-                   "--deadline", str(deadline), *sum([["--model-path", m] for m in args.model_path], [])]
+                   "--deadline", str(deadline), *sum([["--model-path", m] for m in args.model_path], []),
+                   *(["--rescore-mismatched-subsets"] if args.rescore_mismatched_subsets else [])]
             log_path = session / f"phase{p_i:02d}_worker{w}.log"
             procs.append((subprocess.Popen(cmd, env=env, cwd=BASE_DIR, stdout=open(log_path, "w"),
                                            stderr=subprocess.STDOUT), log_path))
@@ -554,6 +588,8 @@ def main():
                         help="score few-shot prompts on the primary subsets only")
     parser.add_argument("--splits", nargs="+", default=None, help="score only these splits")
     parser.add_argument("--no-remainders", action="store_true", help="score only the fixed item subsets")
+    parser.add_argument("--rescore-mismatched-subsets", action="store_true",
+                        help="rescore completed jobs whose stored item indices differ from the current subset")
     parser.add_argument("--deadline-hours", type=float, default=11.0)
     parser.add_argument("--store", default="hub", help="'hub' or 'local:<dir>' (dry runs)")
     parser.add_argument("--model-path", action="append", default=[], help="model_key=local_dir (dry runs)")
