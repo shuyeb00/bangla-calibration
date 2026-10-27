@@ -139,7 +139,7 @@ def read_split(path: Path) -> pd.DataFrame:
 
 
 def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataFrame, work: Path, device: str,
-              sources: dict, failed_dir: Path = None) -> str:
+              sources: dict, failed_dir: Path = None, save_hidden: bool = True) -> str:
     task, model_key, ft_method, objective, seed = run
     run_id = grid_run_id(grid, run)
     if store.done(run_id):
@@ -160,8 +160,8 @@ def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataF
     stored = store.stored_logits(run_id, "cal")[: len(verify_frame)]
     agreement = float((new_logits.argmax(1) == stored.argmax(1)).mean())
     max_diff = float(np.abs(new_logits - stored).max())
-    summary = {"run_id": run_id, "grid": grid, "verify_items": len(verify_frame), "verify_argmax_agreement": agreement,
-               "verify_max_abs_logit_diff": max_diff, "environment": environment_record(), "splits": {}}
+    summary = {"run_id": run_id, "grid": grid, "hidden_states_saved": save_hidden, "verify_items": len(verify_frame),
+               "verify_argmax_agreement": agreement, "verify_max_abs_logit_diff": max_diff, "environment": environment_record(), "splits": {}}
     print(f"  verify {run_id}: agreement {agreement:.4f}, max |diff| {max_diff:.4f}", flush=True)
     if agreement < VERIFY_MIN_AGREEMENT or max_diff > VERIFY_MAX_DIFF:
         print(f"  [VERIFY FAILED] {run_id}: not scored", flush=True)
@@ -173,7 +173,8 @@ def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataF
         logits, hidden = forward_outputs(model, dataset, collator, device)
         np.save(out_dir / f"{name}_logits.npy", logits)
         np.save(out_dir / f"{name}_labels.npy", dataset.labels)
-        np.save(out_dir / f"{name}_hidden.npy", hidden)
+        if save_hidden:
+            np.save(out_dir / f"{name}_hidden.npy", hidden)
         summary["splits"][name] = {"rows": len(frame), "input_fingerprint": input_fingerprint({name: dataset}),
                                    "accuracy": float((logits.argmax(1) == dataset.labels).mean())}
     summary["seconds"] = time.time() - start
@@ -207,6 +208,7 @@ def main():
     parser.add_argument("--work-dir", default=None)
     parser.add_argument("--failed-upload-dir", default="failed_uploads",
                         help="outputs whose upload failed are moved here instead of being deleted")
+    parser.add_argument("--no-hidden", action="store_true", help="do not save last-layer [CLS] hidden states")
     args = parser.parse_args()
 
     store = HubStore() if args.store == "hub" else LocalStore(args.store.split(":", 1)[1])
@@ -229,7 +231,7 @@ def main():
     status = {}
     for run in mine:
         result = score_run(store, args.grid, run, splits, verify_frame, work, device, sources,
-                           Path(args.failed_upload_dir))
+                           Path(args.failed_upload_dir), not args.no_hidden)
         status[result] = status.get(result, 0) + 1
     print(f"Finished shard {args.shard}: {status}", flush=True)
 
