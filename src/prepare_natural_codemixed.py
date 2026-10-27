@@ -34,8 +34,8 @@ from sklearn.model_selection import train_test_split
 from src.config import BASE_DIR, DATA_DIR
 
 RAW_DIR = BASE_DIR / "data" / "raw"
-CHAOS_ARCHIVE = "Code-mixed_Chaos*.zip"
-MIXTOX_ARCHIVE = "MixTox-SA*.zip"
+CHAOS_ARCHIVE = "*Chaos*.zip"
+MIXTOX_ARCHIVE = "*MixTox*.zip"
 CAL_SHARE = 0.2
 SEED = 42
 
