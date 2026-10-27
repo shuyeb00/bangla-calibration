@@ -37,7 +37,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import BASE_DIR, DATA_DIR, HUB_OUTPUT_REPO, TASKS, get_shift_conditions_paths
+from src.config import BASE_DIR, DATA_DIR, HUB_OUTPUT_REPO, TASKS, get_natural_codemixed_paths, \
+    get_shift_conditions_paths
 
 LLM_MODELS = {
     "qwen3_8b": {"hf_id": "Qwen/Qwen3-8B", "dtype": "float16", "gpus": 2,
@@ -72,7 +73,9 @@ TASK_PROMPTS = {
 SPLIT_PRIORITY = ["cal", "test", "shift_d2_test", "shift_d2_cal", "shift_d1_test", "shift_d1_cal",
                   "shift_d1_barishal_test", "shift_d1_chittagong_test", "shift_d1_noakhali_test",
                   "shift_d1_barishal_cal", "shift_d1_chittagong_cal", "shift_d1_noakhali_cal",
-                  "shift_d3_noise10", "shift_d3_noise05", "shift_d3_noise20"]
+                  "shift_d3_noise10", "shift_d3_noise05", "shift_d3_noise20",
+                  "shift_d4_banglish_test", "shift_d4_banglish_cal", "shift_d4_banglish_bangla_script_test",
+                  "shift_d4_banglish_bangla_script_cal", "shift_d5_mixtox_test", "shift_d5_mixtox_cal"]
 CAP = 1500
 PER_CLASS = 3
 DEMO_CHARS = (20, 150)
@@ -85,6 +88,7 @@ WORK_DIR = BASE_DIR / "results" / "llm_runs"
 def split_files(task: str) -> dict:
     files = {"cal": DATA_DIR / task / "cal.csv", "test": DATA_DIR / task / "test.csv"}
     files.update(get_shift_conditions_paths(task))
+    files.update(get_natural_codemixed_paths(task))
     return {k: files[k] for k in SPLIT_PRIORITY if k in files}
 
 
@@ -143,21 +147,24 @@ def label_sequences(tokenizer, prompt: str, labels: dict, chat: bool) -> list:
     return seqs
 
 
-def build_jobs(models: list, tasks: list, seeds: list, cap: int, few_shot_remainders: bool = True) -> list:
+def build_jobs(models: list, tasks: list, seeds: list, cap: int, few_shot_remainders: bool = True,
+               splits: list = None, remainders: bool = True) -> list:
     """Priority order: per model, core (zero shot, first few-shot seed) on the primary subsets; then for every
     model the remainders of zero shot; then extra seeds (one seed complete before the next) and few-shot
-    remainders."""
+    remainders. `splits` restricts the jobs to the named splits; remainders=False drops every remainder job."""
     tiers = []
     for model in models:
         core, rest, extra = [], [], []
         for task in tasks:
             for split, path in split_files(task).items():
+                if splits is not None and split not in splits:
+                    continue
                 n = len(pd.read_csv(path, usecols=["labels"]))
                 _, remainder = subset_indices(task, split, n, cap)
                 for s_i, setting in enumerate(["zero_shot"] + [f"few_shot_seed{s}" for s in seeds]):
                     job = {"model": model, "task": task, "setting": setting, "split": split, "part": "primary"}
                     (core if s_i <= 1 else extra).append(job)
-                    if len(remainder) and (s_i == 0 or few_shot_remainders):
+                    if remainders and len(remainder) and (s_i == 0 or few_shot_remainders):
                         tier = rest if s_i == 0 else extra
                         tier.append({**job, "part": "remainder"})
         settings = ["zero_shot"] + [f"few_shot_seed{s}" for s in seeds]
@@ -475,7 +482,8 @@ def gpu_count() -> int:
 def launcher(args) -> None:
     t_start = time.time()
     deadline = t_start + args.deadline_hours * 3600
-    jobs = build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders)
+    jobs = build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
+                      args.splits, not args.no_remainders)
     print(f"{len(jobs)} jobs for models {args.models}; deadline in {args.deadline_hours} h", flush=True)
     local_paths = dict(p.split("=", 1) for p in args.model_path)
     phases = []
@@ -543,6 +551,8 @@ def main():
     parser.add_argument("--cap", type=int, default=CAP)
     parser.add_argument("--skip-few-shot-remainders", action="store_true",
                         help="score few-shot prompts on the primary subsets only")
+    parser.add_argument("--splits", nargs="+", default=None, help="score only these splits")
+    parser.add_argument("--no-remainders", action="store_true", help="score only the fixed item subsets")
     parser.add_argument("--deadline-hours", type=float, default=11.0)
     parser.add_argument("--store", default="hub", help="'hub' or 'local:<dir>' (dry runs)")
     parser.add_argument("--model-path", action="append", default=[], help="model_key=local_dir (dry runs)")
@@ -557,7 +567,8 @@ def main():
     if args.worker:
         worker(args)
     elif args.show_plan:
-        for j in build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders):
+        for j in build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
+                            args.splits, not args.no_remainders):
             print(j["job_id"])
     else:
         launcher(args)

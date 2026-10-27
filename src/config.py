@@ -156,6 +156,28 @@ def get_shift_conditions_paths(task_name: str) -> dict:
     return conditions
 
 
+# Natural code-mixed offensive targets (src/prepare_natural_codemixed.py). Kept out of
+# get_shift_conditions_paths until every run has outputs for them, so the base-grid evaluation
+# modules are unchanged; scored by src/score_saved_encoders.py and src/llm_inference.py.
+NATURAL_CODEMIXED = {
+    "offensive": {
+        "shift_d4_banglish": "d4_banglish",
+        "shift_d4_banglish_bangla_script": "d4_banglish_bangla_script",
+        "shift_d5_mixtox": "d5_mixtox",
+    },
+}
+
+
+def get_natural_codemixed_paths(task_name: str) -> dict:
+    out = {}
+    for key, stem in NATURAL_CODEMIXED.get(task_name, {}).items():
+        for part in ("cal", "test"):
+            path = DATA_DIR / task_name / f"{stem}_{part}.csv"
+            if path.exists():
+                out[f"{key}_{part}"] = path
+    return out
+
+
 def non_converged_runs() -> set:
     """Run ids flagged as non-converged in the training summary of the evaluated grid."""
     path = RESULTS_DIR / "tables" / f"grid_{EVALUATION_GRID}_training_summary.csv"
