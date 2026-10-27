@@ -1,0 +1,4 @@
+indicator,n_pairs,n_conditions,auroc_llm_better,spearman_encoder_auroc_drop,spearman_nll_gain_llm,loco_decision_accuracy,always_encoder_accuracy
+disagreement_shift,2824,12,0.138462,0.0222318,-0.307893,0.810884,0.812967
+rank_agreement_drop,2824,12,0.727058,0.770096,0.350723,0.906454,0.812967
+marginal_tv_shift,2824,12,0.966294,0.639153,0.590769,0.94812,0.812967
