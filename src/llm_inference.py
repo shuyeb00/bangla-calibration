@@ -4,7 +4,8 @@ The class scores are the log-probabilities of each label word's token sequence a
 (one forward pass when every label is a single token) (the same prompt for every split and condition; English instructions,
 Bangla or code-mixed text). Few-shot prompts hold `per_class` labelled demonstrations per class drawn from
 the source training split with a fixed seed. Splits larger than `cap` items are scored on a fixed random
-subset first (noise splits reuse the test subset, since their rows align with the test rows); the rest of
+subset first (noise splits reuse the test subset and Bangla-script splits the subset of their romanised
+counterpart, since their rows align); the rest of
 the split is a separate, lower-priority job (`{split}_remainder`).
 
 Outputs per run (`llm_runs/{task}_{model}_{setting}/` in the run-outputs Hub repo, and locally):
@@ -99,7 +100,7 @@ def stable_seed(text: str) -> int:
 def subset_indices(task: str, split: str, n: int, cap: int) -> tuple:
     if n <= cap:
         return np.arange(n), np.array([], dtype=int)
-    base = "test" if split.startswith("shift_d3_noise") else split
+    base = "test" if split.startswith("shift_d3_noise") else split.replace("_bangla_script", "")
     primary = np.sort(np.random.default_rng(stable_seed(f"{task}:{base}")).choice(n, cap, replace=False))
     return primary, np.setdiff1d(np.arange(n), primary)
 
