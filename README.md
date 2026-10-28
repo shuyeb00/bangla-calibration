@@ -2,6 +2,8 @@
 
 **A Multi-Model Study of Calibration, Selective Prediction, and Conformal Coverage**
 
+*Authors:* Md Suheb Ahmed, Ferdus Ahmed
+
 ## Overview
 
 This repository contains the code, evaluation protocol, and aggregated results for a study of how reliable the confidence estimates of Bangla text classifiers remain under realistic distribution shift. It covers:
