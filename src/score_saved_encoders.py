@@ -1,5 +1,8 @@
 """Score saved fine-tuned encoders on new evaluation splits without retraining.
 
+Target sets (--targets): natural_codemixed (src/config.get_natural_codemixed_paths) and english_olid (the English
+OLID calibration and test splits of src/config.get_cross_definition_paths, for the BD-SHS-trained encoders).
+
 For every run of the selected grid and task, the saved weights (fp16 full fine-tuning weights, or LoRA adapters
 on the base checkpoint) are loaded from the checkpoint repository, the inputs are prepared exactly as in
 src/train.py (INPUT_PIPELINE, max_length, dynamic padding), and one forward pass per split writes logits,
@@ -11,6 +14,7 @@ runs/<run_id>/ of the run-outputs repository next to the original outputs, with 
 marker written last, so interrupted sessions resume.
 
     python -m src.score_saved_encoders --task offensive --shard 0 --num-shards 2
+    python -m src.score_saved_encoders --task offensive --grid architectures --targets english_olid
 """
 
 import argparse
@@ -27,14 +31,21 @@ import pandas as pd
 import torch
 
 from src.config import ALL_MODELS, HUB_CHECKPOINT_REPO, HUB_OUTPUT_REPO, INPUT_PIPELINE, TASKS, \
-    get_natural_codemixed_paths, recipe_tag
+    get_cross_definition_paths, get_natural_codemixed_paths, recipe_tag
 from src.train import encode, environment_record, forward_outputs, input_fingerprint, make_collator, \
     standardize_dataframe
 from src.training_grid_parallel import grid_run_id, grid_runs
 from src.model_inputs import load_tokenizer
 
+TARGET_SETS = {"natural_codemixed": get_natural_codemixed_paths, "english_olid": get_cross_definition_paths}
 MARKER = "natural_codemixed_complete.json"
 SUMMARY = "natural_codemixed_scoring.json"
+
+
+def set_target_files(targets: str) -> None:
+    """Completion marker and summary of a target set; the natural code-mixed names predate --targets."""
+    global MARKER, SUMMARY
+    MARKER, SUMMARY = f"{targets}_complete.json", f"{targets}_scoring.json"
 VERIFY_ITEMS = 512
 VERIFY_MIN_AGREEMENT = 0.99
 VERIFY_MAX_DIFF = 0.25
@@ -82,7 +93,7 @@ class HubStore:
         for attempt in range(6):
             try:
                 self.api.create_commit(HUB_OUTPUT_REPO, ops, repo_type="dataset",
-                                       commit_message=f"Add natural code-mixed outputs for {run_id}")
+                                       commit_message=f"Add {MARKER.rsplit('_complete', 1)[0]} outputs for {run_id}")
                 return True
             except Exception as e:
                 print(f"  [UPLOAD RETRY {attempt + 1}/6] {run_id}: {describe_error(e)}", flush=True)
@@ -160,7 +171,7 @@ def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataF
     stored = store.stored_logits(run_id, "cal")[: len(verify_frame)]
     agreement = float((new_logits.argmax(1) == stored.argmax(1)).mean())
     max_diff = float(np.abs(new_logits - stored).max())
-    summary = {"run_id": run_id, "grid": grid, "hidden_states_saved": save_hidden, "verify_items": len(verify_frame),
+    summary = {"run_id": run_id, "grid": grid, "targets": MARKER.rsplit("_complete", 1)[0], "hidden_states_saved": save_hidden, "verify_items": len(verify_frame),
                "verify_argmax_agreement": agreement, "verify_max_abs_logit_diff": max_diff, "environment": environment_record(), "splits": {}}
     print(f"  verify {run_id}: agreement {agreement:.4f}, max |diff| {max_diff:.4f}", flush=True)
     if agreement < VERIFY_MIN_AGREEMENT or max_diff > VERIFY_MAX_DIFF:
@@ -197,9 +208,10 @@ def score_run(store, grid: str, run: tuple, splits: dict, verify_frame: pd.DataF
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Score saved encoders on the natural code-mixed splits.")
+    parser = argparse.ArgumentParser(description="Score saved encoders on new evaluation splits.")
     parser.add_argument("--task", default="offensive", choices=list(TASKS))
-    parser.add_argument("--grid", default="base", choices=["base", "objectives", "scale"])
+    parser.add_argument("--grid", default="base", choices=["base", "objectives", "scale", "architectures"])
+    parser.add_argument("--targets", default="natural_codemixed", choices=list(TARGET_SETS))
     parser.add_argument("--shard", type=int, default=0)
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--store", default="hub", help="'hub' or 'local:<dir>' (dry runs)")
@@ -216,9 +228,10 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     from src.config import DATA_DIR
 
-    paths = get_natural_codemixed_paths(args.task)
+    set_target_files(args.targets)
+    paths = TARGET_SETS[args.targets](args.task)
     if not paths:
-        raise SystemExit(f"No natural code-mixed splits for {args.task}")
+        raise SystemExit(f"No {args.targets} splits for {args.task}")
     splits = {name: read_split(path) for name, path in paths.items()}
     if args.limit_rows:
         splits = {k: v.head(args.limit_rows) for k, v in splits.items()}

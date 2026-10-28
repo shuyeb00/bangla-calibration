@@ -214,6 +214,38 @@ def scoped_table_name(name: str) -> str:
     return f"{stem}_natural_codemixed.{ext}" if dot else f"{name}_natural_codemixed"
 
 
+# Cross-definition source task: English OLID (Zampieri et al., 2019) in the tweet_eval release (Barbieri et al.,
+# 2020), whose definition of offensive language is the one OffMix-3L derives from (Goswami et al., 2023).
+# Prepared by src/prepare_olid.py into data/processed/offensive_olid/. Kept out of TASKS so that every
+# analysis module and committed table that iterates over TASKS is unchanged.
+CROSS_DEFINITION_TASKS = {"offensive_olid": 2}
+TRAINING_TASKS = {**TASKS, **CROSS_DEFINITION_TASKS}
+CROSS_DEFINITION_MODELS = ["xlmr_base", "muril", "mdeberta"]
+
+
+def get_cross_definition_paths(task_name: str) -> dict:
+    """Evaluation splits that link the two offensive-language definitions.
+
+    For the OLID-trained encoders: BD-SHS (the source of every other offensive encoder), OffMix-3L and the
+    natural code-mixed targets. For the BD-SHS-trained encoders: the English OLID calibration and test splits.
+    """
+    offensive_dir = DATA_DIR / "offensive"
+    if task_name == "offensive_olid":
+        candidates = {"shift_bdshs_cal": offensive_dir / "cal.csv",
+                      "shift_bdshs_test": offensive_dir / "test.csv",
+                      "shift_d2_cal": offensive_dir / "d2_codemixed_cal.csv",
+                      "shift_d2_test": offensive_dir / "d2_codemixed_test.csv"}
+        for key, stem in NATURAL_CODEMIXED["offensive"].items():
+            for part in ("cal", "test"):
+                candidates[f"{key}_{part}"] = offensive_dir / f"{stem}_{part}.csv"
+    elif task_name == "offensive":
+        candidates = {f"shift_olid_english_{part}": DATA_DIR / "offensive_olid" / f"{part}.csv"
+                      for part in ("cal", "test")}
+    else:
+        candidates = {}
+    return {key: path for key, path in candidates.items() if path.exists()}
+
+
 def non_converged_runs() -> set:
     """Run ids flagged as non-converged in the training summary of the evaluated grid."""
     path = RESULTS_DIR / "tables" / f"grid_{EVALUATION_GRID}_training_summary.csv"

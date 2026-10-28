@@ -49,8 +49,10 @@ from src.config import (
     OBJECTIVES,
     RESULTS_DIR,
     SEEDS,
-    TASKS,
+    CROSS_DEFINITION_TASKS,
     TRAIN_HYPERPARAMS,
+    TRAINING_TASKS,
+    get_cross_definition_paths,
     get_natural_codemixed_paths,
     get_shift_conditions_paths,
     get_task_splits_paths,
@@ -118,8 +120,12 @@ def load_task_splits(task_name: str) -> dict:
 
 
 def load_shift_conditions(task_name: str) -> dict:
-    """Shift splits scored after training, including the natural code-mixed targets."""
-    paths = {**get_shift_conditions_paths(task_name), **get_natural_codemixed_paths(task_name)}
+    """Shift splits scored after training, including the natural code-mixed targets; for a cross-definition
+    source task, the splits of src/config.get_cross_definition_paths."""
+    if task_name in CROSS_DEFINITION_TASKS:
+        paths = get_cross_definition_paths(task_name)
+    else:
+        paths = {**get_shift_conditions_paths(task_name), **get_natural_codemixed_paths(task_name)}
     return {name: standardize_dataframe(pd.read_csv(path)) for name, path in paths.items()}
 
 
@@ -179,7 +185,7 @@ def newly_initialised_modules(missing_keys: list) -> list:
 
 def build_model(task: str, model_key: str, ft_method: str, source: str = None) -> tuple:
     model, info = AutoModelForSequenceClassification.from_pretrained(
-        source or ALL_MODELS[model_key], num_labels=TASKS[task], output_loading_info=True)
+        source or ALL_MODELS[model_key], num_labels=TRAINING_TASKS[task], output_loading_info=True)
     # transformers 5.x keeps the checkpoint dtype; fp16 checkpoints (e.g. mDeBERTa-v3) must be trained from fp32
     # master weights, otherwise mixed precision fails ("Attempting to unscale FP16 gradients").
     model = model.float()
@@ -341,8 +347,9 @@ def with_retry(action, description: str, attempts: int = 5) -> bool:
     return False
 
 
-def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: Path, run_path: str) -> bool:
-    if not with_retry(lambda: api.upload_folder(folder_path=str(weights_dir), repo_id=HUB_CHECKPOINT_REPO,
+def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: Path, run_path: str,
+               upload_weights: bool = True) -> bool:
+    if upload_weights and not with_retry(lambda: api.upload_folder(folder_path=str(weights_dir), repo_id=HUB_CHECKPOINT_REPO,
                                                 repo_type="model", path_in_repo=weights_path,
                                                 commit_message=f"Add weights for {run_id}"), "weights"):
         return False
@@ -358,7 +365,8 @@ def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: 
 
 def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, hub: bool = False,
                           smoke: bool = False, keep_checkpoints: bool = False, source: str = None,
-                          objective: str = "cross_entropy", train_hidden: bool = True) -> dict:
+                          objective: str = "cross_entropy", train_hidden: bool = True,
+                          upload_weights: bool = True) -> dict:
     if objective not in OBJECTIVES:
         raise ValueError(f"Unknown objective {objective!r}")
     recipe = recipe_tag(model_key, ft_method)
@@ -411,7 +419,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
         "label_smoothing_factor": LABEL_SMOOTHING_FACTOR if objective == "label_smoothing" else 0.0,
         "focal_loss_gamma": FOCAL_LOSS_GAMMA if objective == "focal_loss" else None,
         "task": task,
-        "num_labels": TASKS[task],
+        "num_labels": TRAINING_TASKS[task],
         "seed": seed,
         "learning_rate": learning_rate,
         "warmup_ratio": warmup_ratio,
@@ -428,7 +436,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
         "input_fingerprint": input_fingerprint({k: datasets[k] for k in ("train", "test")}),
         "newly_initialised_modules": new_modules,
         "smoke": smoke,
-        "hub_weights": f"{HUB_CHECKPOINT_REPO}/{weights_path}" if hub else "",
+        "hub_weights": f"{HUB_CHECKPOINT_REPO}/{weights_path}" if hub and upload_weights else "",
         "hub_outputs": f"{HUB_OUTPUT_REPO}/{run_path}" if hub else "",
         "environment": environment_record(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -478,7 +486,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
 
     status = "local"
     if api is not None:
-        ok = upload_run(api, run_id, weights_dir, weights_path, run_dir, run_path)
+        ok = upload_run(api, run_id, weights_dir, weights_path, run_dir, run_path, upload_weights)
         status = "uploaded" if ok else "upload_failed"
         if ok:
             shutil.rmtree(weights_dir, ignore_errors=True)
@@ -503,7 +511,7 @@ def parse_run_ids(values: list) -> list:
         if len(parts) != 5:
             raise ValueError(f"Invalid run id {value!r}; expected task:model:ft_method[:objective]:seed")
         task, model_key, ft_method, objective, seed = parts
-        if task not in TASKS or model_key not in ALL_MODELS or ft_method not in FT_METHODS or objective not in OBJECTIVES:
+        if task not in TRAINING_TASKS or model_key not in ALL_MODELS or ft_method not in FT_METHODS or objective not in OBJECTIVES:
             raise ValueError(f"Invalid run id {value!r}; expected task:model:ft_method[:objective]:seed")
         runs.append((task, model_key, ft_method, objective, int(seed)))
     return runs
@@ -511,7 +519,7 @@ def parse_run_ids(values: list) -> list:
 
 def main():
     parser = argparse.ArgumentParser(description="Run the fine-tuning grid.")
-    parser.add_argument("--tasks", nargs="+", default=["sentiment"], choices=list(TASKS))
+    parser.add_argument("--tasks", nargs="+", default=["sentiment"], choices=list(TRAINING_TASKS))
     parser.add_argument("--models", nargs="+", default=["banglabert"], choices=list(ALL_MODELS))
     parser.add_argument("--ft_methods", nargs="+", default=["full_ft"], choices=FT_METHODS)
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
@@ -522,6 +530,8 @@ def main():
     parser.add_argument("--smoke", action="store_true", help="Tiny subsets and one epoch, under smoke/ paths.")
     parser.add_argument("--keep_checkpoints", action="store_true")
     parser.add_argument("--no-train-hidden", action="store_true", help="Do not save hidden states of the train split.")
+    parser.add_argument("--no-upload-weights", action="store_true",
+                        help="With --hub, upload outputs only and keep the weights out of the checkpoint repository.")
     parser.add_argument("--model-source", action="append", metavar="MODEL=PATH",
                         help="Load tokenizer and weights for MODEL from PATH (local testing).")
     args = parser.parse_args()
@@ -534,7 +544,8 @@ def main():
         summary.append(run_single_experiment(task, model_key, ft_method, seed, hub=args.hub, smoke=args.smoke,
                                              keep_checkpoints=args.keep_checkpoints,
                                              source=sources.get(model_key), objective=objective,
-                                             train_hidden=not args.no_train_hidden))
+                                             train_hidden=not args.no_train_hidden,
+                                             upload_weights=not args.no_upload_weights))
     print("\nSUMMARY " + json.dumps(summary), flush=True)
 
 
