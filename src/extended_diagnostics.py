@@ -29,6 +29,7 @@ from src.config import (
     RUNS_DIR,
     SEEDS,
     TASKS,
+    is_natural_codemixed,
     non_converged_runs,
 )
 from src.run_cache import load_cache, run_fingerprint, save_cache
@@ -296,7 +297,7 @@ def evaluate_run_extended_diagnostics(task: str, model_key: str, ft_method: str,
     discovered_conditions = []
     for f in sorted(run_dir.glob("*_logits.npy")):
         prefix = f.name[: -len("_logits.npy")]
-        if prefix in ("train", "val", "cal") or prefix.endswith("_cal"):
+        if prefix in ("train", "val", "cal") or prefix.endswith("_cal") or is_natural_codemixed(prefix):
             continue
         discovered_conditions.append(prefix)
 

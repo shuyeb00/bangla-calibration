@@ -13,16 +13,19 @@ Tables (results/tables/grid_max_length_512/):
   batch_calibration_summary.csv      per system family
 
     python -m src.batch_calibration
+    python -m src.batch_calibration --natural-codemixed   (held-out natural code-mixed targets only;
+        tables *_natural_codemixed.csv)
 """
 
+import argparse
 import time
 
 import numpy as np
 import pandas as pd
 from scipy.special import softmax
 
-from src.config import TASKS
-from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, split_labels
+from src.config import TASKS, natural_codemixed_scope, scoped_table_name, use_natural_codemixed_scope
+from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, restrict_natural_cal_to_llm_subset, split_labels
 from src.llm_shift_recalibration import FORMAT_FAILURE, encoder_systems, family, has_splits, llm_systems
 from src.shift_aware_routing import target_conditions
 from src.shift_recalibration import metrics
@@ -34,9 +37,15 @@ def batch_calibrate(probs: np.ndarray, batch_probs: np.ndarray) -> np.ndarray:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Label-free batch calibration of encoders and LLMs under shift.")
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets")
+    use_natural_codemixed_scope(parser.parse_args().natural_codemixed)
     start = time.time()
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(GRID_DIR / "llm_runs", gold)
+    if natural_codemixed_scope():
+        restrict_natural_cal_to_llm_subset(gold, sets)
     rows = []
     for task in TASKS:
         systems = encoder_systems(task) + llm_systems(sets, task)
@@ -78,8 +87,8 @@ def main():
     summary = summary.reset_index()
     TABLES.mkdir(parents=True, exist_ok=True)
     for name, table in [("batch_calibration_per_system.csv", per), ("batch_calibration_summary.csv", summary)]:
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
     pd.set_option("display.width", 220)
     pd.set_option("display.max_rows", 300)
     view = summary[~summary.format_failure & ((summary.family == "encoders_all")

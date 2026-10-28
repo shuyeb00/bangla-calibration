@@ -21,6 +21,8 @@ Tables (results/tables/grid_max_length_512/):
   selective_prediction_routed.csv       routed, encoder-only and LLM-only systems with MAP BCTS per n
 
     python -m src.selective_prediction_under_shift
+    python -m src.selective_prediction_under_shift --natural-codemixed   (held-out natural code-mixed targets only;
+        priors from the original conditions; tables *_natural_codemixed.csv)
 """
 
 import argparse
@@ -32,8 +34,8 @@ from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
 
 from src.calibration import compute_aurc, risk_at_coverage, risk_coverage_curve
-from src.config import TASKS
-from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, split_labels
+from src.config import TASKS, scoped_table_name, use_natural_codemixed_scope
+from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, restrict_natural_cal_to_llm_subset, split_labels
 from src.llm_shift_recalibration import (
     FORMAT_FAILURE,
     ROUTING_SETTINGS,
@@ -131,14 +133,20 @@ def family(row) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Selective prediction of encoders, LLMs and routed systems under shift.")
     parser.add_argument("--n-resamples", type=int, default=N_RESAMPLES)
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets; priors from the original conditions")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
     start = time.time()
 
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(GRID_DIR / "llm_runs", gold)
+    if args.natural_codemixed:
+        restrict_natural_cal_to_llm_subset(gold, sets)
     systems = {task: encoder_systems(task) + llm_systems(sets, task) for task in TASKS}
     conditions = {task: target_conditions(task) for task in TASKS}
-    prior = prior_variances(systems, conditions, gold, sets)
+    prior = prior_variances(systems, {task: target_conditions(task, natural_codemixed=False) for task in TASKS},
+                            gold, sets)
 
     per_rows, routing_rows = [], []
     for task in TASKS:
@@ -191,8 +199,8 @@ def main():
               "selective_prediction_routed.csv": sort_rows(routed)}
     TABLES.mkdir(parents=True, exist_ok=True)
     for name, table in tables.items():
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
 
     pd.set_option("display.width", 230)
     pd.set_option("display.max_rows", 300)

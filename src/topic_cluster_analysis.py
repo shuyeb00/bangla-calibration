@@ -26,6 +26,7 @@ systems (needs the encoder and LLM outputs):
 
     python -m src.topic_cluster_analysis clusters
     python -m src.topic_cluster_analysis systems
+    python -m src.topic_cluster_analysis clusters --natural-codemixed   (and systems; held-out targets only)
 """
 
 import argparse
@@ -40,7 +41,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import f1_score, mutual_info_score
 from sklearn.preprocessing import normalize
 
-from src.config import TASKS
+from src.config import TASKS, natural_codemixed_scope, scoped_table_name, use_natural_codemixed_scope
 from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, split_labels
 from src.llm_inference import CAP
 from src.llm_inference import subset_indices as llm_subset
@@ -55,11 +56,13 @@ REPRESENTATIONS = {
     "char_ngram": dict(analyzer="char_wb", ngram_range=(2, 4), min_df=2, max_features=50000, sublinear_tf=True),
     "word_unigram": dict(analyzer="word", token_pattern=r"(?u)\b\w+\b", min_df=2, sublinear_tf=True),
 }
-ASSIGNMENTS = TABLES / "topic_cluster_assignments.csv"
+def assignments_path():
+    return TABLES / scoped_table_name("topic_cluster_assignments.csv")
 
 
 def condition_pairs(task: str) -> list:
-    return [("test", "cal")] + [(c, c[: -len("_test")] + "_cal") for c in target_conditions(task)]
+    reference = [] if natural_codemixed_scope() else [("test", "cal")]
+    return reference + [(c, c[: -len("_test")] + "_cal") for c in target_conditions(task)]
 
 
 def within_cluster_auroc(scores: np.ndarray, labels: np.ndarray, clusters: np.ndarray) -> float:
@@ -154,10 +157,11 @@ def run_clusters():
             print(f"{task} {test_split}: {len(items)} items ({time.time() - start:.0f} s)", flush=True)
 
     TABLES.mkdir(parents=True, exist_ok=True)
-    pd.concat(assignment_rows, ignore_index=True).to_csv(ASSIGNMENTS, index=False, lineterminator="\n")
+    pd.concat(assignment_rows, ignore_index=True).to_csv(assignments_path(), index=False, lineterminator="\n")
     table = pd.DataFrame(rows)
-    table.to_csv(TABLES / "topic_cluster_label_dependence.csv", index=False, float_format="%.6g", lineterminator="\n")
-    print(f"Wrote {ASSIGNMENTS} and {TABLES / 'topic_cluster_label_dependence.csv'} ({len(table)} rows)")
+    out = TABLES / scoped_table_name("topic_cluster_label_dependence.csv")
+    table.to_csv(out, index=False, float_format="%.6g", lineterminator="\n")
+    print(f"Wrote {assignments_path()} and {out} ({len(table)} rows)")
     pd.set_option("display.width", 220)
     view = table[table.n_labels.isin(["50", "all"])]
     print(view[["task", "condition", "representation", "k", "n_labels", "adjusted_nmi", "cluster_prior_auroc",
@@ -169,7 +173,7 @@ def run_systems():
     from src.llm_shift_recalibration import encoder_systems, llm_systems
 
     start = time.time()
-    assignments = pd.read_csv(ASSIGNMENTS)
+    assignments = pd.read_csv(assignments_path())
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(GRID_DIR / "llm_runs", gold)
     rows = []
@@ -196,8 +200,9 @@ def run_systems():
                                      "within_cluster_auroc": within_cluster_auroc(p, y, clusters)})
             print(f"{task} {test_split} ({time.time() - start:.0f} s)", flush=True)
     table = pd.DataFrame(rows)
-    table.to_csv(TABLES / "topic_cluster_within_auroc.csv", index=False, float_format="%.6g", lineterminator="\n")
-    print(f"Wrote {TABLES / 'topic_cluster_within_auroc.csv'} ({len(table)} rows)")
+    out = TABLES / scoped_table_name("topic_cluster_within_auroc.csv")
+    table.to_csv(out, index=False, float_format="%.6g", lineterminator="\n")
+    print(f"Wrote {out} ({len(table)} rows)")
     fam = table.assign(family=np.where(table.kind == "encoder", "encoders",
                                        table.model + "_" + np.where(table.setting == "zero_shot", "zero_shot", "few_shot")))
     view = fam[(fam.representation == "char_ngram")].groupby(["task", "condition", "family", "k"])[
@@ -211,7 +216,10 @@ def run_systems():
 def main():
     parser = argparse.ArgumentParser(description="Topic clusters and within-cluster discrimination.")
     parser.add_argument("step", choices=["clusters", "systems"])
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="only the held-out natural code-mixed targets (separate assignment and result tables)")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
     run_clusters() if args.step == "clusters" else run_systems()
 
 

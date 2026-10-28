@@ -12,8 +12,11 @@ The inverse regularisation strength is chosen from C_GRID by stratified cross-va
 Table: surface_feature_baseline.csv (per task, condition, method and n; mean and sd over resamples).
 
     python -m src.surface_feature_baseline
+    python -m src.surface_feature_baseline --natural-codemixed   (held-out natural code-mixed targets only;
+        tables *_natural_codemixed.csv)
 """
 
+import argparse
 import time
 
 import numpy as np
@@ -22,7 +25,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
-from src.config import TASKS
+from src.config import TASKS, scoped_table_name, use_natural_codemixed_scope
 from src.error_correlates import CONTRAST_WORDS, NEGATION_WORDS, letter_shares
 from src.llm_evaluation import TABLES, split_labels
 from src.llm_inference import CAP
@@ -72,6 +75,10 @@ def fit_predict(x_train, y_train, x_test, k: int) -> np.ndarray:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Few-label surface-feature baselines on the target splits.")
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets")
+    use_natural_codemixed_scope(parser.parse_args().natural_codemixed)
     start = time.time()
     gold = {task: split_labels(task) for task in TASKS}
     rows = []
@@ -102,8 +109,9 @@ def main():
     table = table.assign(_n=table.n_labels.map(lambda v: float("inf") if v == "all" else float(v))).sort_values(
         ["task", "condition", "method", "_n"]).drop(columns="_n")
     TABLES.mkdir(parents=True, exist_ok=True)
-    table.to_csv(TABLES / "surface_feature_baseline.csv", index=False, float_format="%.6g", lineterminator="\n")
-    print(f"Wrote {TABLES / 'surface_feature_baseline.csv'} ({len(table)} rows)")
+    out = TABLES / scoped_table_name("surface_feature_baseline.csv")
+    table.to_csv(out, index=False, float_format="%.6g", lineterminator="\n")
+    print(f"Wrote {out} ({len(table)} rows)")
     pd.set_option("display.width", 220)
     view = table.pivot_table(index=["task", "condition", "method"], columns="n_labels", values=["macro_f1", "auroc"])
     print(view.round(3).to_string())

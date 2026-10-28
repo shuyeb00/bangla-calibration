@@ -16,9 +16,15 @@ correlation with encoder_auroc_drop over pairs x conditions; and leave-one-condi
 a threshold rule (threshold chosen on the other conditions to maximise accuracy, then applied to the held-out
 condition) against the always-encoder rule. Conditions, not pairs, are the units of generalisation.
 
+With --natural-codemixed the indicators are computed on every condition, the threshold of each indicator is
+chosen on the original conditions only and then applied, unchanged, to the held-out natural code-mixed targets
+(label_free_severity_{pairs,conditions,heldout}_natural_codemixed.csv).
+
     python -m src.label_free_severity
+    python -m src.label_free_severity --natural-codemixed
 """
 
+import argparse
 import time
 
 import numpy as np
@@ -27,7 +33,8 @@ from scipy.special import softmax
 from scipy.stats import spearmanr
 from sklearn.metrics import roc_auc_score
 
-from src.config import TASKS
+from src.config import TASKS, is_natural_codemixed, natural_codemixed_scope, scoped_table_name, \
+    use_natural_codemixed_scope
 from src.llm_evaluation import GRID_DIR, TABLES, llm_sets, split_labels
 from src.llm_shift_recalibration import FORMAT_FAILURE, encoder_systems, llm_systems
 from src.shift_recalibration import compute_nll, ranking_auroc
@@ -55,7 +62,37 @@ def best_threshold(x: np.ndarray, y: np.ndarray) -> float:
     return float(candidates[int(np.argmax(accuracy))])
 
 
+def heldout_validation(pairs: pd.DataFrame) -> pd.DataFrame:
+    """Thresholds chosen on the original conditions, applied to the held-out natural code-mixed conditions."""
+    held = pairs.condition.map(is_natural_codemixed).to_numpy()
+    rows = []
+    for indicator in INDICATORS:
+        x, y = pairs[indicator].to_numpy(), pairs.llm_better.to_numpy()
+        t = best_threshold(x[~held], y[~held])
+        base = {"indicator": indicator, "threshold_from_original": t, "n_original_conditions":
+                pairs[~held].unit.nunique(), "original_accuracy": float(((x[~held] > t) == y[~held]).mean())}
+        for unit in sorted(pairs[held].unit.unique()):
+            m = (pairs.unit == unit).to_numpy()
+            rows.append({**base, "heldout_condition": unit, "n_pairs": int(m.sum()),
+                         "share_llm_better": float(y[m].mean()), "share_flagged": float((x[m] > t).mean()),
+                         "decision_accuracy": float(((x[m] > t) == y[m]).mean()),
+                         "always_encoder_accuracy": float((~y[m]).mean()),
+                         "indicator_mean": float(x[m].mean())})
+        xh, yh = x[held], y[held]
+        rows.append({**base, "heldout_condition": "all_heldout", "n_pairs": int(held.sum()),
+                     "share_llm_better": float(yh.mean()), "share_flagged": float((xh > t).mean()),
+                     "decision_accuracy": float(((xh > t) == yh).mean()),
+                     "always_encoder_accuracy": float((~yh).mean()), "indicator_mean": float(xh.mean()),
+                     "auroc_llm_better": float(roc_auc_score(yh, xh)) if 0 < yh.mean() < 1 else np.nan,
+                     "spearman_encoder_auroc_drop": float(spearmanr(xh, pairs.encoder_auroc_drop[held]).correlation)})
+    return pd.DataFrame(rows)
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Label-free severity indicators from encoder-LLM agreement.")
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="validate the indicators on the held-out natural code-mixed targets")
+    use_natural_codemixed_scope(parser.parse_args().natural_codemixed)
     start = time.time()
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(GRID_DIR / "llm_runs", gold)
@@ -91,6 +128,24 @@ def main():
 
     pairs = pd.DataFrame(rows)
     pairs["unit"] = pairs.task + ":" + pairs.condition
+    if natural_codemixed_scope():
+        heldout = heldout_validation(pairs)
+        natural = pairs[pairs.condition.map(is_natural_codemixed)]
+        per_condition = natural.groupby(["task", "condition"]).agg(
+            n_pairs=("llm", "size"), share_llm_better=("llm_better", "mean"),
+            encoder_auroc_drop=("encoder_auroc_drop", "mean"), nll_gain_llm=("nll_gain_llm", "mean"),
+            **{i: (i, "mean") for i in INDICATORS}).reset_index()
+        TABLES.mkdir(parents=True, exist_ok=True)
+        for name, table in [("label_free_severity_pairs.csv", natural.drop(columns="unit")),
+                            ("label_free_severity_conditions.csv", per_condition),
+                            ("label_free_severity_heldout.csv", heldout)]:
+            table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+            print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
+        pd.set_option("display.width", 220)
+        print(per_condition.round(3).to_string(index=False))
+        print(heldout.round(3).to_string(index=False))
+        print(f"Finished in {time.time() - start:.0f} s")
+        return
     validation = []
     for indicator in INDICATORS:
         x, y = pairs[indicator].to_numpy(), pairs.llm_better.to_numpy()

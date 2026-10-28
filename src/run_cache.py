@@ -3,7 +3,8 @@ Per-run result caches that are invalidated automatically when the run's
 model outputs change.
 
 A cache file is reused only if the fingerprint stored next to it matches the
-current fingerprint of the run directory (config.json plus every *_logits.npy).
+current fingerprint of the run directory (config.json plus every *_logits.npy except those of the held-out
+natural code-mixed targets, which no cached evaluation uses).
 Retraining a run therefore never reuses numbers computed from the old model.
 """
 
@@ -12,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from src.config import is_natural_codemixed
+
 import pandas as pd
 
 MANIFEST = "cache_manifest.json"
@@ -19,7 +22,8 @@ MANIFEST = "cache_manifest.json"
 
 def run_fingerprint(run_dir: Path) -> str:
     h = hashlib.sha1()
-    for f in [run_dir / "config.json", *sorted(run_dir.glob("*_logits.npy"))]:
+    logits = [f for f in sorted(run_dir.glob("*_logits.npy")) if not is_natural_codemixed(f.name)]
+    for f in [run_dir / "config.json", *logits]:
         if f.exists():
             h.update(f.name.encode())
             h.update(f.read_bytes())

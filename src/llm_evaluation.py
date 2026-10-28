@@ -9,6 +9,7 @@ split), evaluated on exactly the LLM's items.
     python -m src.llm_evaluation --download     fetch llm_runs/ from the Hub, then evaluate
     python -m src.llm_evaluation                evaluate the local copy
     python -m src.llm_evaluation --download-only
+    python -m src.llm_evaluation --natural-codemixed   held-out natural code-mixed targets only (*_natural_codemixed tables)
 
 Tables (results/tables/grid_max_length_512/):
   llm_coverage.csv            scored vs expected jobs per model, setting and task
@@ -30,7 +31,8 @@ import pandas as pd
 from scipy.special import softmax
 from scipy.stats import rankdata
 
-from src.config import HUB_OUTPUT_REPO, MODELS, RESULTS_DIR, TASKS
+from src.config import HUB_OUTPUT_REPO, MODELS, RESULTS_DIR, TASKS, is_natural_codemixed, natural_codemixed_scope, \
+    scoped_table_name, use_natural_codemixed_scope
 from src.llm_inference import CAP, LLM_MODELS, build_jobs, split_files, subset_indices
 from src.shift_recalibration import fit_log_temperature, metrics
 
@@ -55,11 +57,14 @@ def load_part(run_dir, name: str):
 
 
 def split_labels(task: str) -> dict:
-    return {split: pd.read_csv(path, usecols=["labels"]).labels.to_numpy() for split, path in split_files(task).items()}
+    """Gold labels of every split; the natural code-mixed targets only in the natural code-mixed scope."""
+    return {split: pd.read_csv(path, usecols=["labels"]).labels.to_numpy() for split, path in split_files(task).items()
+            if natural_codemixed_scope() or not is_natural_codemixed(split)}
 
 
 def coverage(llm_dir) -> pd.DataFrame:
     jobs = build_jobs(list(LLM_MODELS), list(TASKS), SEEDS, CAP)
+    jobs = [j for j in jobs if is_natural_codemixed(j["split"]) == natural_codemixed_scope()]
     rows = []
     for j in jobs:
         present = (llm_dir / j["run_id"] / f"{j['name']}_complete.json").exists()
@@ -96,6 +101,41 @@ def llm_sets(llm_dir, gold: dict) -> dict:
                     full = merged
             out[(model, setting, task, split)] = {"subset": primary, "full": full}
     return out
+
+
+# Natural code-mixed calibration splits exceed CAP items, and the few-shot LLM systems were scored on their
+# 1,500-item subset only. Modules that compare encoders and LLMs on labelled target calibration items restrict
+# these splits to that subset for every system (positions 0..n-1 of the subset); REDUCED_ROWS maps positions back
+# to rows of the split file for the encoders' full-split outputs.
+REDUCED_ROWS = {}
+
+
+def restrict_natural_cal_to_llm_subset(gold: dict, sets: dict) -> None:
+    for task in gold:
+        for split in list(gold[task]):
+            if not (is_natural_codemixed(split) and split.endswith("_cal")):
+                continue
+            rows, _ = subset_indices(task, split, len(gold[task][split]), CAP)
+            if len(rows) == len(gold[task][split]):
+                continue
+            REDUCED_ROWS[(task, split)] = rows
+            gold[task][split] = gold[task][split][rows]
+    for key, value in sets.items():
+        rows = REDUCED_ROWS.get((key[2], key[3]))
+        if rows is None:
+            continue
+        part = value["subset"]
+        order = np.argsort(part["indices"])
+        if not np.array_equal(part["indices"][order], rows):
+            raise ValueError(f"{key}: LLM calibration subset differs from the deterministic subset")
+        part = {k: v[order] for k, v in part.items()}
+        part["indices"] = np.arange(len(rows))
+        sets[key] = {"subset": part, "full": None}
+
+
+def original_rows(task: str, split: str, rows: np.ndarray) -> np.ndarray:
+    reduced = REDUCED_ROWS.get((task, split))
+    return rows if reduced is None else reduced[rows]
 
 
 def llm_metrics(sets: dict) -> pd.DataFrame:
@@ -224,7 +264,10 @@ def main():
     parser.add_argument("--download", action="store_true")
     parser.add_argument("--download-only", action="store_true", help="fetch llm_runs/ from the Hub and stop")
     parser.add_argument("--llm-dir", default=str(GRID_DIR / "llm_runs"))
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
     llm_dir = Path(args.llm_dir)
     if args.download or args.download_only:
         download(llm_dir)
@@ -234,17 +277,24 @@ def main():
     gold = {task: split_labels(task) for task in TASKS}
     cov = coverage(llm_dir)
     sets = llm_sets(llm_dir, gold)
+    if natural_codemixed_scope():
+        sets = {k: v for k, v in sets.items() if k[3] == "cal" or is_natural_codemixed(k[3])}
     per_run = llm_metrics(sets)
+    if natural_codemixed_scope():
+        per_run = per_run[per_run.condition.map(is_natural_codemixed)].reset_index(drop=True)
     summary = summarise(per_run)
     comp = comparison(sets, encoder_runs(), np.random.default_rng(0))
+    if natural_codemixed_scope():
+        comp = comp[comp.condition.map(is_natural_codemixed)].reset_index(drop=True)
     TABLES.mkdir(parents=True, exist_ok=True)
     for name, table in [("llm_coverage.csv", cov), ("llm_metrics_per_run.csv", per_run),
                         ("llm_metrics_summary.csv", summary), ("llm_encoder_comparison.csv", comp)]:
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
     pd.set_option("display.width", 220)
     print(cov.pivot_table(index=["model", "setting"], columns=["task", "part"], values="n_scored", fill_value=0))
-    view = comp[comp.condition.isin(["test", "shift_d2_test"])]
+    view = comp[comp.condition.map(is_natural_codemixed) if natural_codemixed_scope()
+                else comp.condition.isin(["test", "shift_d2_test"])]
     print(view[["task", "condition", "system", "n_runs", "accuracy", "macro_f1", "ece_15", "auroc", "auroc_ci_low",
                 "auroc_ci_high"]].round(3).to_string(index=False))
 

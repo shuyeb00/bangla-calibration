@@ -66,6 +66,9 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/batch_calibration.py`, `src/last_layer_retraining.py`, `src/surface_feature_baseline.py` | Label-free batch calibration, few-label last-layer retraining on frozen encoder features, and few-label surface-feature baselines, on the same items as the LLM comparison |
 | `src/topic_cluster_analysis.py` | Label-free topic clusters of every target split, how much of each label they explain, and within-cluster discrimination of encoders and LLMs |
 | `src/label_free_severity.py` | Label-free severity indicators from encoder–LLM agreement, validated leave-one-condition-out |
+| `src/prepare_natural_codemixed.py`, `src/score_saved_encoders.py` | Natural code-mixed offensive targets (Code-mixed Chaos in Banglish and Bangla script, MixTox-SA) and scoring of the saved encoders on them; analyses evaluate them as held-out conditions with `--natural-codemixed` |
+| `src/script_intervention_analysis.py` | Paired comparison of every system on the same Code-mixed Chaos comments in Banglish and in Bangla script |
+| `src/shift_triage.py`, `thesis/theory/shift_triage_theory.md` | Shift-triage procedure with a ranking-survival test, abstention under collapse and selection-valid conformal sets and risk control, evaluated on the saved outputs |
 | `src/prepare_natural_codemixed.py` | Natural code-mixed offensive targets (Code-mixed Chaos in Banglish and Bangla script, MixTox-SA) prepared like the other shift sets |
 | `src/score_saved_encoders.py` | Scores the saved fine-tuned encoders on new splits (verified against the stored calibration logits) and uploads the outputs next to the original run outputs |
 | `thesis/figures/` | Figures |

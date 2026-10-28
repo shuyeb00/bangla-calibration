@@ -36,6 +36,8 @@ Tables (results/tables/grid_max_length_512/):
   llm_routing_recalibrated.csv              routed, encoder-only, LLM-only and oracle systems per n and method
 
     python -m src.llm_shift_recalibration
+    python -m src.llm_shift_recalibration --natural-codemixed   (held-out natural code-mixed targets only;
+        priors from the original conditions; tables *_natural_codemixed.csv)
 """
 
 import argparse
@@ -46,8 +48,9 @@ import pandas as pd
 from scipy.optimize import minimize
 from scipy.special import log_softmax, softmax
 
-from src.config import TASKS
-from src.llm_evaluation import GRID_DIR, TABLES, encoder_runs, llm_sets, split_labels
+from src.config import TASKS, scoped_table_name, use_natural_codemixed_scope
+from src.llm_evaluation import GRID_DIR, TABLES, encoder_runs, llm_sets, original_rows, \
+    restrict_natural_cal_to_llm_subset, split_labels
 from src.shift_aware_routing import target_conditions
 from src.shift_recalibration import (
     ALPHA,
@@ -144,7 +147,8 @@ def encoder_systems(task: str) -> list:
     out = []
     for run in [r for r in encoder_runs() if r["task"] == task]:
         d = run["dir"]
-        getter = (lambda d: lambda split, rows: np.load(d / f"{split}_logits.npy").astype(np.float64)[rows])(d)
+        getter = (lambda d: lambda split, rows: np.load(d / f"{split}_logits.npy").astype(np.float64)[
+            original_rows(task, split, rows)])(d)
         source = (np.load(d / "cal_logits.npy").astype(np.float64), np.load(d / "cal_labels.npy").astype(int))
         seed = int(d.name.rsplit("seed", 1)[1])
         out.append(System(d.name, "encoder", run["model"], d.name.split(f"{run['model']}_", 1)[1].split("_seed")[0],
@@ -324,17 +328,23 @@ def summarise(per_system: pd.DataFrame, values: list) -> pd.DataFrame:
 def main():
     parser = argparse.ArgumentParser(description="Few-label recalibration, conformal prediction and routing for LLMs.")
     parser.add_argument("--n-resamples", type=int, default=N_RESAMPLES)
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets; priors from the original conditions")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
     start = time.time()
 
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(GRID_DIR / "llm_runs", gold)
+    if args.natural_codemixed:
+        restrict_natural_cal_to_llm_subset(gold, sets)
     systems = {task: encoder_systems(task) + llm_systems(sets, task) for task in TASKS}
     conditions = {task: target_conditions(task) for task in TASKS}
     for task in TASKS:
         kinds = pd.Series([s.kind for s in systems[task]]).value_counts().to_dict()
         print(f"{task}: {kinds}, conditions {conditions[task]}", flush=True)
-    prior = prior_variances(systems, conditions, gold, sets)
+    prior = prior_variances(systems, {task: target_conditions(task, natural_codemixed=False) for task in TASKS},
+                            gold, sets)
     print(prior.round(4).to_string(index=False), flush=True)
 
     per_rows, set_rows, routing_rows = [], [], []
@@ -397,8 +407,8 @@ def main():
     tables = {name: (sort_rows(t) if "n_labels" in t.columns else t) for name, t in tables.items()}
     routing_summary = tables["llm_routing_recalibrated.csv"]
     for name, table in tables.items():
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
 
     pd.set_option("display.width", 230)
     pd.set_option("display.max_rows", 400)

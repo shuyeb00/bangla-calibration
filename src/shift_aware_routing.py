@@ -18,7 +18,11 @@ Sylheti, sentiment D2).
     items the domain classifier assigns to the target domain (probability >= 0.5) to the LLM.
 
     python -m src.shift_aware_routing
+    python -m src.shift_aware_routing --natural-codemixed   (held-out natural code-mixed targets only;
+        tables *_natural_codemixed.csv)
 """
+
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -27,8 +31,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
-from src.config import RESULTS_DIR, TASKS
-from src.llm_evaluation import GRID_DIR, encoder_runs, llm_sets, source_temperatures, split_labels
+from src.config import RESULTS_DIR, TASKS, is_natural_codemixed, natural_codemixed_scope, scoped_table_name, \
+    use_natural_codemixed_scope
+from src.llm_evaluation import GRID_DIR, encoder_runs, llm_sets, original_rows, restrict_natural_cal_to_llm_subset, \
+    source_temperatures, split_labels
 from src.llm_inference import split_files
 from src.shift_recalibration import fit_log_temperature, metrics, subset_indices
 
@@ -40,9 +46,14 @@ GATE_THRESHOLD = 0.5
 OUTCOMES = ("accuracy", "macro_f1", "nll", "ece_15", "auroc")
 
 
-def target_conditions(task: str) -> list:
+def target_conditions(task: str, natural_codemixed: bool = None) -> list:
+    """Target test splits with a calibration split: the original conditions, or only the held-out natural
+    code-mixed targets (default: the current scope, see src.config.use_natural_codemixed_scope)."""
+    if natural_codemixed is None:
+        natural_codemixed = natural_codemixed_scope()
     files = split_files(task)
-    return [c for c in files if c.endswith("_test") and c != "test" and c[: -len("_test")] + "_cal" in files]
+    return [c for c in files if c.endswith("_test") and c != "test" and c[: -len("_test")] + "_cal" in files
+            and is_natural_codemixed(c) == natural_codemixed]
 
 
 def texts(task: str, split: str) -> np.ndarray:
@@ -74,7 +85,8 @@ def encoder_systems(task: str) -> list:
         d = run["dir"]
         t = float(np.exp(fit_log_temperature(np.load(d / "cal_logits.npy").astype(np.float64),
                                              np.load(d / "cal_labels.npy").astype(int))))
-        getter = (lambda d: lambda split, rows: np.load(d / f"{split}_logits.npy").astype(np.float64)[rows])(d)
+        getter = (lambda d: lambda split, rows: np.load(d / f"{split}_logits.npy").astype(np.float64)[
+            original_rows(task, split, rows)])(d)
         out.append(System(d.name, f"encoder_{run['model']}", t, getter))
     return out
 
@@ -176,9 +188,15 @@ def summarise_few(few: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Shift detection and encoder-LLM routing.")
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets")
+    use_natural_codemixed_scope(parser.parse_args().natural_codemixed)
     llm_dir = GRID_DIR / "llm_runs"
     gold = {task: split_labels(task) for task in TASKS}
     sets = llm_sets(llm_dir, gold)
+    if natural_codemixed_scope():
+        restrict_natural_cal_to_llm_subset(gold, sets)
     detection, few, gate = [], [], []
     for task in TASKS:
         d, f, g = evaluate_task(task, sets, gold)
@@ -192,8 +210,8 @@ def main():
     det_summary = detection.groupby(["task", "condition", "kind"]).shift_auroc.agg(["mean", "min", "max", "count"]).reset_index()
     for name, table in [("shift_detection.csv", detection), ("routing_few_label.csv", few_summary),
                         ("routing_gate.csv", gate_summary)]:
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
     pd.set_option("display.width", 230)
     pd.set_option("display.max_rows", 200)
     print(det_summary.round(3).to_string(index=False))

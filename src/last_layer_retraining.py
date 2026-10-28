@@ -20,6 +20,8 @@ Tables (results/tables/grid_max_length_512/):
   last_layer_retraining_summary.csv   per encoder model and over all encoders
 
     python -m src.last_layer_retraining                 (--workers sets the number of processes)
+    python -m src.last_layer_retraining --natural-codemixed   (held-out natural code-mixed targets only;
+        tables *_natural_codemixed.csv)
 """
 
 import argparse
@@ -33,7 +35,7 @@ from scipy.optimize import minimize
 from scipy.special import log_softmax, softmax
 from sklearn.model_selection import StratifiedKFold
 
-from src.config import TASKS
+from src.config import TASKS, scoped_table_name, use_natural_codemixed_scope
 from src.llm_evaluation import GRID_DIR, TABLES, encoder_runs, llm_sets, split_labels
 from src.shift_aware_routing import target_conditions
 from src.shift_recalibration import metrics, subset_indices
@@ -103,7 +105,7 @@ def load_hidden(run_dir, split: str) -> np.ndarray:
     return np.load(run_dir / f"{split}_hidden.npy").astype(np.float64)
 
 
-def process_run(run: dict, items_by: dict, gold: dict, n_resamples: int) -> list:
+def process_run(run: dict, items_by: dict, gold: dict, n_resamples: int, natural_codemixed: bool = False) -> list:
     d, task = run["dir"], run["task"]
     k = TASKS[task]
     if not (d / "cal_hidden.npy").exists():
@@ -119,7 +121,7 @@ def process_run(run: dict, items_by: dict, gold: dict, n_resamples: int) -> list
            "ft_method": d.name.split(f"{run['model']}_", 1)[1].split("_seed")[0],
            "seed": int(d.name.rsplit("seed", 1)[1])}
     rows = []
-    for cond in ["test"] + target_conditions(task):
+    for cond in ["test"] + target_conditions(task, natural_codemixed):
         items = items_by.get((task, cond))
         if items is None or not (d / f"{cond}_hidden.npy").exists():
             continue
@@ -149,7 +151,10 @@ def main():
     parser = argparse.ArgumentParser(description="Few-label last-layer retraining on frozen encoder features.")
     parser.add_argument("--n-resamples", type=int, default=N_RESAMPLES)
     parser.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) // 2))
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
     start = time.time()
     # One BLAS thread per worker process; the workers inherit this environment.
     for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -166,7 +171,8 @@ def main():
     runs = encoder_runs()
     rows = []
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(process_run, run, items_by, gold, args.n_resamples): run["dir"].name for run in runs}
+        futures = {pool.submit(process_run, run, items_by, gold, args.n_resamples, args.natural_codemixed):
+                   run["dir"].name for run in runs}
         for i, future in enumerate(as_completed(futures)):
             rows += future.result()
             print(f"[{i + 1}/{len(runs)}] {futures[future]} ({time.time() - start:.0f} s)", flush=True)
@@ -186,8 +192,8 @@ def main():
     TABLES.mkdir(parents=True, exist_ok=True)
     for name, table in [("last_layer_retraining_per_run.csv", order(per_run)),
                         ("last_layer_retraining_summary.csv", order(summary))]:
-        table.to_csv(TABLES / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / name} ({len(table)} rows)")
+        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
     pd.set_option("display.width", 220)
     pd.set_option("display.max_rows", 300)
     view = summary[summary.model == "all_encoders"].pivot_table(index=["task", "condition", "method"],

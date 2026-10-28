@@ -23,7 +23,11 @@ inputs of each split (confidence, entropy, predicted-label marginal shift) for s
 included and identified by model, fine-tuning method, objective and recipe (learning rate, warmup).
 Non-converged runs are excluded.
 
+With --natural-codemixed only the held-out natural code-mixed targets are evaluated (tables *_natural_codemixed);
+the prior variance is still estimated from the original conditions.
+
     python -m src.shift_recalibration                      (EVALUATION_GRID selects the grid)
+    python -m src.shift_recalibration --natural-codemixed
 """
 
 import argparse
@@ -48,8 +52,13 @@ from src.config import (
     MODELS,
     RUNS_DIR,
     TASKS,
+    get_natural_codemixed_paths,
     get_shift_conditions_paths,
+    is_natural_codemixed,
+    natural_codemixed_scope,
     non_converged_runs,
+    scoped_table_name,
+    use_natural_codemixed_scope,
 )
 
 ALPHA = 0.10
@@ -82,9 +91,13 @@ def load_split(run_dir: Path, name: str) -> tuple:
     return np.load(run_dir / f"{name}_logits.npy").astype(np.float64), np.load(run_dir / f"{name}_labels.npy").astype(int)
 
 
-def test_conditions(run_dir: Path) -> list:
+def test_conditions(run_dir: Path, natural_codemixed: bool = None) -> list:
+    """Evaluated splits of a run: the original conditions, or only the natural code-mixed targets."""
+    if natural_codemixed is None:
+        natural_codemixed = natural_codemixed_scope()
     names = [p.name[: -len("_logits.npy")] for p in sorted(run_dir.glob("*_logits.npy"))]
-    return [n for n in names if n not in ("train", "val", "cal") and not n.endswith("_cal")]
+    return [n for n in names if n not in ("train", "val", "cal") and not n.endswith("_cal")
+            and is_natural_codemixed(n) == natural_codemixed]
 
 
 def target_cal_name(condition: str):
@@ -229,11 +242,15 @@ def subset_indices(n_total: int, n: int, resample: int) -> np.ndarray:
 def main():
     parser = argparse.ArgumentParser(description="Recalibration, conformal prediction and risk control under shift.")
     parser.add_argument("--n-resamples", type=int, default=N_RESAMPLES)
+    parser.add_argument("--natural-codemixed", action="store_true",
+                        help="evaluate only the held-out natural code-mixed targets; prior from the original conditions")
     args = parser.parse_args()
+    use_natural_codemixed_scope(args.natural_codemixed)
 
     runs = discover_runs()
     print(f"Evaluation grid {EVALUATION_GRID}: {len(runs)} converged runs in {RUNS_DIR}", flush=True)
-    shift_paths = {task: get_shift_conditions_paths(task) for task in TASKS}
+    shift_paths = {task: (get_natural_codemixed_paths(task) if args.natural_codemixed
+                          else get_shift_conditions_paths(task)) for task in TASKS}
 
     domain_cache, domain_rows = {}, []
     for task in sorted({r["task"] for r in runs}):
@@ -253,7 +270,7 @@ def main():
         cal_z, cal_y = load_split(run["dir"], "cal")
         log_t_src = fit_log_temperature(cal_z, cal_y)
         run["log_t_src"] = log_t_src
-        for cond in test_conditions(run["dir"]):
+        for cond in test_conditions(run["dir"], natural_codemixed=False):
             tc = target_cal_name(cond)
             if tc and (run["dir"] / f"{tc}_logits.npy").exists():
                 tz, ty = load_split(run["dir"], tc)
@@ -373,12 +390,12 @@ def main():
                few_run.groupby(group + ["n_labels"])[target_metrics + ["log_ratio", "at_upper_bound"]].mean().reset_index()]
     tables["shift_recalibration_summary.csv"] = pd.concat(summary, ignore_index=True)
     for name, df in tables.items():
-        df.to_csv(out / name, index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {out / name} ({len(df)} rows)")
+        df.to_csv(out / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {out / scoped_table_name(name)} ({len(df)} rows)")
 
     pd.set_option("display.width", 220)
     s = tables["shift_recalibration_summary.csv"]
-    view = s[s.condition.str.contains("d2|chittagong|shift_d1_test")].pivot_table(
+    view = s[s.condition.str.contains("d2|chittagong|shift_d1_test|d4|d5")].pivot_table(
         index=["task", "condition", "method"], columns="n_labels", values="nll", aggfunc="mean")
     view = view[sorted(view.columns, key=lambda c: float("inf") if c == "all" else int(c))]
     print("\nMean target NLL over runs (n_labels 0 = label-free)")
