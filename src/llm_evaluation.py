@@ -8,6 +8,7 @@ split), evaluated on exactly the LLM's items.
 
     python -m src.llm_evaluation --download     fetch llm_runs/ from the Hub, then evaluate
     python -m src.llm_evaluation                evaluate the local copy
+    python -m src.llm_evaluation --download-only
 
 Tables (results/tables/grid_max_length_512/):
   llm_coverage.csv            scored vs expected jobs per model, setting and task
@@ -221,11 +222,15 @@ def comparison(sets: dict, encoders: list, rng) -> pd.DataFrame:
 def main():
     parser = argparse.ArgumentParser(description="Evaluate the LLM outputs and compare them with the encoders.")
     parser.add_argument("--download", action="store_true")
+    parser.add_argument("--download-only", action="store_true", help="fetch llm_runs/ from the Hub and stop")
     parser.add_argument("--llm-dir", default=str(GRID_DIR / "llm_runs"))
     args = parser.parse_args()
     llm_dir = Path(args.llm_dir)
-    if args.download:
+    if args.download or args.download_only:
         download(llm_dir)
+        print(f"Downloaded {sum(1 for _ in llm_dir.glob('*/*_complete.json'))} completed LLM jobs to {llm_dir}")
+    if args.download_only:
+        return
     gold = {task: split_labels(task) for task in TASKS}
     cov = coverage(llm_dir)
     sets = llm_sets(llm_dir, gold)

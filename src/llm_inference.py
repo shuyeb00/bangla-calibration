@@ -565,7 +565,7 @@ def launcher(args) -> None:
                 new = text[offsets[str(path)]:]
                 offsets[str(path)] = len(text)
                 for line in new.splitlines():
-                    if any(k in line for k in ("done ", "loaded ", "skip ", "stop ", "ABORT", "RETRY", "Error",
+                    if any(k in line for k in ("done ", "loaded ", "skip ", "rescore ", "stop ", "ABORT", "RETRY", "Error",
                                                "error", "Traceback", "out of memory")):
                         print(line, flush=True)
             if not any(alive):
