@@ -1,0 +1,17 @@
+model,instruction,n_items,predicted_offensive_share,agreement_gold,agreement_annotator_1,annotator_1_offensive_share,agreement_annotator_2,annotator_2_offensive_share,gold_offensive_share
+llama3_1_8b_instruct,default,100,0.11,0.59,0.9,0.01,0.6875,0.40625,0.52
+qwen3_4b_instruct,default,100,0.09,0.57,0.92,0.01,0.645833,0.40625,0.52
+qwen3_5_9b,default,100,0.05,0.53,0.96,0.01,0.645833,0.40625,0.52
+qwen3_8b,default,100,0.06,0.54,0.95,0.01,0.65625,0.40625,0.52
+llama3_1_8b_instruct,olid_definition,100,0.12,0.6,0.89,0.01,0.697917,0.40625,0.52
+qwen3_4b_instruct,olid_definition,100,0.08,0.56,0.93,0.01,0.635417,0.40625,0.52
+qwen3_5_9b,olid_definition,100,0.04,0.52,0.97,0.01,0.635417,0.40625,0.52
+qwen3_8b,olid_definition,100,0.05,0.53,0.96,0.01,0.645833,0.40625,0.52
+llama3_1_8b_instruct,broad_definition,100,0.23,0.71,0.78,0.01,0.760417,0.40625,0.52
+qwen3_4b_instruct,broad_definition,100,0.2,0.68,0.81,0.01,0.75,0.40625,0.52
+qwen3_5_9b,broad_definition,100,0.04,0.52,0.97,0.01,0.635417,0.40625,0.52
+qwen3_8b,broad_definition,100,0.11,0.59,0.9,0.01,0.666667,0.40625,0.52
+llama3_1_8b_instruct,paraphrase,100,0.05,0.53,0.96,0.01,0.645833,0.40625,0.52
+qwen3_4b_instruct,paraphrase,100,0.12,0.6,0.89,0.01,0.677083,0.40625,0.52
+qwen3_5_9b,paraphrase,100,0.04,0.52,0.97,0.01,0.635417,0.40625,0.52
+qwen3_8b,paraphrase,100,0.04,0.52,0.97,0.01,0.635417,0.40625,0.52
