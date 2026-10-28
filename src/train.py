@@ -51,6 +51,7 @@ from src.config import (
     SEEDS,
     TASKS,
     TRAIN_HYPERPARAMS,
+    get_natural_codemixed_paths,
     get_shift_conditions_paths,
     get_task_splits_paths,
     make_run_id,
@@ -117,8 +118,9 @@ def load_task_splits(task_name: str) -> dict:
 
 
 def load_shift_conditions(task_name: str) -> dict:
-    return {name: standardize_dataframe(pd.read_csv(path))
-            for name, path in get_shift_conditions_paths(task_name).items()}
+    """Shift splits scored after training, including the natural code-mixed targets."""
+    paths = {**get_shift_conditions_paths(task_name), **get_natural_codemixed_paths(task_name)}
+    return {name: standardize_dataframe(pd.read_csv(path)) for name, path in paths.items()}
 
 
 class FocalLossTrainer(Trainer):
@@ -353,7 +355,7 @@ def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: 
 
 def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, hub: bool = False,
                           smoke: bool = False, keep_checkpoints: bool = False, source: str = None,
-                          objective: str = "cross_entropy") -> dict:
+                          objective: str = "cross_entropy", train_hidden: bool = True) -> dict:
     if objective not in OBJECTIVES:
         raise ValueError(f"Unknown objective {objective!r}")
     recipe = recipe_tag(model_key, ft_method)
@@ -444,7 +446,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
         logits, hidden = forward_outputs(trainer.model, dataset, collator, device)
         np.save(run_dir / f"{name}_logits.npy", logits)
         np.save(run_dir / f"{name}_labels.npy", dataset.labels)
-        if name != "val":
+        if name != "val" and (train_hidden or name != "train"):
             np.save(run_dir / f"{name}_hidden.npy", hidden)
     output_runtime = time.time() - t0
 
@@ -516,6 +518,7 @@ def main():
     parser.add_argument("--hub", action="store_true", help="Upload weights and outputs to the Hugging Face repos.")
     parser.add_argument("--smoke", action="store_true", help="Tiny subsets and one epoch, under smoke/ paths.")
     parser.add_argument("--keep_checkpoints", action="store_true")
+    parser.add_argument("--no-train-hidden", action="store_true", help="Do not save hidden states of the train split.")
     parser.add_argument("--model-source", action="append", metavar="MODEL=PATH",
                         help="Load tokenizer and weights for MODEL from PATH (local testing).")
     args = parser.parse_args()
@@ -527,7 +530,8 @@ def main():
     for task, model_key, ft_method, objective, seed in runs:
         summary.append(run_single_experiment(task, model_key, ft_method, seed, hub=args.hub, smoke=args.smoke,
                                              keep_checkpoints=args.keep_checkpoints,
-                                             source=sources.get(model_key), objective=objective))
+                                             source=sources.get(model_key), objective=objective,
+                                             train_hidden=not args.no_train_hidden))
     print("\nSUMMARY " + json.dumps(summary), flush=True)
 
 

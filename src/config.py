@@ -31,7 +31,14 @@ SCALE_MODELS = {
     "xlmr_large": "FacebookAI/xlm-roberta-large",
     "banglabert_large": "csebuetnlp/banglabert_large",
 }
-ALL_MODELS = {**MODELS, **SCALE_MODELS}
+# Further multilingual encoder families (base size, full fine-tuning, cross-entropy, base-model recipe, SEEDS):
+# MuRIL was pretrained on Indian languages including transliterated (romanised) text (Khanuja et al., 2021);
+# mDeBERTa-v3 is a second multilingual architecture (He et al., 2023).
+ARCHITECTURE_MODELS = {
+    "muril": "google/muril-base-cased",
+    "mdeberta": "microsoft/mdeberta-v3-base",
+}
+ALL_MODELS = {**MODELS, **SCALE_MODELS, **ARCHITECTURE_MODELS}
 # Seeds of the first large-encoder grid, trained with the base-model recipe (lr 2e-5, no warmup).
 SCALE_SEEDS = [42, 123, 2026]
 
@@ -39,13 +46,15 @@ SCALE_SEEDS = [42, 123, 2026]
 # collapsed to a single class, so they use the standard large-encoder setting (smaller rate, linear
 # warmup; Liu et al., 2019; Mosbach et al., 2021). Run ids and Hub paths carry the recipe.
 FULL_FT_TRAINING = {key: {"learning_rate": 1e-5, "warmup_ratio": 0.1} for key in SCALE_MODELS}
+# mDeBERTa-v3 is fine-tuned with linear warmup as in its original recipe (He et al., 2023); fixed a priori.
+FULL_FT_TRAINING["mdeberta"] = {"learning_rate": 2e-5, "warmup_ratio": 0.1}
 
 # Memory settings for a 16 GB T4: full batches of 16 with gradient checkpointing. Gradient
 # accumulation is not used: under transformers 5.x it doubled the update of sequence-classification
 # models in a sandbox check (src/train.py refuses it).
 MEMORY_SETTINGS = {
     key: {"per_device_train_batch_size": 16, "gradient_accumulation_steps": 1, "gradient_checkpointing": True}
-    for key in SCALE_MODELS
+    for key in (*SCALE_MODELS, "mdeberta")
 }
 
 # Training objectives; cross_entropy is the default and keeps the original run ids.
@@ -176,6 +185,33 @@ def get_natural_codemixed_paths(task_name: str) -> dict:
             if path.exists():
                 out[f"{key}_{part}"] = path
     return out
+
+
+NATURAL_CODEMIXED_PREFIXES = tuple(f"{key}_" for groups in NATURAL_CODEMIXED.values() for key in groups)
+# The natural code-mixed targets are held-out conditions: every module excludes them by default, so committed
+# tables and the priors and thresholds estimated from the original conditions do not change. Modules called with
+# --natural-codemixed switch this scope on, evaluate only these conditions and write *_natural_codemixed tables.
+_SCOPE = {"natural_codemixed": False}
+
+
+def is_natural_codemixed(split: str) -> bool:
+    return split.startswith(NATURAL_CODEMIXED_PREFIXES)
+
+
+def use_natural_codemixed_scope(enabled: bool = True) -> None:
+    _SCOPE["natural_codemixed"] = bool(enabled)
+
+
+def natural_codemixed_scope() -> bool:
+    return _SCOPE["natural_codemixed"]
+
+
+def scoped_table_name(name: str) -> str:
+    """Table file name for the current scope: natural code-mixed tables carry the suffix _natural_codemixed."""
+    if not natural_codemixed_scope():
+        return name
+    stem, dot, ext = name.rpartition(".")
+    return f"{stem}_natural_codemixed.{ext}" if dot else f"{name}_natural_codemixed"
 
 
 def non_converged_runs() -> set:

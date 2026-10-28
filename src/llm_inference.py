@@ -21,7 +21,14 @@ models that fit one GPU run one worker per GPU, larger models one worker across 
 are skipped through the Hub markers, so a session can be rerun to continue. No job is started that is not
 expected to finish before the deadline.
 
+Prompt variants (--prompt-variants, zero shot only): the same answer format with another instruction, run as
+setting zero_shot_{variant} under the separate prefix llm_prompt_variants/ so that the analyses of llm_runs/ are
+unchanged. They test whether the definition of offensiveness moves the decision threshold (OLID-style or broad
+definition) and how sensitive the scores are to the wording of the instruction (paraphrase).
+
     python -m src.llm_inference --models qwen3_8b qwen3_5_9b --deadline-hours 11
+    python -m src.llm_inference --models qwen3_8b --tasks offensive --prompt-variants olid_definition \
+        broad_definition paraphrase --splits cal test shift_d2_test shift_d2_cal --no-remainders
 """
 
 import argparse
@@ -71,6 +78,28 @@ TASK_PROMPTS = {
     },
 }
 
+# Alternative instructions for the offensive task (answer format unchanged). olid_definition follows the
+# annotation guideline of OLID (Zampieri et al., 2019), from which OffMix-3L's training data derive;
+# broad_definition also counts hostile or harshly critical remarks without abusive words; paraphrase restates
+# the default BD-SHS-style definition in other words.
+PROMPT_VARIANTS = {
+    "offensive": {
+        "olid_definition": ("You are given a text in Bangla. It may contain regional dialect, informal spelling, or "
+                            "words in English or Hindi. Decide whether the text is offensive, that is, whether it "
+                            "contains any form of non-acceptable language (profanity) or a targeted offense, "
+                            "which can be veiled or direct, including insults, threats, and posts containing "
+                            "profane language or swear words."),
+        "broad_definition": ("You are given a text in Bangla. It may contain regional dialect, informal spelling, or "
+                             "words in English or Hindi. Decide whether the text is offensive, that is, whether it "
+                             "could hurt, upset or anger a person or group, including hostile, mocking or harshly "
+                             "critical remarks even when they contain no abusive words."),
+        "paraphrase": ("The following text is written in Bangla and may include dialect, non-standard spelling, or "
+                       "English and Hindi words. Your task is to judge whether it is offensive: does it insult, "
+                       "abuse or threaten anyone, express hate, or use vulgar words?"),
+    },
+}
+OUTPUT_PREFIXES = ("llm_runs", "llm_prompt_variants")
+
 SPLIT_PRIORITY = ["cal", "test", "shift_d2_test", "shift_d2_cal", "shift_d1_test", "shift_d1_cal",
                   "shift_d1_barishal_test", "shift_d1_chittagong_test", "shift_d1_noakhali_test",
                   "shift_d1_barishal_cal", "shift_d1_chittagong_cal", "shift_d1_noakhali_cal",
@@ -84,6 +113,20 @@ TOKEN_BUDGET = 12288
 MAX_BATCH = 64
 HUB_PREFIX = "llm_runs"
 WORK_DIR = BASE_DIR / "results" / "llm_runs"
+
+
+def set_output_prefix(prefix: str) -> None:
+    global HUB_PREFIX, WORK_DIR
+    if prefix not in OUTPUT_PREFIXES:
+        raise ValueError(f"output prefix must be one of {OUTPUT_PREFIXES}")
+    HUB_PREFIX, WORK_DIR = prefix, BASE_DIR / "results" / prefix
+
+
+def instruction(task: str, setting: str) -> str:
+    for variant, text in PROMPT_VARIANTS.get(task, {}).items():
+        if setting == f"zero_shot_{variant}":
+            return text
+    return TASK_PROMPTS[task]["instruction"]
 
 
 def split_files(task: str) -> dict:
@@ -118,12 +161,13 @@ def demonstrations(task: str, seed: int, per_class: int) -> list:
     return [{"train_row": i, "text": text.iloc[i], "label": int(train.labels.iloc[i])} for i in picks]
 
 
-def user_message(task: str, text: str, demos: list) -> str:
+def user_message(task: str, text: str, demos: list, setting: str = "zero_shot") -> str:
     spec = TASK_PROMPTS[task]
+    head = instruction(task, setting)
     if not demos:
-        return f"{spec['instruction']}\n\nText: {text}\n\n{spec['answer']}"
+        return f"{head}\n\nText: {text}\n\n{spec['answer']}"
     shots = "\n\n".join(f"Text: {d['text']}\nAnswer: {spec['labels'][d['label']]}" for d in demos)
-    return (f"{spec['instruction']}\n\nExamples:\n\n{shots}\n\nNow classify this text.\n\n"
+    return (f"{head}\n\nExamples:\n\n{shots}\n\nNow classify this text.\n\n"
             f"Text: {text}\n\n{spec['answer']}")
 
 
@@ -177,6 +221,33 @@ def build_jobs(models: list, tasks: list, seeds: list, cap: int, few_shot_remain
         j["name"] = j["split"] if j["part"] == "primary" else f"{j['split']}_remainder"
         j["job_id"] = f"{j['run_id']}__{j['name']}"
     return order
+
+
+def build_variant_jobs(models: list, tasks: list, variants: list, cap: int, splits: list = None) -> list:
+    """Zero-shot prompt-variant jobs on the primary item subsets, model by model and variant by variant."""
+    jobs = []
+    for model in models:
+        for task in tasks:
+            unknown = set(variants) - set(PROMPT_VARIANTS.get(task, {}))
+            if unknown:
+                raise ValueError(f"no prompt variants {sorted(unknown)} for task {task}")
+            for variant in variants:
+                for split in split_files(task):
+                    if splits is None or split in splits:
+                        jobs.append({"model": model, "task": task, "setting": f"zero_shot_{variant}", "split": split,
+                                     "part": "primary"})
+    for j in jobs:
+        j["run_id"] = f"{j['task']}_{j['model']}_{j['setting']}"
+        j["name"] = j["split"]
+        j["job_id"] = f"{j['run_id']}__{j['name']}"
+    return jobs
+
+
+def planned_jobs(args) -> list:
+    if args.prompt_variants:
+        return build_variant_jobs(args.models, args.tasks, args.prompt_variants, args.cap, args.splits)
+    return build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
+                      args.splits, not args.no_remainders)
 
 
 class HubStore:
@@ -362,7 +433,8 @@ def run_config(job: dict, model: str, source: str, revision, tok, label_seqs: li
 
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BASE_DIR, capture_output=True, text=True).stdout.strip()
     spec = TASK_PROMPTS[job["task"]]
-    template = render(tok, user_message(job["task"], "{text}", demos), LLM_MODELS[model].get("template_kwargs", {}))
+    template = render(tok, user_message(job["task"], "{text}", demos, job["setting"]),
+                      LLM_MODELS[model].get("template_kwargs", {}))
     seed = int(job["setting"].rsplit("seed", 1)[1]) if job["setting"].startswith("few_shot") else None
     return {"run_id": job["run_id"], "task": job["task"], "model_key": model, "hf_id": LLM_MODELS[model]["hf_id"],
             "source": source, "revision": revision, "ft_method": job["setting"], "objective": "prompting",
@@ -370,7 +442,7 @@ def run_config(job: dict, model: str, source: str, revision, tok, label_seqs: li
             "labels": spec["labels"], "label_token_ids": label_seqs,
             "label_tokens": [tok.convert_ids_to_tokens(q) for q in label_seqs],
             "label_scoring": "first token" if all(len(q) == 1 for q in label_seqs) else "token sequence",
-            "instruction": spec["instruction"],
+            "instruction": instruction(job["task"], job["setting"]), "output_prefix": HUB_PREFIX,
             "answer_instruction": spec["answer"], "demonstrations": demos, "per_class": PER_CLASS,
             "subset_cap": cap, "prompt_template": template, "chat_template": bool(getattr(tok, "chat_template", None)),
             "template_kwargs": LLM_MODELS[model].get("template_kwargs", {}), "torch": torch.__version__,
@@ -386,7 +458,7 @@ def run_job(job: dict, net, tok, model: str, source: str, revision, demos: list,
     texts = df.text_clean.astype(str).to_numpy()[rows]
     labels = df.labels.to_numpy()[rows].astype(np.int64)
     kwargs = LLM_MODELS[model].get("template_kwargs", {})
-    prompts = [render(tok, user_message(task, t, demos), kwargs) for t in texts]
+    prompts = [render(tok, user_message(task, t, demos, job["setting"]), kwargs) for t in texts]
     encoded = [tok(p, add_special_tokens=False)["input_ids"] for p in prompts]
     n_tokens = int(sum(len(e) for e in encoded))
     remaining = deadline - time.time()
@@ -516,8 +588,7 @@ def gpu_count() -> int:
 def launcher(args) -> None:
     t_start = time.time()
     deadline = t_start + args.deadline_hours * 3600
-    jobs = build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
-                      args.splits, not args.no_remainders)
+    jobs = planned_jobs(args)
     print(f"{len(jobs)} jobs for models {args.models}; deadline in {args.deadline_hours} h", flush=True)
     local_paths = dict(p.split("=", 1) for p in args.model_path)
     phases = []
@@ -553,7 +624,8 @@ def launcher(args) -> None:
             cmd = [sys.executable, "-m", "src.llm_inference", "--worker", "--phase-file", str(phase_file),
                    "--worker-index", str(w), "--store", args.store, "--cap", str(args.cap),
                    "--deadline", str(deadline), *sum([["--model-path", m] for m in args.model_path], []),
-                   *(["--rescore-mismatched-subsets"] if args.rescore_mismatched_subsets else [])]
+                   *(["--rescore-mismatched-subsets"] if args.rescore_mismatched_subsets else []),
+                   "--output-prefix", HUB_PREFIX]
             log_path = session / f"phase{p_i:02d}_worker{w}.log"
             procs.append((subprocess.Popen(cmd, env=env, cwd=BASE_DIR, stdout=open(log_path, "w"),
                                            stderr=subprocess.STDOUT), log_path))
@@ -600,12 +672,15 @@ def main():
     parser.add_argument("--phase-file", help=argparse.SUPPRESS)
     parser.add_argument("--worker-index", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--deadline", type=float, help=argparse.SUPPRESS)
+    parser.add_argument("--prompt-variants", nargs="+", default=None,
+                        help="zero-shot prompt variants (written under llm_prompt_variants/)")
+    parser.add_argument("--output-prefix", default=None, choices=OUTPUT_PREFIXES, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    set_output_prefix(args.output_prefix or ("llm_prompt_variants" if args.prompt_variants else "llm_runs"))
     if args.worker:
         worker(args)
     elif args.show_plan:
-        for j in build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
-                            args.splits, not args.no_remainders):
+        for j in planned_jobs(args):
             print(j["job_id"])
     else:
         launcher(args)

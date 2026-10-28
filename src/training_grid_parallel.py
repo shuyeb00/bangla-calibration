@@ -5,6 +5,8 @@ Grids
   objectives  3 encoders x full FT x label smoothing / focal loss x 5 seeds x 2 tasks (60 runs, 2 shards)
   scale       XLM-R-large, BanglaBERT-large x full FT (large-encoder recipe, config.FULL_FT_TRAINING)
               x 5 seeds x 2 tasks, cross-entropy (20 runs, 3 shards)
+  architectures  MuRIL, mDeBERTa-v3 x full FT x 5 seeds x 2 tasks, cross-entropy, base-model recipe
+              (20 runs, 2 shards; outputs include the natural code-mixed targets)
 Audit only (not launchable; trained with the base-model recipe before FULL_FT_TRAINING existed):
   scale_recipe_base  the same large encoders x 3 seeds (SCALE_SEEDS) at lr 2e-5 without warmup
 
@@ -26,6 +28,7 @@ import sys
 import time
 
 from src.config import (
+    ARCHITECTURE_MODELS,
     FT_METHODS,
     MODELS,
     RESULTS_DIR,
@@ -59,6 +62,12 @@ EST_MINUTES = {
     ("offensive", "banglabert_large", "full_ft"): 48.0,
     ("sentiment", "xlmr_large", "full_ft"): 16.0,
     ("sentiment", "banglabert_large", "full_ft"): 12.0,
+    # Further encoder families (estimates, not measurements): MuRIL as BanglaBERT-size BERT; mDeBERTa-v3 with
+    # gradient checkpointing at about 2.2 times the XLM-R-base time.
+    ("offensive", "muril", "full_ft"): 15.0,
+    ("sentiment", "muril", "full_ft"): 4.0,
+    ("offensive", "mdeberta", "full_ft"): 50.0,
+    ("sentiment", "mdeberta", "full_ft"): 12.0,
 }
 GPUS_PER_SHARD = 2
 KEEP = ("=====", "[UPLOADED", "[LOCAL", "[UPLOAD_FAILED", "[UPLOAD RETRY", "[SKIP", "[COLLAPSE",
@@ -73,6 +82,8 @@ def grid_runs(grid: str) -> list:
         return list(itertools.product(TASKS, MODELS, ["full_ft"], ["label_smoothing", "focal_loss"], SEEDS))
     if grid == "scale":
         return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SEEDS))
+    if grid == "architectures":
+        return list(itertools.product(TASKS, ARCHITECTURE_MODELS, ["full_ft"], ["cross_entropy"], SEEDS))
     if grid == "scale_recipe_base":
         return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SCALE_SEEDS))
     raise ValueError(f"Unknown grid {grid!r}")
@@ -84,7 +95,7 @@ def grid_run_id(grid: str, run: tuple) -> str:
     return make_run_id(task, model, ft, seed, objective, recipe)
 
 
-N_SHARDS = {"base": 2, "objectives": 2, "scale": 3}
+N_SHARDS = {"base": 2, "objectives": 2, "scale": 3, "architectures": 2}
 AUDIT_GRIDS = list(N_SHARDS) + ["scale_recipe_base"]
 
 
