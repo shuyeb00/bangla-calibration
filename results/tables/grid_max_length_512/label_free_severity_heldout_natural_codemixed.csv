@@ -1,0 +1,13 @@
+indicator,threshold_from_original,n_original_conditions,original_accuracy,heldout_condition,n_pairs,share_llm_better,share_flagged,decision_accuracy,always_encoder_accuracy,indicator_mean,auroc_llm_better,spearman_encoder_auroc_drop
+disagreement_shift,0.230147,12,0.811969,offensive:shift_d4_banglish_bangla_script_test,232,1,0,0,0,-0.0706983,,
+disagreement_shift,0.230147,12,0.811969,offensive:shift_d4_banglish_test,232,0.969828,0.0172414,0.0474138,0.0301724,0.0168649,,
+disagreement_shift,0.230147,12,0.811969,offensive:shift_d5_mixtox_test,232,1,0,0,0,-0.126963,,
+disagreement_shift,0.230147,12,0.811969,all_heldout,696,0.989943,0.00574713,0.0158046,0.0100575,-0.0602653,0.322517,-0.09044
+rank_agreement_drop,0.167009,12,0.910411,offensive:shift_d4_banglish_bangla_script_test,232,1,0,0,0,-0.0524126,,
+rank_agreement_drop,0.167009,12,0.910411,offensive:shift_d4_banglish_test,232,0.969828,0.512931,0.543103,0.0301724,0.183454,,
+rank_agreement_drop,0.167009,12,0.910411,offensive:shift_d5_mixtox_test,232,1,0.943966,0.943966,0,0.306293,,
+rank_agreement_drop,0.167009,12,0.910411,all_heldout,696,0.989943,0.485632,0.49569,0.0100575,0.145778,0.622642,0.879613
+marginal_tv_shift,0.236633,12,0.968484,offensive:shift_d4_banglish_bangla_script_test,232,1,0.103448,0.103448,0,0.227925,,
+marginal_tv_shift,0.236633,12,0.968484,offensive:shift_d4_banglish_test,232,0.969828,0.724138,0.75431,0.0301724,0.32519,,
+marginal_tv_shift,0.236633,12,0.968484,offensive:shift_d5_mixtox_test,232,1,1,1,0,0.451718,,
+marginal_tv_shift,0.236633,12,0.968484,all_heldout,696,0.989943,0.609195,0.619253,0.0100575,0.334944,0.971076,0.595465

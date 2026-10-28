@@ -1,0 +1,4 @@
+task,condition,n_pairs,share_llm_better,encoder_auroc_drop,nll_gain_llm,disagreement_shift,rank_agreement_drop,marginal_tv_shift
+offensive,shift_d4_banglish_bangla_script_test,232,1,0.086813,0.274554,-0.0706983,-0.0524126,0.227925
+offensive,shift_d4_banglish_test,232,0.969828,0.197101,0.421887,0.0168649,0.183454,0.32519
+offensive,shift_d5_mixtox_test,232,1,0.282992,0.438497,-0.126963,0.306293,0.451718

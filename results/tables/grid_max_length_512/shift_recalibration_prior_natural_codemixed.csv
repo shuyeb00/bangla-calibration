@@ -1,0 +1,3 @@
+task,prior_from_task,prior_variance_log_t
+offensive,sentiment,0.592449
+sentiment,offensive,1.60433

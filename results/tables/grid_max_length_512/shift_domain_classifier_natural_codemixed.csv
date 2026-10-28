@@ -1,0 +1,4 @@
+task,target_split,domain_auc,effective_sample_size,n_source,n_target
+offensive,shift_d4_banglish_cal,0.999997,2114.9,4718,2035
+offensive,shift_d4_banglish_bangla_script_cal,0.96446,2467.29,4718,2035
+offensive,shift_d5_mixtox_cal,0.99552,2274.51,4718,2456
