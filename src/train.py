@@ -180,6 +180,9 @@ def newly_initialised_modules(missing_keys: list) -> list:
 def build_model(task: str, model_key: str, ft_method: str, source: str = None) -> tuple:
     model, info = AutoModelForSequenceClassification.from_pretrained(
         source or ALL_MODELS[model_key], num_labels=TASKS[task], output_loading_info=True)
+    # transformers 5.x keeps the checkpoint dtype; fp16 checkpoints (e.g. mDeBERTa-v3) must be trained from fp32
+    # master weights, otherwise mixed precision fails ("Attempting to unscale FP16 gradients").
+    model = model.float()
     new_modules = newly_initialised_modules(info["missing_keys"])
     if ft_method == "lora":
         # Every module absent from the checkpoint (the classifier, and ALBERT's pooler when the
