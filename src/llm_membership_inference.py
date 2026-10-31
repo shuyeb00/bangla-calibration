@@ -270,6 +270,21 @@ def main():
     parser.add_argument("--store", default="hub", help="'hub' or 'local:<dir>' (dry runs)")
     parser.add_argument("--model-path", action="append", default=[], help="model_key=local_dir (dry runs)")
     args = parser.parse_args()
+    if len(args.models) > 1:
+        # One process per model: GPU memory of a released model is not always returned within one process, and the
+        # next model then fails to load (out of memory while loading Qwen3.5-9B after Llama-3.1-8B).
+        import subprocess
+        import sys
+
+        start = time.time()
+        for model in args.models:
+            remaining = args.deadline_hours - (time.time() - start) / 3600
+            cmd = [sys.executable, "-u", "-m", "src.llm_membership_inference", "--models", model,
+                   "--sets", *args.sets, "--parts", *args.parts, "--deadline-hours", f"{remaining:.3f}",
+                   "--store", args.store, *sum([["--model-path", m] for m in args.model_path], [])]
+            code = subprocess.run(cmd).returncode
+            print(f"{datetime.now():%H:%M:%S} {model}: return code {code}", flush=True)
+        return
     store = HubStore() if args.store == "hub" else LocalStore(args.store.split(":", 1)[1])
     local = dict(p.split("=", 1) for p in args.model_path)
     deadline = time.time() + args.deadline_hours * 3600
