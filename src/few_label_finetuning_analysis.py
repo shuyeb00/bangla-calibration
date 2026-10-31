@@ -114,7 +114,7 @@ def main():
     if table.empty:
         raise SystemExit(f"No few-label fine-tuning outputs in {LOCAL}; run with --download first.")
     table.to_csv(TABLES / "few_label_finetuning_per_run.csv", index=False, float_format="%.6f", lineterminator="\n")
-    print(f"runs {table.run_id.nunique()}, conditions {table.condition.nunique()}, rows {len(table)}; "
+    print(f"runs {table.run_id.nunique()}, conditions {table.groupby(['task', 'condition']).ngroups}, rows {len(table)}; "
           f"max |n0 - stored test logits| {table.max_abs_logit_diff.max():.4f}")
     tuned = table[table.calibration.isin(["val_ts", "source_ts"])].copy()
     tuned["system"] = np.where(tuned.calibration == "source_ts", "encoder_finetune_n0_source_ts",
@@ -129,7 +129,7 @@ def main():
     pd.set_option("display.width", 220)
     for metric in ("auroc", "macro_f1"):
         view = comparison[comparison.n_labels.isin(["0", "25", "50", "100", "all"])].pivot_table(
-            index=["condition", "n_labels"], columns="system", values=metric)
+            index=["task", "condition", "n_labels"], columns="system", values=metric)
         print(f"\n{metric} (means over runs, resamples or systems)")
         print(view.round(3).to_string())
 
