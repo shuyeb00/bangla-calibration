@@ -1,0 +1,16 @@
+run_id,model,seed,val_macro_f1,majority_baseline_val_f1,collapsed,non_converged,learning_rate,warmup_ratio,train_minutes,code_commit,transformers
+offensive_olid_mdeberta_full_ft_lr2e-05_warmup0.1_seed123,mdeberta,123,0.766773,0.395158,False,False,0.000020,0.100000,10.895378,ca01f15,5.16.1
+offensive_olid_mdeberta_full_ft_lr2e-05_warmup0.1_seed2026,mdeberta,2026,0.769968,0.395158,False,False,0.000020,0.100000,10.881207,ca01f15,5.16.1
+offensive_olid_mdeberta_full_ft_lr2e-05_warmup0.1_seed42,mdeberta,42,0.769317,0.395158,False,False,0.000020,0.100000,10.558267,ca01f15,5.16.1
+offensive_olid_mdeberta_full_ft_lr2e-05_warmup0.1_seed7,mdeberta,7,0.778914,0.395158,False,False,0.000020,0.100000,10.562313,ca01f15,5.16.1
+offensive_olid_mdeberta_full_ft_lr2e-05_warmup0.1_seed99,mdeberta,99,0.775541,0.395158,False,False,0.000020,0.100000,10.952113,ca01f15,5.16.1
+offensive_olid_muril_full_ft_seed123,muril,123,0.761077,0.395158,False,False,0.000020,0.000000,5.440298,ca01f15,5.16.1
+offensive_olid_muril_full_ft_seed2026,muril,2026,0.741559,0.395158,False,False,0.000020,0.000000,5.331305,ca01f15,5.16.1
+offensive_olid_muril_full_ft_seed42,muril,42,0.757170,0.395158,False,False,0.000020,0.000000,5.451548,ca01f15,5.16.1
+offensive_olid_muril_full_ft_seed7,muril,7,0.762764,0.395158,False,False,0.000020,0.000000,5.441488,ca01f15,5.16.1
+offensive_olid_muril_full_ft_seed99,muril,99,0.761995,0.395158,False,False,0.000020,0.000000,5.338578,ca01f15,5.16.1
+offensive_olid_xlmr_base_full_ft_seed123,xlmr_base,123,0.764858,0.395158,False,False,0.000020,0.000000,5.902618,ca01f15,5.16.1
+offensive_olid_xlmr_base_full_ft_seed2026,xlmr_base,2026,0.755887,0.395158,False,False,0.000020,0.000000,5.785878,ca01f15,5.16.1
+offensive_olid_xlmr_base_full_ft_seed42,xlmr_base,42,0.763211,0.395158,False,False,0.000020,0.000000,5.877398,ca01f15,5.16.1
+offensive_olid_xlmr_base_full_ft_seed7,xlmr_base,7,0.762494,0.395158,False,False,0.000020,0.000000,5.881047,ca01f15,5.16.1
+offensive_olid_xlmr_base_full_ft_seed99,xlmr_base,99,0.765200,0.395158,False,False,0.000020,0.000000,5.766038,ca01f15,5.16.1
