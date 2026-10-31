@@ -10,6 +10,8 @@ complete and consistent and writes results/tables/grid_max_length_512_training_s
     python -m src.fetch_run_outputs
     python -m src.fetch_run_outputs --no-download
     python -m src.fetch_run_outputs --hidden-target-splits
+    python -m src.fetch_run_outputs --natural-codemixed-task sentiment   (encoder and LLM outputs of one task's
+        natural code-mixed targets only; no full re-check of the Hub repository)
 """
 
 import argparse
@@ -19,8 +21,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import HUB_OUTPUT_REPO, RESULTS_DIR, SEEDS, TASKS, get_natural_codemixed_paths, \
-    get_shift_conditions_paths
+from src.config import HUB_OUTPUT_REPO, NATURAL_CODEMIXED, RESULTS_DIR, SEEDS, TASKS, \
+    get_natural_codemixed_paths, get_shift_conditions_paths
 from src.training_grid_parallel import AUDIT_GRIDS, grid_run_id, grid_runs
 
 GRID_DIR = RESULTS_DIR / "grid_max_length_512"
@@ -46,6 +48,15 @@ CROSS_DEFINITION_PATTERNS = ["runs/offensive_olid_*/*.json", "runs/offensive_oli
                              "runs/offensive_olid_*/*_labels.npy", "runs/offensive_*/english_olid_*.json",
                              "runs/offensive_*/shift_olid_english_*_logits.npy",
                              "runs/offensive_*/shift_olid_english_*_labels.npy"]
+
+
+def natural_codemixed_patterns(task: str) -> list:
+    """Encoder outputs (logits, labels, base-grid hidden states, scoring records) and LLM outputs of the natural
+    code-mixed targets of one task."""
+    patterns = [f"runs/{task}_*/natural_codemixed_*.json"]
+    for key in NATURAL_CODEMIXED[task]:
+        patterns += [f"runs/{task}_*/{key}_*.npy", f"llm_runs/{task}_*/{key}_*"]
+    return patterns
 
 
 def download(with_hidden: bool, hidden_target_splits: bool = False, only: list = None) -> None:
@@ -127,10 +138,13 @@ def main():
     parser.add_argument("--grids", nargs="+", choices=AUDIT_GRIDS, default=AUDIT_GRIDS)
     parser.add_argument("--cross-definition-only", action="store_true",
                         help="Download only the cross-definition outputs (avoids re-checking every file on the Hub).")
+    parser.add_argument("--natural-codemixed-task", choices=sorted(NATURAL_CODEMIXED),
+                        help="Download only the outputs of this task's natural code-mixed targets.")
     args = parser.parse_args()
     if not args.no_download:
-        download(args.with_hidden, args.hidden_target_splits,
-                 CROSS_DEFINITION_PATTERNS if args.cross_definition_only else None)
+        only = (CROSS_DEFINITION_PATTERNS if args.cross_definition_only
+                else natural_codemixed_patterns(args.natural_codemixed_task) if args.natural_codemixed_task else None)
+        download(args.with_hidden, args.hidden_target_splits, only)
 
     rows = []
     for grid in args.grids:

@@ -115,6 +115,10 @@ def run_clusters():
     assignment_rows, rows = [], []
     rng = np.random.default_rng(0)
     for task, k in TASKS.items():
+        # Held-out targets get one permutation stream per task, so adding targets of one task leaves the
+        # permutation nulls of the other unchanged; the original scope keeps its single stream.
+        if natural_codemixed_scope():
+            rng = np.random.default_rng(0)
         for test_split, cal_split in condition_pairs(task):
             cal_texts, test_texts = texts(task, cal_split), texts(task, test_split)
             y_cal, y_test = gold[task][cal_split], gold[task][test_split]

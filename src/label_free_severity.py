@@ -78,13 +78,18 @@ def heldout_validation(pairs: pd.DataFrame) -> pd.DataFrame:
                          "decision_accuracy": float(((x[m] > t) == y[m]).mean()),
                          "always_encoder_accuracy": float((~y[m]).mean()),
                          "indicator_mean": float(x[m].mean())})
-        xh, yh = x[held], y[held]
-        rows.append({**base, "heldout_condition": "all_heldout", "n_pairs": int(held.sum()),
-                     "share_llm_better": float(yh.mean()), "share_flagged": float((xh > t).mean()),
-                     "decision_accuracy": float(((xh > t) == yh).mean()),
-                     "always_encoder_accuracy": float((~yh).mean()), "indicator_mean": float(xh.mean()),
-                     "auroc_llm_better": float(roc_auc_score(yh, xh)) if 0 < yh.mean() < 1 else np.nan,
-                     "spearman_encoder_auroc_drop": float(spearmanr(xh, pairs.encoder_auroc_drop[held]).correlation)})
+        # Pooled rows: per task when the held-out targets span several tasks, then over all held-out targets.
+        tasks = sorted(pairs[held].task.unique())
+        pools = ([(f"{task}:all_heldout", held & (pairs.task == task).to_numpy()) for task in tasks]
+                 if len(tasks) > 1 else [])
+        for name, m in pools + [("all_heldout", held)]:
+            xh, yh = x[m], y[m]
+            rows.append({**base, "heldout_condition": name, "n_pairs": int(m.sum()),
+                         "share_llm_better": float(yh.mean()), "share_flagged": float((xh > t).mean()),
+                         "decision_accuracy": float(((xh > t) == yh).mean()),
+                         "always_encoder_accuracy": float((~yh).mean()), "indicator_mean": float(xh.mean()),
+                         "auroc_llm_better": float(roc_auc_score(yh, xh)) if 0 < yh.mean() < 1 else np.nan,
+                         "spearman_encoder_auroc_drop": float(spearmanr(xh, pairs.encoder_auroc_drop[m]).correlation)})
     return pd.DataFrame(rows)
 
 
