@@ -104,6 +104,15 @@ PROMPT_VARIANTS = {
                        "English and Hindi words. Your task is to judge whether it is offensive: does it insult, "
                        "abuse or threaten anyone, express hate, or use vulgar words?"),
     },
+    # language_neutral drops every statement about the language, which the default misstates for the SentiMix
+    # targets (romanised Hindi-English and Spanish-English); paraphrase restates the default in other words.
+    "sentiment": {
+        "language_neutral": ("You are given a social media text. It may be written in any language or mix several "
+                             "languages and scripts, with informal spelling. Classify the sentiment that the text "
+                             "expresses."),
+        "paraphrase": ("The following text is written in Bangla and may include dialect, non-standard spelling, or "
+                       "English and Hindi words. Your task is to judge the sentiment that it expresses."),
+    },
 }
 OUTPUT_PREFIXES = ("llm_runs", "llm_prompt_variants", "llm_target_demonstrations")
 
