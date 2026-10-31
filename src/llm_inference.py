@@ -21,6 +21,13 @@ models that fit one GPU run one worker per GPU, larger models one worker across 
 are skipped through the Hub markers, so a session can be rerun to continue. No job is started that is not
 expected to finish before the deadline.
 
+Target demonstrations (--target-demonstrations; in-context learning with labelled target items): for every target
+test split, PER_CLASS demonstrations per class are drawn from the TARGET_DEMO_LABELS labelled target calibration items
+of resample s of src/shift_recalibration.subset_indices (calibration pool = the LLM subset of the calibration split),
+i.e. from the same labels the few-label methods use at n = TARGET_DEMO_LABELS. Setting few_shot_target_seed{s}, output
+prefix llm_target_demonstrations/, scored on TARGET_DEMO_CAP items of the primary test subset where that subset was
+drawn from a larger split (all items otherwise).
+
 Prompt variants (--prompt-variants, zero shot only): the same answer format with another instruction, run as
 setting zero_shot_{variant} under the separate prefix llm_prompt_variants/ so that the analyses of llm_runs/ are
 unchanged. They test whether the definition of offensiveness moves the decision threshold (OLID-style or broad
@@ -98,7 +105,7 @@ PROMPT_VARIANTS = {
                        "abuse or threaten anyone, express hate, or use vulgar words?"),
     },
 }
-OUTPUT_PREFIXES = ("llm_runs", "llm_prompt_variants")
+OUTPUT_PREFIXES = ("llm_runs", "llm_prompt_variants", "llm_target_demonstrations")
 
 SPLIT_PRIORITY = ["cal", "test", "shift_d2_test", "shift_d2_cal", "shift_d1_test", "shift_d1_cal",
                   "shift_d1_barishal_test", "shift_d1_chittagong_test", "shift_d1_noakhali_test",
@@ -107,6 +114,9 @@ SPLIT_PRIORITY = ["cal", "test", "shift_d2_test", "shift_d2_cal", "shift_d1_test
                   "shift_d4_banglish_test", "shift_d4_banglish_cal", "shift_d4_banglish_bangla_script_test",
                   "shift_d4_banglish_bangla_script_cal", "shift_d5_mixtox_test", "shift_d5_mixtox_cal"]
 CAP = 1500
+TARGET_DEMO_LABELS = 50
+TARGET_DEMO_MAX_CHARS = 600
+TARGET_DEMO_CAP = 600
 PER_CLASS = 3
 DEMO_CHARS = (20, 150)
 TOKEN_BUDGET = 12288
@@ -159,6 +169,45 @@ def demonstrations(task: str, seed: int, per_class: int) -> list:
         picks += [int(i) for i in rng.choice(pool, per_class, replace=False)]
     picks = [picks[i] for i in rng.permutation(len(picks))]
     return [{"train_row": i, "text": text.iloc[i], "label": int(train.labels.iloc[i])} for i in picks]
+
+
+def target_cal_split(test_split: str) -> str:
+    return test_split[: -len("_test")] + "_cal"
+
+
+def target_demonstrations(task: str, test_split: str, seed: int, per_class: int) -> list:
+    """Demonstrations from the labelled target calibration items of resample `seed` at n = TARGET_DEMO_LABELS: per
+    class, random items of at most TARGET_DEMO_MAX_CHARS characters (the shortest ones if too few are that short);
+    a class with fewer labelled items contributes all of them."""
+    from src.shift_recalibration import subset_indices as label_subset
+
+    cal_split = target_cal_split(test_split)
+    cal = pd.read_csv(split_files(task)[cal_split])
+    pool, _ = subset_indices(task, cal_split, len(cal), CAP)
+    labelled = pool[label_subset(len(pool), min(TARGET_DEMO_LABELS, len(pool)), seed)]
+    text, y = cal.text_clean.astype(str).to_numpy(), cal.labels.to_numpy()
+    base = test_split.replace("_bangla_script", "")
+    rng = np.random.default_rng(stable_seed(f"{task}:{base}:target_demonstrations:{seed}"))
+    picks = []
+    for label in sorted(TASK_PROMPTS[task]["labels"]):
+        rows = labelled[y[labelled] == label]
+        short = rows[np.char.str_len(text[rows].astype(str)) <= TARGET_DEMO_MAX_CHARS]
+        if len(short) >= per_class:
+            chosen = rng.choice(short, per_class, replace=False)
+        else:
+            chosen = rows[np.argsort(np.char.str_len(text[rows].astype(str)), kind="stable")][:per_class]
+        picks += [int(i) for i in chosen]
+    picks = [picks[i] for i in rng.permutation(len(picks))]
+    return [{"cal_split": cal_split, "cal_row": i, "text": text[i], "label": int(y[i])} for i in picks]
+
+
+def target_eval_rows(task: str, split: str, n: int) -> np.ndarray:
+    primary, _ = subset_indices(task, split, n, CAP)
+    if len(primary) < CAP or len(primary) <= TARGET_DEMO_CAP:
+        return primary
+    base = split.replace("_bangla_script", "")
+    rng = np.random.default_rng(stable_seed(f"{task}:{base}:target_demonstration_items"))
+    return np.sort(rng.choice(primary, TARGET_DEMO_CAP, replace=False))
 
 
 def user_message(task: str, text: str, demos: list, setting: str = "zero_shot") -> str:
@@ -243,7 +292,29 @@ def build_variant_jobs(models: list, tasks: list, variants: list, cap: int, spli
     return jobs
 
 
+def build_target_demo_jobs(models: list, tasks: list, seeds: list, splits: list = None) -> list:
+    """Per model, one seed complete over every target test split before the next seed."""
+    jobs = []
+    for model in models:
+        for seed in seeds:
+            for task in tasks:
+                files = split_files(task)
+                for split in files:
+                    if not split.endswith("_test") or target_cal_split(split) not in files:
+                        continue
+                    if splits is None or split in splits:
+                        jobs.append({"model": model, "task": task, "setting": f"few_shot_target_seed{seed}",
+                                     "split": split, "part": "target_demonstration"})
+    for j in jobs:
+        j["run_id"] = f"{j['task']}_{j['model']}_{j['setting']}"
+        j["name"] = j["split"]
+        j["job_id"] = f"{j['run_id']}__{j['name']}"
+    return jobs
+
+
 def planned_jobs(args) -> list:
+    if args.target_demonstrations:
+        return build_target_demo_jobs(args.models, args.tasks, args.few_shot_seeds, args.splits)
     if args.prompt_variants:
         return build_variant_jobs(args.models, args.tasks, args.prompt_variants, args.cap, args.splits)
     return build_jobs(args.models, args.tasks, args.few_shot_seeds, args.cap, not args.skip_few_shot_remainders,
@@ -318,6 +389,8 @@ def describe_error(e: Exception) -> str:
 
 def expected_indices(job: dict, cap: int) -> np.ndarray:
     n = len(pd.read_csv(split_files(job["task"])[job["split"]], usecols=["labels"]))
+    if job["part"] == "target_demonstration":
+        return target_eval_rows(job["task"], job["split"], n)
     primary, remainder = subset_indices(job["task"], job["split"], n, cap)
     return primary if job["part"] == "primary" else remainder
 
@@ -436,6 +509,7 @@ def run_config(job: dict, model: str, source: str, revision, tok, label_seqs: li
     template = render(tok, user_message(job["task"], "{text}", demos, job["setting"]),
                       LLM_MODELS[model].get("template_kwargs", {}))
     seed = int(job["setting"].rsplit("seed", 1)[1]) if job["setting"].startswith("few_shot") else None
+    target = job["setting"].startswith("few_shot_target")
     return {"run_id": job["run_id"], "task": job["task"], "model_key": model, "hf_id": LLM_MODELS[model]["hf_id"],
             "source": source, "revision": revision, "ft_method": job["setting"], "objective": "prompting",
             "learning_rate": 0.0, "warmup_ratio": 0.0, "seed": seed, "dtype": LLM_MODELS[model]["dtype"],
@@ -443,7 +517,10 @@ def run_config(job: dict, model: str, source: str, revision, tok, label_seqs: li
             "label_tokens": [tok.convert_ids_to_tokens(q) for q in label_seqs],
             "label_scoring": "first token" if all(len(q) == 1 for q in label_seqs) else "token sequence",
             "instruction": instruction(job["task"], job["setting"]), "output_prefix": HUB_PREFIX,
-            "answer_instruction": spec["answer"], "demonstrations": demos, "per_class": PER_CLASS,
+            "answer_instruction": spec["answer"], "demonstrations": [] if target else demos, "per_class": PER_CLASS,
+            "demonstrations_source": "target calibration split, one set per test split ({split}_demonstrations.json)"
+            if target else "source training split",
+            "target_demonstration_labels": TARGET_DEMO_LABELS if target else None,
             "subset_cap": cap, "prompt_template": template, "chat_template": bool(getattr(tok, "chat_template", None)),
             "template_kwargs": LLM_MODELS[model].get("template_kwargs", {}), "torch": torch.__version__,
             "transformers": transformers.__version__, "python": platform.python_version(), "code_commit": commit}
@@ -453,8 +530,11 @@ def run_job(job: dict, net, tok, model: str, source: str, revision, demos: list,
             tps: float, deadline: float, log) -> tuple:
     task, split = job["task"], job["split"]
     df = pd.read_csv(split_files(task)[split])
-    primary, remainder = subset_indices(task, split, len(df), cap)
-    rows = primary if job["part"] == "primary" else remainder
+    if job["part"] == "target_demonstration":
+        rows = target_eval_rows(task, split, len(df))
+    else:
+        primary, remainder = subset_indices(task, split, len(df), cap)
+        rows = primary if job["part"] == "primary" else remainder
     texts = df.text_clean.astype(str).to_numpy()[rows]
     labels = df.labels.to_numpy()[rows].astype(np.int64)
     kwargs = LLM_MODELS[model].get("template_kwargs", {})
@@ -493,6 +573,10 @@ def run_job(job: dict, net, tok, model: str, source: str, revision, demos: list,
     (out / f"{name}_complete.json").write_text(json.dumps(marker, indent=2))
     files = {f"{name}_{s}.npy": out / f"{name}_{s}.npy" for s in ("logits", "labels", "indices", "label_mass")}
     files["config.json"] = out / "config.json"
+    if job["part"] == "target_demonstration":
+        (out / f"{name}_demonstrations.json").write_text(json.dumps(demos, ensure_ascii=False, indent=2),
+                                                         encoding="utf-8")
+        files[f"{name}_demonstrations.json"] = out / f"{name}_demonstrations.json"
     files[f"{name}_complete.json"] = out / f"{name}_complete.json"
     ok = store.commit(job, files)
     log(f"done {job['job_id']}: n {len(rows)}, {n_tokens} tokens, {seconds / 60:.1f} min "
@@ -547,7 +631,9 @@ def worker(args) -> None:
                 (claims / f"{model}.failed").write_text("load")
                 continue
         demos = []
-        if job["setting"].startswith("few_shot"):
+        if job["setting"].startswith("few_shot_target"):
+            demos = target_demonstrations(job["task"], job["split"], int(job["setting"].rsplit("seed", 1)[1]), PER_CLASS)
+        elif job["setting"].startswith("few_shot"):
             demos = demonstrations(job["task"], int(job["setting"].rsplit("seed", 1)[1]), PER_CLASS)
         try:
             status, tps = run_job(job, net, tok, model, source, revision, demos, args.cap, store, WORK_DIR, tps,
@@ -625,7 +711,7 @@ def launcher(args) -> None:
                    "--worker-index", str(w), "--store", args.store, "--cap", str(args.cap),
                    "--deadline", str(deadline), *sum([["--model-path", m] for m in args.model_path], []),
                    *(["--rescore-mismatched-subsets"] if args.rescore_mismatched_subsets else []),
-                   "--output-prefix", HUB_PREFIX]
+                   "--output-prefix", HUB_PREFIX, *(["--target-demonstrations"] if args.target_demonstrations else [])]
             log_path = session / f"phase{p_i:02d}_worker{w}.log"
             procs.append((subprocess.Popen(cmd, env=env, cwd=BASE_DIR, stdout=open(log_path, "w"),
                                            stderr=subprocess.STDOUT), log_path))
@@ -674,9 +760,13 @@ def main():
     parser.add_argument("--deadline", type=float, help=argparse.SUPPRESS)
     parser.add_argument("--prompt-variants", nargs="+", default=None,
                         help="zero-shot prompt variants (written under llm_prompt_variants/)")
+    parser.add_argument("--target-demonstrations", action="store_true",
+                        help="few-shot prompts with labelled target demonstrations (written under "
+                             "llm_target_demonstrations/; --few-shot-seeds selects the label resamples)")
     parser.add_argument("--output-prefix", default=None, choices=OUTPUT_PREFIXES, help=argparse.SUPPRESS)
     args = parser.parse_args()
-    set_output_prefix(args.output_prefix or ("llm_prompt_variants" if args.prompt_variants else "llm_runs"))
+    set_output_prefix(args.output_prefix or ("llm_target_demonstrations" if args.target_demonstrations else
+                                             "llm_prompt_variants" if args.prompt_variants else "llm_runs"))
     if args.worker:
         worker(args)
     elif args.show_plan:

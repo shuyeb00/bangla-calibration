@@ -74,6 +74,8 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/score_saved_encoders.py` | Scores the saved fine-tuned encoders on new splits (verified against the stored calibration logits) and uploads the outputs next to the original run outputs |
 | `src/prepare_olid.py` | English OLID (TweetEval offensive) as a second source task with the OLID definition of offensive language; encoders trained on it form the `cross_definition` grid, and the BD-SHS encoders are scored on its test split (`score_saved_encoders --targets english_olid`) |
 | `src/cross_definition_analysis.py` | Cross-definition test: OLID-trained vs BD-SHS-trained encoders of the same architectures on BD-SHS, OLID, OffMix-3L and the natural code-mixed targets, with the pre-registered difference-in-differences contrast |
+| `src/few_label_finetuning.py` | Few-label fine-tuning of the saved base-grid encoders on n labelled target items (equal-budget baseline) |
+| `src/llm_membership_inference.py` | Contamination checks for the LLMs: Min-K% / Min-K%++ likelihood statistics with word-shuffled references and guided versus general instance completion |
 | `thesis/figures/` | Figures |
 
 Model outputs (`*.npy`) and processed datasets are not tracked. Dataset sources are listed in `data/DATA_SOURCES.md`.
