@@ -72,6 +72,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/prompt_variant_analysis.py` | Zero-shot LLMs under three alternative definitions of offensiveness (OLID guideline, broad, paraphrase): ranking, decision threshold and agreement with the human labels |
 | `src/prepare_natural_codemixed.py` | Natural code-mixed offensive targets (Code-mixed Chaos in Banglish and Bangla script, MixTox-SA) prepared like the other shift sets |
 | `src/score_saved_encoders.py` | Scores the saved fine-tuned encoders on new splits (verified against the stored calibration logits) and uploads the outputs next to the original run outputs |
+| `src/prepare_sentimix.py` | SemEval-2020 SentiMix Hinglish and Spanglish as held-out cross-language code-mixed sentiment targets (natural code-mixed scope) |
 | `src/prepare_olid.py` | English OLID (TweetEval offensive) as a second source task with the OLID definition of offensive language; encoders trained on it form the `cross_definition` grid, and the BD-SHS encoders are scored on its test split (`score_saved_encoders --targets english_olid`) |
 | `src/cross_definition_analysis.py` | Cross-definition test: OLID-trained vs BD-SHS-trained encoders of the same architectures on BD-SHS, OLID, OffMix-3L and the natural code-mixed targets, with the pre-registered difference-in-differences contrast |
 | `src/few_label_finetuning.py` | Few-label fine-tuning of the saved base-grid encoders on n labelled target items (equal-budget baseline) |

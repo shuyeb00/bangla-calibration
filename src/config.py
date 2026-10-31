@@ -174,6 +174,11 @@ NATURAL_CODEMIXED = {
         "shift_d4_banglish_bangla_script": "d4_banglish_bangla_script",
         "shift_d5_mixtox": "d5_mixtox",
     },
+    # SemEval-2020 SentiMix (src/prepare_sentimix.py): cross-language code-mixed sentiment targets.
+    "sentiment": {
+        "shift_d6_hinglish": "d6_hinglish",
+        "shift_d7_spanglish": "d7_spanglish",
+    },
 }
 
 

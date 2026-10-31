@@ -112,7 +112,8 @@ SPLIT_PRIORITY = ["cal", "test", "shift_d2_test", "shift_d2_cal", "shift_d1_test
                   "shift_d1_barishal_cal", "shift_d1_chittagong_cal", "shift_d1_noakhali_cal",
                   "shift_d3_noise10", "shift_d3_noise05", "shift_d3_noise20",
                   "shift_d4_banglish_test", "shift_d4_banglish_cal", "shift_d4_banglish_bangla_script_test",
-                  "shift_d4_banglish_bangla_script_cal", "shift_d5_mixtox_test", "shift_d5_mixtox_cal"]
+                  "shift_d4_banglish_bangla_script_cal", "shift_d5_mixtox_test", "shift_d5_mixtox_cal",
+                  "shift_d6_hinglish_test", "shift_d6_hinglish_cal", "shift_d7_spanglish_test", "shift_d7_spanglish_cal"]
 CAP = 1500
 TARGET_DEMO_LABELS = 50
 TARGET_DEMO_MAX_CHARS = 600
