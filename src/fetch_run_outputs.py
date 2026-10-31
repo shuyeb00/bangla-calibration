@@ -41,9 +41,20 @@ def target_hidden_patterns() -> list:
     return patterns
 
 
-def download(with_hidden: bool, hidden_target_splits: bool = False) -> None:
+# Outputs of the cross-definition test (E3b): the OLID-trained runs and the English OLID scores of the BD-SHS runs.
+CROSS_DEFINITION_PATTERNS = ["runs/offensive_olid_*/*.json", "runs/offensive_olid_*/*_logits.npy",
+                             "runs/offensive_olid_*/*_labels.npy", "runs/offensive_*/english_olid_*.json",
+                             "runs/offensive_*/shift_olid_english_*_logits.npy",
+                             "runs/offensive_*/shift_olid_english_*_labels.npy"]
+
+
+def download(with_hidden: bool, hidden_target_splits: bool = False, only: list = None) -> None:
     from huggingface_hub import snapshot_download
 
+    if only:
+        snapshot_download(HUB_OUTPUT_REPO, repo_type="dataset", local_dir=str(GRID_DIR), allow_patterns=only,
+                          max_workers=4)
+        return
     patterns = ["runs/*/*.json", "runs/*/*_logits.npy", "runs/*/*_labels.npy"]
     if with_hidden:
         patterns.append("runs/*/*_hidden.npy")
@@ -114,9 +125,12 @@ def main():
     parser.add_argument("--hidden-target-splits", action="store_true",
                         help="Also download base-grid hidden states of the source and target cal/test splits only.")
     parser.add_argument("--grids", nargs="+", choices=AUDIT_GRIDS, default=AUDIT_GRIDS)
+    parser.add_argument("--cross-definition-only", action="store_true",
+                        help="Download only the cross-definition outputs (avoids re-checking every file on the Hub).")
     args = parser.parse_args()
     if not args.no_download:
-        download(args.with_hidden, args.hidden_target_splits)
+        download(args.with_hidden, args.hidden_target_splits,
+                 CROSS_DEFINITION_PATTERNS if args.cross_definition_only else None)
 
     rows = []
     for grid in args.grids:
