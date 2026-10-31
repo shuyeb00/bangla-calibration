@@ -25,18 +25,26 @@ items for both groups).
 Reading fixed before the results: definition evidence needs delta_offmix3l > 0 and did > 0; OLID-trained encoders
 near 0.5 on OffMix-3L mean that its labels do not carry the OLID definition (cluster artifact, finding 41).
 
+English-share check (cross_definition_english_share.csv; needs data/processed/offensive_olid from src.prepare_olid):
+the OffMix-3L test items are split into tertiles of their English share (share of word tokens that occur at least
+ENGLISH_MIN_COUNT times in the OLID training split) and the AUROC of every primary system is computed per tertile. If
+the OLID-trained encoders rank OffMix-3L only through its English words, their advantage shrinks towards 0 in the
+lowest tertile.
+
     python -m src.cross_definition_analysis
 """
 
 import itertools
 import json
+import re
+from collections import Counter
 
 import numpy as np
 import pandas as pd
 from scipy.special import softmax
 from scipy.stats import rankdata
 
-from src.config import CROSS_DEFINITION_MODELS, SEEDS
+from src.config import CROSS_DEFINITION_MODELS, DATA_DIR, SEEDS
 from src.contrast_statistics import holm
 from src.fetch_run_outputs import COLLAPSE_MARGIN
 from src.llm_evaluation import GRID_DIR, SUMMARY_PATH, TABLES
@@ -63,6 +71,8 @@ CLUSTER_SOURCES = {"bdshs_test": ("topic_cluster_assignments.csv", "test", "test
                    "mixtox": ("topic_cluster_assignments_natural_codemixed.csv", "shift_d5_mixtox_test",
                               "shift_d5_mixtox_test")}
 PAIRED_DID = ("offmix3l", "chaos_banglish")
+ENGLISH_MIN_COUNT = 3
+WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 
 def converged(run_dir) -> tuple:
@@ -250,6 +260,36 @@ def contrasts(per_system: pd.DataFrame, scores: dict, labels: dict) -> pd.DataFr
     return table
 
 
+def english_share_strata(per_system: pd.DataFrame, scores: dict, labels: dict):
+    olid_train, offmix = DATA_DIR / "offensive_olid" / "train.csv", DATA_DIR / "offensive" / "d2_codemixed_test.csv"
+    if not olid_train.exists() or "offmix3l" not in labels:
+        print("English-share check skipped (run src.prepare_olid first)")
+        return None
+    counts = Counter(w for t in pd.read_csv(olid_train).text_clean.astype(str) for w in WORD.findall(t.lower()))
+    vocab = {w for w, c in counts.items() if c >= ENGLISH_MIN_COUNT}
+    texts = pd.read_csv(offmix).text_clean.astype(str)
+    share = np.array([np.mean([w in vocab for w in WORD.findall(t.lower())]) if WORD.findall(t.lower()) else 0.0
+                      for t in texts])
+    y = labels["offmix3l"]
+    if len(share) != len(y):
+        raise ValueError("OffMix-3L text and label lengths differ")
+    tertile = pd.qcut(share, 3, labels=["low", "middle", "high"])
+    rows = []
+    primary = per_system[per_system.primary & (per_system.condition == "offmix3l")]
+    for r in primary.itertuples():
+        p = scores[(r.run_id, "offmix3l")]
+        for t in ("low", "middle", "high"):
+            m = np.asarray(tertile == t)
+            yy, pp = y[m], p[m]
+            ranks = rankdata(pp)
+            n1, n0 = (yy == 1).sum(), (yy == 0).sum()
+            auc = (ranks[yy == 1].sum() - n1 * (n1 + 1) / 2) / (n1 * n0) if n1 and n0 else np.nan
+            rows.append({"run_id": r.run_id, "source": r.source, "model": r.model, "tertile": t, "auroc": auc,
+                         "n_items": int(m.sum()), "gold_positive_share": float(yy.mean()),
+                         "english_share_mean": float(share[m].mean())})
+    return pd.DataFrame(rows)
+
+
 def main():
     systems_, training = systems()
     if not training.empty:
@@ -274,6 +314,15 @@ def main():
     summary.to_csv(TABLES / "cross_definition_summary.csv", index=False, float_format="%.6f", lineterminator="\n")
     table = contrasts(per_system, scores, labels)
     table.to_csv(TABLES / "cross_definition_contrasts.csv", index=False, float_format="%.6g", lineterminator="\n")
+    strata = english_share_strata(per_system, scores, labels)
+    if strata is not None:
+        strata.to_csv(TABLES / "cross_definition_english_share.csv", index=False, float_format="%.6f",
+                      lineterminator="\n")
+        print("\nOffMix-3L AUROC by English-share tertile (mean over primary runs)")
+        view = strata.groupby(["tertile", "source"]).agg(auroc=("auroc", "mean"), n_items=("n_items", "first"),
+                                                         english_share=("english_share_mean", "first"),
+                                                         gold_positive=("gold_positive_share", "first"))
+        print(view.round(3).to_string())
     pd.set_option("display.width", 220)
     view = summary[summary.primary].pivot_table(index=["model", "source"], columns="condition", values="auroc_mean")
     print("\nAUROC after source TS, mean over seeds (primary architectures)")
