@@ -191,7 +191,7 @@ def correction_ablation_table() -> str:
                r"and cannot change the decision; batch calibration only shifts the class bias and uses no labels; "
                r"MAP BCTS does both with 50 target labels. Last column: share of run $\times$ cell units whose NLL is "
                r"below source TS. Cells: number of (source task, target) pairs in the regime, as assigned in the regime map.")
-    return tabular("lrlllrrr", header, rows, caption, "tab:correction-ablation-by-regime", r"\small", groups)
+    return tabular("lrlllrrr", header, rows, caption, "tab:correction-ablation-by-regime", r"\small", groups, fit_width=True)
 
 
 def prior_shift_ablation_table() -> str:
@@ -211,7 +211,7 @@ def prior_shift_ablation_table() -> str:
                r"resampled to a positive share $\pi_+$; means over runs, targets and 5 resamples; macro-F1 / NLL). "
                r"Uniform batch calibration assumes $\pi_+ = 0.5$; a prior estimated from 50 labels removes that "
                r"assumption and is close to the true-prior reference.")
-    return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small")
+    return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small", fit_width=True)
 
 
 TABLE_BUILDERS = {"regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,

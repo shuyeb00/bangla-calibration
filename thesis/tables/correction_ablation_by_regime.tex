@@ -3,6 +3,7 @@
 \small
 \caption{Which part of the correction matters in each regime (all converged cross-entropy runs of the four source tasks; means over runs and cells of the regime). Shrinkage TS only rescales the temperature and cannot change the decision; batch calibration only shifts the class bias and uses no labels; MAP BCTS does both with 50 target labels. Last column: share of run $\times$ cell units whose NLL is below source TS. Cells: number of (source task, target) pairs in the regime, as assigned in the regime map.}
 \label{tab:correction-ablation-by-regime}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lrlllrrr}
 \toprule
 Regime & Cells & Correction & Adjusts & Labels & Macro-F1 & NLL & NLL $<$ source TS \\
@@ -33,4 +34,5 @@ R4 collapse & 1 & Source TS & none & no & 0.367 & 1.299 & -- \\
  &  & MAP BCTS & temperature + bias & 50 & 0.448 & 0.704 & 1.00 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}

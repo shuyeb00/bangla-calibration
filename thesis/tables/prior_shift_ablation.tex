@@ -3,6 +3,7 @@
 \small
 \caption{Batch calibration under class-prior shift (offensive source tasks, BD-SHS and OLID; every target resampled to a positive share $\pi_+$; means over runs, targets and 5 resamples; macro-F1 / NLL). Uniform batch calibration assumes $\pi_+ = 0.5$; a prior estimated from 50 labels removes that assumption and is close to the true-prior reference.}
 \label{tab:prior-shift-ablation}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
 Method & $\pi_+ = 0.1$ & $\pi_+ = 0.3$ & $\pi_+ = 0.5$ & $\pi_+ = 0.7$ & $\pi_+ = 0.9$ \\
@@ -14,4 +15,5 @@ Batch calibration + true prior (reference) & 0.661 / 0.26 & 0.692 / 0.46 & 0.699
 MAP BCTS (50 labels) & 0.665 / 0.25 & 0.686 / 0.45 & 0.709 / 0.51 & 0.636 / 0.46 & 0.572 / 0.26 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
