@@ -169,7 +169,10 @@ nested, and paired over items for comparisons on identical items (2{,}000 resamp
 AUROC). Few-label methods use 20 resamples of the labelled target items, drawn with a fixed seed per $(n,
 \text{resample})$ so that every system sees the same items. Five-versus-five permutation tests have a smallest
 attainable $p$ of $2/252$, so a family of 120 such tests cannot reach significance after correction; we report it
-descriptively.
+descriptively. In the two LLM recalibration families the sign-flip test treats the 16 systems (four LLMs, four
+prompting settings) as exchangeable, although they come from four models. The hierarchical bootstrap intervals, which
+resample models, exclude zero for all 16 significant contrasts on the original targets but for only 24 of the 26 on the
+natural targets; the two exceptions are NLL contrasts on MixTox-SA with 25 labels.
 
 \input{../thesis/tables/contrast_families_holm}
 

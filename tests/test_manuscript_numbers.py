@@ -679,6 +679,22 @@ claim("appendix", "Few-label methods use 20 resamples", sr.N_RESAMPLES)
 claim("appendix", "smallest attainable $p$ of $2/252$, so a family of 120 such tests", None, None,
       int((_cs.family == "architectures").sum()))
 
+
+def llm_family_ci(family: str) -> tuple:
+    d = _cs[(_cs.family == family) & (_cs.significant_holm_05 == 1)]
+    return len(d), int(((d.ci_low > 0) | (d.ci_high < 0)).sum()), int(d.n.max())
+
+
+_llm_o, _llm_n = llm_family_ci("llm_recalibration"), llm_family_ci("llm_recalibration_natural")
+_llm_exc = _cs[(_cs.family == "llm_recalibration_natural") & (_cs.significant_holm_05 == 1)
+               & (_cs.ci_low <= 0) & (_cs.ci_high >= 0)]
+assert set(_llm_exc.condition) == {"shift_d5_mixtox_test"} and set(_llm_exc.metric) == {"nll"}
+assert set(_llm_exc.method) == {"map_bcts_n25"}
+claim("appendix", "treats the 16 systems (four LLMs, four prompting settings)", _llm_o[2])
+claim("appendix", "exclude zero for all 16 significant contrasts on the original targets but for only 24 of the 26 on the "
+      "natural targets", _llm_o[0] if _llm_o[0] == _llm_o[1] else -1, _llm_n[1], _llm_n[0])
+claim("appendix", "on MixTox-SA with 25 labels", 25)
+
 # Appendix: additional results.
 _ls_all = _obj_ts[(_obj_ts.contrast == "label_smoothing - cross_entropy") & (_obj_ts.task == "offensive")
                   & (_obj_ts.condition != "test")]
