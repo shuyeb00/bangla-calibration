@@ -8,7 +8,7 @@ from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.multitest import multipletests
 
 from src.config import DATA_DIR, EVALUATION_TABLES_DIR, FT_METHODS, MODELS, RUNS_DIR, SEEDS, TASKS, \
-    is_natural_codemixed, non_converged_runs
+    is_cross_definition, is_natural_codemixed, non_converged_runs
 from src.run_cache import load_cache, save_cache
 
 
@@ -140,7 +140,7 @@ def run_shift_significance_for_run(
     records = []
     for f in sorted(run_dir.glob("shift_*_logits.npy")):
         cond_name = f.name[: -len("_logits.npy")]
-        if cond_name.endswith("_cal") or is_natural_codemixed(cond_name):
+        if cond_name.endswith("_cal") or is_natural_codemixed(cond_name) or is_cross_definition(cond_name):
             continue
 
         cond_probs = softmax(np.load(f), axis=1)

@@ -54,6 +54,7 @@ from src.config import (
     TASKS,
     get_natural_codemixed_paths,
     get_shift_conditions_paths,
+    is_cross_definition,
     is_natural_codemixed,
     natural_codemixed_scope,
     non_converged_runs,
@@ -97,7 +98,7 @@ def test_conditions(run_dir: Path, natural_codemixed: bool = None) -> list:
         natural_codemixed = natural_codemixed_scope()
     names = [p.name[: -len("_logits.npy")] for p in sorted(run_dir.glob("*_logits.npy"))]
     return [n for n in names if n not in ("train", "val", "cal") and not n.endswith("_cal")
-            and is_natural_codemixed(n) == natural_codemixed]
+            and not is_cross_definition(n) and is_natural_codemixed(n) == natural_codemixed]
 
 
 def target_cal_name(condition: str):

@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from src.config import is_natural_codemixed
+from src.config import is_cross_definition, is_natural_codemixed
 
 import pandas as pd
 
@@ -22,7 +22,8 @@ MANIFEST = "cache_manifest.json"
 
 def run_fingerprint(run_dir: Path) -> str:
     h = hashlib.sha1()
-    logits = [f for f in sorted(run_dir.glob("*_logits.npy")) if not is_natural_codemixed(f.name)]
+    logits = [f for f in sorted(run_dir.glob("*_logits.npy"))
+              if not (is_natural_codemixed(f.name) or is_cross_definition(f.name))]
     for f in [run_dir / "config.json", *logits]:
         if f.exists():
             h.update(f.name.encode())

@@ -203,6 +203,16 @@ def is_natural_codemixed(split: str) -> bool:
     return split.startswith(NATURAL_CODEMIXED_PREFIXES)
 
 
+# English OLID scores of the BD-SHS encoders (cross-definition test, src/cross_definition_analysis.py). They are
+# stored in the same run folders but are no condition of the Bangla tasks, so every module that discovers splits
+# from the files of a run skips them.
+CROSS_DEFINITION_PREFIXES = ("shift_olid_english_",)
+
+
+def is_cross_definition(split: str) -> bool:
+    return split.startswith(CROSS_DEFINITION_PREFIXES)
+
+
 def use_natural_codemixed_scope(enabled: bool = True) -> None:
     _SCOPE["natural_codemixed"] = bool(enabled)
 
