@@ -1,3 +1,29 @@
 \section{Discussion and Limitations}
 \label{sec:discussion}
-[Draft pending.]
+
+\paragraph{What practitioners should do.}
+Detect shift with a domain classifier, not with the model's confidence. After a detected shift, correct the class bias
+rather than only the temperature. Without labels, batch calibration is appropriate only when the target classes are
+believed to be roughly balanced; otherwise about 50 labels estimate the prior or fit MAP BCTS. The same 50 labels also
+test whether the ranking survived, choose between the fine-tuned encoder and an LLM, and certify coverage and the
+false-negative rate. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+
+\paragraph{Limitations.}
+\begin{itemize}
+  \item \emph{Scope.} Two classification tasks; the main grid is Bangla, the cross-source replication uses three
+  architectures per source; encoders up to 560M parameters and LLMs up to 9B parameters. Generative tasks and larger
+  or proprietary models are not covered.
+  \item \emph{Regime thresholds} were set after inspecting the results; the regime names and the reading rule were
+  fixed in advance, and a leave-source-out test shows that a label-free threshold does not transfer.
+  \item \emph{Data.} The Sylheti set is small (401 items) and was translated and label-checked by the authors; a blind
+  re-annotation reproduced the source labels only at the level of the source dataset's own subjectivity. OffMix-3L
+  carries strong writing-style artifacts. The Spanglish calibration and test splits come from different releases, so
+  their exchangeability is not guaranteed.
+  \item \emph{Statistics.} Many results are descriptive means over runs; formal tests with multiplicity control are
+  reported for pre-defined families. Five-versus-five designs cannot reach significance after correction in large
+  families and are reported descriptively.
+  \item \emph{Guarantees} are marginal over the target calibration and test items and assume exchangeability within the
+  target; when the same items decide whether to deploy, the coverage bound holds jointly with the deployment event.
+  \item \emph{Contamination.} No item-level memorisation was detected, but exposure of the LLMs to the public test sets
+  cannot be excluded.
+\end{itemize}

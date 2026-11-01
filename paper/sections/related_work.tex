@@ -1,3 +1,31 @@
 \section{Related Work}
 \label{sec:related-work}
-[Draft pending.]
+
+\paragraph{Calibration under distribution shift.}
+Modern networks are overconfident and temperature scaling is a strong post-hoc repair in domain
+\citep{guo2017calibration}, but calibration degrades under shift \citep{ovadia2019trust}; for pre-trained transformers
+\citet{desai2020calibration} found temperature scaling effective in and out of domain on English tasks, and
+\citet{ahuja2022multilingual} report miscalibration of multilingual models in cross-lingual transfer. We add an analysis
+that separates temperature, threshold and ranking failures and shows that the second dominates under language-variety
+shift.
+
+\paragraph{Label shift and bias correction.}
+Prior adjustment by EM \citep{saerens2002adjusting}, black-box shift estimation \citep{lipton2018bbse} and bias-corrected
+calibration \citep{alexandari2020maximum} address changes of the class prior with a fixed class-conditional
+distribution, and posterior re-calibration interpolates towards a target prior \citep{tian2020posterior}. For prompted
+LLMs, contextual calibration \citep{zhao2021calibrate} and batch calibration \citep{zhou2024batch} estimate a bias
+without labels. Our targets violate the label-shift assumption, EM degenerates on them, and batch calibration works only
+near a balanced target; a few labels make the bias correction safe.
+
+\paragraph{Conformal prediction and risk control.}
+Split conformal prediction and conformal risk control give finite-sample guarantees under exchangeability
+\citep{angelopoulos2024crc}; weighted conformal prediction handles covariate shift with known density ratios
+\citep{tibshirani2019weighted}, which our near-perfectly separable shifts do not admit. Choosing among models with the
+same calibration data breaks the guarantee unless corrected \citep{liang2024conformal}; we use Bonferroni and
+sample-splitting corrections.
+
+\paragraph{Code-mixing, dialects and cross-dataset offensive-language detection.}
+Code-mixed benchmarks \citep{khanuja2020gluecos, aguilar2020lince, patwa2020sentimix, goswami2023offmix} and dialect
+resources document accuracy drops, and hate-speech detectors are known to generalise poorly across datasets partly
+because definitions differ \citep{yin2021generalisable, fortuna2021generalize}. We show by intervention that such a
+definition mismatch, not language coverage alone, produces the most severe calibration failure in our study.

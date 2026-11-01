@@ -1,3 +1,9 @@
 \section{Conclusion}
 \label{sec:conclusion}
-[Draft pending.]
+
+Across dialects, scripts, code-mixing and languages, and across four source tasks, the dominant failure of fine-tuned
+text classifiers under language-variety shift is a shifted decision threshold, not a wrong temperature. Temperature
+scaling, the default repair, cannot fix it; a bias correction can, provided its assumption about the target class prior
+is checked with a few labels. Genuine collapse of the ranking is rare, is caused here by a mismatch of label
+definitions, and cannot be repaired by any post-hoc map; detecting it needs labels, and about 50 suffice to choose
+between recalibrating, routing and abstaining with stated guarantees.

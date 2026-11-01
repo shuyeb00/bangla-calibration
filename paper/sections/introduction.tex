@@ -1,3 +1,36 @@
 \section{Introduction}
 \label{sec:introduction}
-[Draft pending.]
+
+Text classifiers for low-resource languages are trained on one variety of a language and deployed on many: regional
+dialects, romanised spellings, code-mixed posts that switch between two or three languages and scripts. Confidence
+scores are what downstream decisions rest on, from abstaining on uncertain items to setting the threshold of a
+moderation system. The standard repair for miscalibrated confidence is temperature scaling \citep{guo2017calibration},
+fitted on a source calibration split or, when a few target labels are available, on the target.
+
+We show that under language-variety shift this repair usually addresses the wrong problem. We fine-tune seven encoder
+families on Bangla offensive-language and sentiment data (five seeds each), compare them with four instruction-tuned
+LLMs on identical items, and evaluate them on regional dialects (including a Sylheti set we translated), natural
+Bangla--English code-mixing in two scripts, tri-lingual code-mixing, and other languages. To test whether the findings
+depend on the source language, we repeat the analysis with encoders trained on English (OLID) and on Hindi--English
+code-mixed sentiment (SentiMix Hinglish). Across the four source tasks the failures fall into a small number of
+regimes, and the most common one is not a change of temperature but a shift of the decision threshold with the
+ranking largely intact.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item \textbf{A regime map across four source languages} (Section~\ref{sec:results-regimes}). Dialect shifts need no
+  correction; temperature shifts are rare and small; the common failure, found for every source task, is a threshold
+  shift with retained ranking; collapse of the ranking occurs once, under a mismatch of label definitions.
+  \item \textbf{Temperature is the wrong knob} (Section~\ref{sec:results-threshold}). Under threshold shift, temperature
+  scaling with target labels lowers the log-loss but cannot change a decision, whereas a label-free bias correction
+  raises macro-F1 by about 0.09 on average. The label-free correction assumes a balanced target and is harmful when
+  the target class prior is skewed, as in content moderation; a prior estimated from 50 labels repairs it.
+  \item \textbf{Causal evidence for the collapse} (Section~\ref{sec:results-causes}). Changing only the script of the
+  same comments moves the mean encoder AUROC by up to 0.22, and training the same architectures on the label definition of the
+  target dataset restores its ranking (pre-registered difference-in-differences $+0.378$). The code-mixing
+  collapse of Bangla encoders on OffMix-3L is largely a label-definition mismatch on an artifact-laden test set.
+  \item \textbf{A label-efficient triage procedure with guarantees} (Section~\ref{sec:shift-triage}). Shift is detected
+  without labels; about 50 target labels decide between recalibrating, routing to an LLM whose ranking survives, and
+  abstaining, with finite-sample coverage and false-negative-rate guarantees after selection.
+\end{itemize}
+Code, configurations and all derived tables are released.

@@ -1,1 +1,11 @@
-[Abstract pending.]
+Text classifiers for low-resource languages are deployed on dialects, romanised spellings and code-mixed text that
+differ from their training data, and their confidence is usually repaired with temperature scaling. We study seven
+encoder families and four instruction-tuned LLMs on Bangla offensive-language and sentiment tasks, evaluated on
+regional dialects, natural and tri-lingual code-mixing and other languages, and replicate the analysis with encoders
+trained on English and on Hindi--English code-mixed data. Across four source tasks, the dominant failure is a shift of
+the decision threshold with the ranking largely retained; temperature scaling cannot change a single decision there,
+while a bias correction can, and a label-free bias correction becomes harmful when the target class prior is skewed
+unless about 50 labels inform it. A collapse of the ranking occurs once, and two interventions trace it to a mismatch of
+label definitions rather than to language coverage alone. We turn these findings into a label-efficient triage
+procedure that detects shift without labels and uses about 50 target labels to recalibrate, route to an LLM or abstain,
+with finite-sample guarantees on coverage and false-negative rate after selection.
