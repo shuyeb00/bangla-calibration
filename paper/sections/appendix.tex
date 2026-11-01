@@ -1,3 +1,45 @@
+\section{Proofs}
+\label{sec:appendix-proofs}
+
+\paragraph{Proposition~\ref{prop:impossibility}.}
+Conditionally on $S = s$, the expected log-loss of $q = g(s)$ is the cross-entropy
+$\mathbb{E}[-\log q_Y \mid S = s] = H(Q(\cdot \mid s)) + \mathrm{KL}(Q(\cdot \mid s) \,\|\, q) \ge H(Q(\cdot \mid s))$,
+with equality if and only if $q = Q(\cdot \mid s)$. Taking expectations over $S$ gives the bound. Under independence
+$Q(\cdot \mid s) = \pi_Q$ for almost every $s$, so the bound equals $H_Q(Y)$ and is attained by the constant $\pi_Q$.
+For the selective error, independence gives $Q(Y = h(S) \mid S) = \pi_Q(h(S)) \le \max_k \pi_Q(k)$; conditioning on
+$A \in \sigma(S)$ preserves the bound. $\square$
+
+\paragraph{Proposition~\ref{prop:shrinkage}.}
+With $n\hat L_n(\theta) \approx \mathrm{const} + \tfrac{n}{2}(\theta - \hat\theta_n)^\top F (\theta - \hat\theta_n)$, the
+stationarity condition of the MAP objective is $nF(\theta - \hat\theta_n) + \Sigma^{-1}(\theta - \theta_P) = 0$, which
+gives $\hat\theta_{\mathrm{MAP}} = W_n\hat\theta_n + (I - W_n)\theta_P$ with $W_n = (nF + \Sigma^{-1})^{-1}nF$. In the
+scalar case $\hat\theta_{\mathrm{MAP}} - \theta^* = w_n(\hat\theta_n - \theta^*) - (1 - w_n)\delta$, so with
+$\mathbb{E}[\hat\theta_n - \theta^*] \approx 0$ and $\operatorname{Var}\hat\theta_n \approx \tau^2/n$,
+$\mathrm{MSE}(\hat\theta_{\mathrm{MAP}}) = (1 - w_n)^2\delta^2 + w_n^2\tau^2/n$. This is below $\tau^2/n$ if and only if
+$\delta^2 < \frac{\tau^2}{n}\frac{1 + w_n}{1 - w_n} = \frac{\tau^2}{n} + 2\sigma^2$. The source estimate $\theta_P$ is
+treated as fixed, and the prior variance is a cross-task plug-in rather than an estimate from the target population.
+$\square$
+
+\paragraph{Proposition~\ref{prop:survival}.}
+Under exchangeability and independence of score and label, the joint law of the scores given the labels is invariant
+under permutations, so the observed AUROC and its permuted copies are exchangeable and the add-one Monte Carlo p-value
+is valid \citep{phipson2010permutation}. The AUROC is a two-sample U-statistic with kernel in $[0, 1]$; Hoeffding's
+inequality for U-statistics \citep{hoeffding1963} gives $\Pr(\hat A - A \ge t) \le \exp(-2mt^2)$, and the bound
+follows. It also holds for sampling without replacement from a finite calibration pool, relative to the pool AUROC.
+For three classes we use only the permutation test, applied to the macro one-vs-rest AUROC. $\square$
+
+\paragraph{Proposition~\ref{prop:selection}.}
+Each set calibrated at level $\alpha/M$ on exchangeable items with a fixed score covers with probability at least
+$1 - \alpha/M$; the conformal quantile is finite when $\lceil (n+1)(1 - \alpha/M) \rceil \le n$, i.e.\
+$n \ge M/\alpha - 1$. For any choice $\hat\jmath$, $\{Y_{n+1} \notin C_{\hat\jmath}\} \subseteq \bigcup_j \{Y_{n+1}
+\notin C_j\}$, and the union bound gives miscoverage at most $\alpha$. For risk control with losses in $[0, 1]$,
+$L_{\hat\jmath} \le \sum_j L_j$ pointwise, so $\mathbb{E}[L_{\hat\jmath}] \le M \cdot \alpha/M$. For the FNR the
+threshold is the $\lfloor (\alpha/M)(n_1 + 1) - 1\rfloor$-th smallest positive score, which exists only if
+$n_1 \ge M/\alpha - 1$. With sample splitting the chosen candidate is independent of the calibration part and the
+single-candidate guarantee applies conditionally on the choice. When the same items also decide whether to deploy at
+all, the bound applies to the joint event of deploying and missing, so conditionally on deployment it is
+$\alpha / \Pr(\text{deploy})$. $\square$
+
 \section{Additional Results}
 \label{sec:appendix-results}
 [Draft pending.]
