@@ -4,6 +4,7 @@
 \setlength{\tabcolsep}{3pt}
 \caption{Shift regimes across four source tasks (means over converged cross-entropy runs, each after its own source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_t/T_s$: oracle temperature ratio from all target calibration labels ($^{\dagger}$ fit at the upper bound in most runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; Expl.: share of target label entropy explained by target-TS probabilities ($\le 0$: no better than a constant); F1: macro-F1 after source TS; $\Delta$F1: change from label-free batch calibration on the unlabeled target calibration split and from MAP bias-corrected TS with 50 target labels (20 resamples). Best: method with the best mean macro-F1 / NLL; differences below 0.005 are practically ties.}
 \label{tab:regime-map-source-transfer}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrrrrrrll}
 \toprule
 Source & Target & AUROC & Ret. & $\log T^{*}_t/T_s$ & TV & Expl. & F1 & $\Delta$F1 batch & $\Delta$F1 BCTS & Best F1 & Best NLL \\
@@ -34,4 +35,5 @@ SentiMix (hi-en) & SentMix-3L & 0.818 & 0.95 & +0.74 & 0.33 & 0.06 & 0.434 & +0.
  & Spanglish & 0.648 & 0.75 & +0.81 & 0.40 & -0.01 & 0.351 & +0.091 & +0.023 & batch calib. & MAP BCTS \\
 \bottomrule
 \end{tabular}
+}
 \end{table*}

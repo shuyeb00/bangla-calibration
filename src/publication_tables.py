@@ -54,17 +54,20 @@ def pvalue(p) -> str:
 
 
 def tabular(columns: str, header: list, rows: list, caption: str, label: str, size: str = r"\small",
-            groups: list = None, env: str = "table", colsep: str = None) -> str:
+            groups: list = None, env: str = "table", colsep: str = None, fit_width: bool = False) -> str:
     lines = [rf"\begin{{{env}}}[t]", r"\centering", size]
     if colsep:
         lines.append(rf"\setlength{{\tabcolsep}}{{{colsep}}}")
-    lines += [rf"\caption{{{caption}}}", rf"\label{{{label}}}", rf"\begin{{tabular}}{{{columns}}}", r"\toprule",
+    lines += [rf"\caption{{{caption}}}", rf"\label{{{label}}}"]
+    if fit_width:
+        lines.append(r"\resizebox{\textwidth}{!}{%")
+    lines += [rf"\begin{{tabular}}{{{columns}}}", r"\toprule",
               " & ".join(header) + r" \\", r"\midrule"]
     for i, row in enumerate(rows):
         if groups and i in groups and i > 0:
             lines.append(r"\midrule")
         lines.append(" & ".join(row) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}", rf"\end{{{env}}}", ""]
+    lines += [r"\bottomrule", r"\end{tabular}"] + (["}"] if fit_width else []) + [rf"\end{{{env}}}", ""]
     return "\n".join(lines)
 
 
@@ -92,7 +95,7 @@ def regime_map_table() -> str:
                r"macro-F1 after source TS; $\Delta$F1: change from label-free batch calibration on the unlabeled "
                r"target calibration split and from MAP bias-corrected TS with 50 target labels (20 resamples). Best: method "
                r"with the best mean macro-F1 / NLL; differences below 0.005 are practically ties.")
-    return tabular("llrrrrrrrrll", header, rows, caption, "tab:regime-map-source-transfer", r"\scriptsize", groups, "table*", "3pt")
+    return tabular("llrrrrrrrrll", header, rows, caption, "tab:regime-map-source-transfer", r"\scriptsize", groups, "table*", "3pt", True)
 
 
 def cross_definition_table() -> str:
