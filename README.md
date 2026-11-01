@@ -97,3 +97,5 @@ python -m src.analysis_and_plots
 python -m src.publication_figures
 python -m src.publication_tables
 ```
+
+`bash reproduce.sh tables` rebuilds the publication figures, LaTeX tables and contrast statistics from the committed tables and runs the unit tests (`tests/`) in about two minutes on a CPU; the result is byte-identical to the repository. `bash reproduce.sh outputs` regenerates every analysis table from the saved run and LLM outputs. `requirements-analysis.txt` pins the CPU analysis environment (Python 3.11).
