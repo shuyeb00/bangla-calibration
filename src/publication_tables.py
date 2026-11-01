@@ -7,6 +7,7 @@ Tables (thesis/tables/):
   shift_triage_policies.tex          deployment policies at n target labels, original and held-out natural conditions
   correction_ablation_by_regime.tex  which component of the correction matters per regime (temperature, bias, labels)
   prior_shift_ablation.tex           batch calibration vs a labelled prior estimate vs MAP BCTS under class-prior shift
+  training_objectives.tex            label smoothing and focal loss vs cross-entropy, before and after temperature scaling
 
     python -m src.publication_tables
 """
@@ -127,7 +128,7 @@ def cross_definition_table() -> str:
                r"mDeBERTa-v3; 5 seeds each). Differences are OLID-trained minus BD-SHS-trained; CIs from a paired "
                r"item bootstrap; $p$ from a stratified permutation test, Holm-adjusted over the seven contrasts. The "
                r"last row is the pre-registered difference-in-differences.")
-    return tabular("lrrrcr", header, rows, caption, "tab:cross-definition-contrasts")
+    return tabular("lrrrcr", header, rows, caption, "tab:cross-definition-contrasts", colsep="4pt")
 
 
 def contrast_families_table() -> str:
@@ -214,10 +215,36 @@ def prior_shift_ablation_table() -> str:
     return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small", fit_width=True)
 
 
+def training_objectives_table() -> str:
+    c = pd.read_csv(TABLES / "contrast_statistics.csv")
+    c = c[c.family == "objectives"]
+    cells = [("ece_15", "uncalibrated"), ("ece_15", "temperature_scaling"), ("nll", "uncalibrated"),
+             ("nll", "temperature_scaling"), ("auroc", "uncalibrated")]
+    names = {"label_smoothing - cross_entropy": "Label smoothing", "focal_loss - cross_entropy": "Focal loss"}
+    rows, groups = [], []
+    for task, condition, label in [("offensive", "test", "BD-SHS test"), ("offensive", "shift_d2_test", "OffMix-3L"),
+                                   ("sentiment", "test", "SentNoB test"), ("sentiment", "shift_d2_test", "SentMix-3L")]:
+        groups.append(len(rows))
+        for k, contrast in enumerate(names):
+            d = c[(c.task == task) & (c.condition == condition) & (c.contrast == contrast)]
+            row = [label if k == 0 else "", names[contrast]]
+            for metric, method in cells:
+                x = d[(d.metric == metric) & (d.method == method)].iloc[0]
+                row.append(num(x.effect, 3, True) + (r"$^{*}$" if x.p_holm < 0.05 else ""))
+            rows.append(row)
+    header = ["Condition", "Objective", "ECE", "ECE after TS", "NLL", "NLL after TS", "AUROC"]
+    caption = (r"Training-time calibration: difference from cross-entropy training (same model and seed; three base "
+               r"encoders, full fine-tuning, 5 seeds). Negative ECE and NLL differences are improvements. $^{*}$: "
+               r"significant after Holm correction over the 100 contrasts of the family (exact sign-flip test). The "
+               r"objectives improve uncalibrated ECE and NLL under shift, but not after source temperature scaling, and "
+               r"leave the ranking unchanged.")
+    return tabular("llrrrrr", header, rows, caption, "tab:training-objectives", r"\small", groups)
+
+
 TABLE_BUILDERS = {"regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
                   "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
                   "correction_ablation_by_regime": correction_ablation_table,
-                  "prior_shift_ablation": prior_shift_ablation_table}
+                  "prior_shift_ablation": prior_shift_ablation_table, "training_objectives": training_objectives_table}
 
 
 def main():

@@ -1,29 +1,38 @@
 \section{Discussion and Limitations}
 \label{sec:discussion}
 
-\paragraph{What practitioners should do.}
+\paragraph{What to do in practice.}
 Detect shift with a domain classifier, not with the model's confidence. After a detected shift, correct the class bias
-rather than only the temperature. Without labels, batch calibration is appropriate only when the target classes are
-believed to be roughly balanced; otherwise about 50 labels estimate the prior or fit MAP BCTS. The same 50 labels also
-test whether the ranking survived, choose between the fine-tuned encoder and an LLM, and certify coverage and the
-false-negative rate. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+rather than only the temperature. Without labels, batch calibration is appropriate only if the target classes are
+believed to be roughly balanced; otherwise about 50 labels suffice to estimate the prior or to fit MAP BCTS. The same 50
+labels test whether the ranking survived, choose between the fine-tuned encoder and an LLM, and certify coverage and
+the false-negative rate. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+
+\paragraph{Why thresholds move.}
+Our evidence locates the failure but does not explain why the threshold moves. One plausible account is that
+text the encoder cannot read well receives scores close to those of bland in-domain text, which pushes its predictions
+towards the non-offensive class. The script intervention is consistent with this account: the BD-SHS encoders label 16.4\% of the Banglish Chaos comments as toxic and
+26.1\% of the same comments in Bangla script, against 50\% in the gold labels. A mechanistic test is left for future
+work.
 
 \paragraph{Limitations.}
 \begin{itemize}
-  \item \emph{Scope.} Two classification tasks; the main grid is Bangla, the cross-source replication uses three
-  architectures per source; encoders up to 560M parameters and LLMs up to 9B parameters. Generative tasks and larger
-  or proprietary models are not covered.
-  \item \emph{Regime thresholds} were set after inspecting the results; the regime names and the reading rule were
-  fixed in advance, and a leave-source-out test shows that a label-free threshold does not transfer.
-  \item \emph{Data.} The Sylheti set is small (401 items) and was translated and label-checked by the authors; a blind
-  re-annotation reproduced the source labels only at the level of the source dataset's own subjectivity. OffMix-3L
-  carries strong writing-style artifacts. The Spanglish calibration and test splits come from different releases, so
-  their exchangeability is not guaranteed.
-  \item \emph{Statistics.} Many results are descriptive means over runs; formal tests with multiplicity control are
-  reported for pre-defined families. Five-versus-five designs cannot reach significance after correction in large
+  \item \emph{Scope.} Two classification tasks; the main grid is Bangla, and the English and Hindi--English sources use
+  three architectures each, against seven for the Bangla sources. Encoders have up to 560M parameters and LLMs up to 9B;
+  generative tasks and proprietary models are not covered.
+  \item \emph{Regimes.} The regime names and the reading rule were fixed in advance, but the operational thresholds were
+  set after inspecting the results. The conclusion that matters for practice does not depend on where they are drawn:
+  in each of the 16 pairs whose predicted marginal moves by more than 0.10, label-free bias correction raises macro-F1
+  in at least 93\% of runs, while temperature scaling changes no decision anywhere.
+  \item \emph{Data.} The Sylheti set is small and was translated by the authors; a blind re-annotation matched the gold
+  labels about as well as the same annotators matched SentNoB in domain (Appendix~\ref{sec:appendix-data}). OffMix-3L
+  carries strong writing-style artifacts, so we rely on the natural code-mixed targets for claims about code-mixing. The
+  Spanglish calibration and test splits come from different releases, so their exchangeability is not guaranteed.
+  \item \emph{Statistics.} Many results are descriptive means over runs. Formal tests with multiplicity control are
+  reported for pre-defined families; five-versus-five comparisons cannot reach significance after correction in large
   families and are reported descriptively.
-  \item \emph{Guarantees} are marginal over the target calibration and test items and assume exchangeability within the
-  target; when the same items decide whether to deploy, the coverage bound holds jointly with the deployment event.
+  \item \emph{Guarantees} are marginal over target calibration and test items and assume exchangeability within the
+  target. When the same items also decide whether to deploy, the coverage bound holds jointly with the deployment event.
   \item \emph{Contamination.} No item-level memorisation was detected, but exposure of the LLMs to the public test sets
   cannot be excluded.
 \end{itemize}

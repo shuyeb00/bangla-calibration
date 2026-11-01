@@ -60,3 +60,7 @@ they are reported and excluded from aggregates by every analysis module.
 conformal coverage, conformal risk control of the false-negative rate and its minimum number of positives,
 bias-corrected temperature scaling, batch calibration and its prior-aware variant, E-AURC, the vectorised AUROC, the
 validity of the permutation test, Holm's procedure and the shrinkage condition of Proposition 2.
+
+`tests/test_manuscript_numbers.py` recomputes every number quoted in the text of `paper/sections/` from the committed
+tables (or, for design constants, from the code) and fails if a number differs from its rounded value or is not
+covered by a check. `python tests/test_manuscript_numbers.py` prints each passage with its recomputed values.

@@ -1,62 +1,73 @@
 \section{Label-Efficient Shift Triage}
 \label{sec:shift-triage}
 
-The regimes call for different actions: nothing, a temperature, a bias correction, or a different system. We turn this
-into a procedure with stated guarantees. Proofs are in Appendix~\ref{sec:appendix-proofs}.
+The regimes call for different actions: nothing, a bias correction, a different system, or no prediction at all. Only
+the presence of a shift can be detected without labels. We therefore turn the findings into a procedure that spends a
+small number of target labels on the decisions that need them, and state what it guarantees. Proofs are in
+Appendix~\ref{sec:appendix-proofs}.
 
 \begin{proposition}[No post-hoc map repairs an uninformative score]
 \label{prop:impossibility}
 Let $S = s(X)$ be the score of a fixed model and $g$ any measurable map from scores to the probability simplex. Then
 the target log-loss satisfies $\mathbb{E}_Q[-\log g(S)_Y] \ge H_Q(Y \mid S) = H_Q(Y) - I_Q(Y; S)$. If $Y$ and $S$ are
 independent under $Q$, no post-hoc map beats the constant predictor $\pi_Q$, and for any classifier $h(S)$ and any
-acceptance event $A \in \sigma(S)$ the selective error is at least $1 - \max_k \pi_Q(k)$.
+acceptance event $A \in \sigma(S)$ with $Q(A) > 0$ the selective error is at least $1 - \max_k \pi_Q(k)$.
 \end{proposition}
 
 \begin{proposition}[Shrinkage versus maximum likelihood]
 \label{prop:shrinkage}
-In a locally quadratic approximation with per-item Fisher information $F = \tau^{-2}$ and prior variance $\sigma^2$,
-the MAP estimate is the convex combination $w_n \hat\theta_n + (1 - w_n)\theta_P$ with
-$w_n = n\sigma^2 / (n\sigma^2 + \tau^2)$, and it has lower mean squared error than the maximum-likelihood estimate if
-and only if $\delta^2 < 2\sigma^2 + \tau^2/n$, where $\delta$ is the distance between the target optimum and the
-source estimate.
+In a locally quadratic approximation with per-item Fisher information $\tau^{-2}$ and prior variance $\sigma^2$, the MAP
+estimate is $w_n \hat\theta_n + (1 - w_n)\theta_P$ with $w_n = n\sigma^2 / (n\sigma^2 + \tau^2)$, and it has lower mean
+squared error than the maximum-likelihood estimate $\hat\theta_n$ if and only if $\delta^2 < 2\sigma^2 + \tau^2/n$, where
+$\delta$ is the distance between the target optimum and the source estimate $\theta_P$.
 \end{proposition}
 
 \begin{proposition}[Ranking-survival test]
 \label{prop:survival}
-For a score that is not fitted on the $n$ labelled target items, the Monte Carlo permutation p-value of the AUROC
-(with the add-one correction) is valid for the null of no association between score and label at every $n$; with
-$m = \min(n_1, n_0)$ labelled items per class, $\Pr(A \ge \hat A - \sqrt{\log(1/\delta)/(2m)}) \ge 1 - \delta$.
+For a score that is not fitted on the $n$ labelled target items, the Monte Carlo permutation p-value of the AUROC with the
+add-one correction is valid for the null hypothesis of no association between score and label, at every $n$. For $K = 2$
+and $m = \min(n_1, n_0)$ labelled items in the smaller class, $\Pr(A \ge \hat A - \sqrt{\log(1/\delta)/(2m)}) \ge 1 -
+\delta$.
 \end{proposition}
 
 \begin{proposition}[Coverage and risk control after selection]
 \label{prop:selection}
-Let $M$ candidate systems have fixed nonconformity scores. If each conformal set is calibrated on the same $n$ items at
-level $\alpha/M$, the set of any data-dependent choice covers with probability at least $1 - \alpha$; the same holds
-for conformal risk control of a loss in $[0,1]$. For the false-negative rate, calibrated on the positive items only, a
-non-trivial threshold needs at least $M/\alpha - 1$ labelled positives. If the choice and the calibration use disjoint
-parts of the labelled items, the guarantees hold at level $\alpha$ conditionally on the choice.
+Let $M$ candidate systems have fixed nonconformity scores. If each candidate's conformal set is calibrated on the same
+$n$ exchangeable items at level $\alpha/M$, the set of any data-dependent choice covers a new item with probability at
+least $1 - \alpha$; the same holds for conformal risk control of a loss in $[0, 1]$. For the false-negative rate,
+calibrated on the positive items, a threshold that does not flag every item requires at least $M/\alpha - 1$ labelled
+positives. If the choice and the calibration use disjoint parts of the labelled items, the guarantees hold at level
+$\alpha$ conditionally on the choice.
 \end{proposition}
+
+Proposition~\ref{prop:impossibility} explains why recalibration and abstention fail on OffMix-3L
+(Section~\ref{sec:results-systems}); Proposition~\ref{prop:shrinkage} explains why shrinkage helps on dialects, where
+the target optimum is near the source estimate, and loses to maximum likelihood under collapse, where it is unbounded.
 
 \paragraph{Procedure.}
 (1) Detect shift without labels with a character n-gram domain classifier; if a shift is detected, request $n$ target
-labels. (2) Test each candidate system (the encoder and an LLM) for ranking survival (Proposition~\ref{prop:survival},
-Holm over candidates at $\delta = 0.05$). (3) If no candidate survives, abstain: by
-Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold of these scores does
-better than ignoring the input. (4) Otherwise choose the survivor with the lowest log-loss after MAP BCTS, recalibrate
-it with MAP BCTS, and certify conformal sets and the FNR threshold either on all $n$ items at level $\alpha/M$
-(\emph{Bonferroni}) or on a held-out half at level $\alpha$ (\emph{split}).
+labels. (2) Test each candidate system, the fine-tuned encoder and an LLM, for ranking survival
+(Proposition~\ref{prop:survival}, Holm over candidates at $\delta = 0.05$). (3) If no candidate survives, abstain: by
+Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold of these scores is better
+than ignoring the input. (4) Otherwise choose the surviving candidate with the lowest penalised log-loss after MAP BCTS,
+recalibrate it with MAP BCTS, and certify the conformal sets and the FNR threshold either on all $n$ items at level
+$\alpha/M$ (\emph{Bonferroni}) or on a held-out half at level $\alpha$ (\emph{split}).
 
 \paragraph{Evaluation.}
-We evaluate the procedure on every shifted condition, every converged encoder run paired with each general LLM, and
-20 resamples of $n \in \{25, 50, 100\}$ target labels, against always using the encoder, always using the LLM, a router
-that reuses the same labels without correction for selection, and an oracle that picks the better system on the test
-split (Table~\ref{tab:shift-triage-policies}). With $n = 50$ the Bonferroni variant reaches macro-F1 0.794 on the
-original shifted conditions against 0.796 for the oracle, 0.788 for the reuse router, 0.715 for always-LLM and 0.658 for
-always-encoder, with coverage 0.962 and a share of deployments whose test coverage falls below 0.85 of 0.006 (reuse
-router 0.124, always-encoder 0.472). On the held-out natural code-mixed offensive targets it reaches 0.787 (oracle
-0.792) with that share at 0.004. With $n = 25$ and about twelve positives, the Bonferroni FNR threshold is vacuous and
-flags every item, as Proposition~\ref{prop:selection} predicts; the split variant pays for its conditional guarantee
-with abstention (up to 0.34 of resamples on the natural targets at $n = 25$). The guarantees therefore need about 50
-labelled target items in this design, which we report as the procedure's label requirement.
+We run the procedure on every shifted condition with a target calibration split, for every converged encoder run paired
+with each general LLM and 20 resamples of $n \in \{25, 50, 100\}$ target labels. It is compared with always using the
+encoder, always using the LLM, a router that reuses the same labels for choice and calibration without correction, and
+an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies}). With $n = 50$ on the
+original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, reuse router 0.788, always-LLM 0.715,
+always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
+always-encoder 0.472). On the held-out natural offensive targets, where the LLM is almost always the better system,
+always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant loses 0.006 of macro-F1 in exchange for
+coverage that falls below 0.85 in 0.004 of deployments instead of 0.081.
+
+The guarantees have a price that the numbers make explicit. Bonferroni-valid FNR control is conservative: on the
+original shifts it raises the FPR from 0.324 for the oracle to 0.543. With $n = 25$ and about twelve offensive items it
+flags every item, as Proposition~\ref{prop:selection} predicts. The split variant pays for its conditional guarantee
+with abstention, which reaches 0.34 of resamples on the natural offensive targets at $n = 25$. The procedure therefore needs about
+50 labelled target items in this design, and we state that as its label requirement.
 
 \input{../thesis/tables/shift_triage_policies}

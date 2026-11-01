@@ -1,53 +1,51 @@
-\section{Problem Setting}
+\section{What a Temperature Can and Cannot Repair}
 \label{sec:problem-setting}
 
-\paragraph{Classifiers, scores and shift.}
-A fine-tuned classifier maps an input $x$ to logits $z(x) \in \mathbb{R}^K$ over $K$ classes ($K = 2$ for offensive
-language, $K = 3$ for sentiment). It is trained on a labelled source distribution $P$ and deployed on a target
-distribution $Q$ of a different language variety: a regional dialect, a romanised or code-mixed register, or another
-language. We observe the source training, validation and calibration splits and, on the target, an unlabeled stream
-and possibly a small number $n$ of labelled calibration items. All target quantities are evaluated on a disjoint target
-test split.
+\paragraph{Setting.}
+A fine-tuned classifier maps an input $x$ to logits $z(x) \in \mathbb{R}^K$ ($K = 2$ for offensive language, $K = 3$
+for sentiment). It is trained on a source distribution $P$ and deployed on a target distribution $Q$ of another
+language variety. We observe labelled source splits and, on the target, unlabeled inputs and possibly $n$ labelled
+calibration items. Every target quantity is evaluated on a disjoint target test split.
 
-\paragraph{Post-hoc corrections.}
-Every correction we study is a map applied to the logits of a fixed model. Temperature scaling
-(TS; \citealp{guo2017calibration}) uses $\mathrm{softmax}(z/T)$ with $T$ fitted on the source calibration split
-(\emph{source TS}) or on target labels. TS is monotone in each logit difference and cannot change the predicted class.
-Bias-corrected temperature scaling (BCTS; \citealp{alexandari2020maximum}) uses $\mathrm{softmax}(z/T + b)$ and can
-move the decision threshold. With $n$ target labels we fit both by maximum a posteriori estimation around the source
-estimate (\emph{shrinkage TS} and \emph{MAP BCTS}; Gaussian priors whose variances are set from oracle deviations
-measured on the other task, so nothing is fitted on the evaluated target). Batch calibration
-\citep{zhou2024batch} needs no labels: it divides the source-TS probabilities by their mean over an unlabeled target
-batch and renormalises, which equalises the predicted class marginals and therefore assumes a uniform target class
-prior. Its prior-aware variant multiplies by a class prior estimated from the $n$ labels.
+\paragraph{Corrections.}
+All corrections are maps applied to the logits of a fixed model. Temperature scaling (TS; \citealp{guo2017calibration})
+predicts $\mathrm{softmax}(z/T)$, with $T$ fitted on the source calibration split (\emph{source TS}) or on target labels.
+Bias-corrected temperature scaling (BCTS; \citealp{alexandari2020maximum}) predicts $\mathrm{softmax}(z/T + b)$. With
+$n$ target labels we fit both by maximum a posteriori estimation, with Gaussian priors centred on the source estimates
+(\emph{shrinkage TS} and \emph{MAP BCTS}); the prior variances are the mean squared oracle deviations measured on the
+\emph{other} task, so nothing is fitted on the target being evaluated. Batch calibration \citep{zhou2024batch} needs no
+labels: it divides the source-TS probabilities by their mean over unlabeled target inputs and renormalises. This
+equalises the predicted class marginals and therefore assumes a uniform target class prior. Its prior-aware variant
+multiplies the result by a class prior estimated from the $n$ labels, a Saerens-type prior adjustment
+\citep{saerens2002adjusting}.
+
+\paragraph{What a temperature cannot change.}
+For every $T > 0$, $\mathrm{softmax}(z/T)$ preserves the order of the classes within an item, and for $K = 2$ it
+preserves the order of the scores across items, since the logit difference is divided by the same positive constant.
+Temperature scaling therefore changes no predicted class and, for $K = 2$, neither the AUROC nor any decision made by
+thresholding the score, including the thresholds of conformal risk control. A bias term $b$ moves the boundary between classes and changes
+decisions; it leaves the ranking of items intact for $K = 2$. A failure whose cause is the location of the decision
+threshold is therefore invisible to every temperature-only method, however many labels it is fitted on.
 
 \paragraph{Quantities that describe a shift.}
-For a model and a target we record, after source TS:
-(i) the \emph{ranking} AUROC of the scores (macro one-vs-rest for $K = 3$) and its \emph{retention}, the ratio to the
-in-domain AUROC;
+For each model and target we record, after source TS:
+(i) the ranking \emph{AUROC} (macro one-vs-rest for $K = 3$) and its \emph{retention}, the ratio to the in-domain AUROC;
 (ii) the \emph{oracle temperature ratio} $\log(T^{*}_{Q} / T_{P})$, where $T^{*}_{Q}$ maximises the likelihood of all
-target calibration labels (we flag fits that reach the upper bound $T = 20$, i.e.\ an unbounded optimum);
+target calibration labels, flagged when the fit reaches the bound $T = 20$, i.e.\ when the optimum is unbounded;
 (iii) the \emph{explained label entropy} $1 - \mathrm{NLL}_{Q}(\text{target TS}) / H(\pi_Q)$, where $\pi_Q$ is the
-target class prior; values $\le 0$ mean that even the oracle temperature is no better than predicting $\pi_Q$ for every
-input;
-(iv) the \emph{predicted-marginal shift}, the total variation between the predicted-label distribution on the target
-inputs and on the source calibration split, which needs no target labels.
+target class prior; a value $\le 0$ means that even the oracle temperature is no better than predicting $\pi_Q$ for
+every input;
+(iv) the \emph{predicted-marginal shift}, the total variation between the distribution of predicted labels on the
+target inputs and on the source calibration split, which needs no target labels; and, for comparison,
+(v) the total variation between the target and source class priors, which does.
 
 \paragraph{Regimes.}
-These quantities separate four regimes, which we named before the cross-source experiment:
+These quantities define four regimes, which we named before the cross-source experiments:
 \emph{no correction needed} (ranking and calibration transfer);
-\emph{temperature shift} (a finite change of the optimal temperature with a stable predicted marginal);
-\emph{threshold shift with retained ranking} (the ranking survives, but the predicted marginal moves and the decision
-threshold is wrong); and
-\emph{discrimination collapse} (the score carries no usable information about the target label; the oracle temperature
-diverges and target TS is no better than a constant). We add a fifth, \emph{weak ranking}, for targets where the ranking
-is above chance but target TS is still no better than a constant. The operational thresholds that assign targets to
-regimes were set after inspecting the results and are reported as such (Section~\ref{sec:results}).
-
-\paragraph{Why temperature can be the wrong knob.}
-Under collapse no post-hoc map of the score can beat the constant predictor at the target prior
-(Proposition~\ref{prop:impossibility}, Section~\ref{sec:shift-triage}), and abstaining on low-confidence inputs leaves
-the selective risk at the majority-class error. Under a threshold shift the ranking is intact but every
-temperature-only correction leaves the decisions unchanged; only a bias term or a different system can repair them.
-Distinguishing these regimes requires labels for collapse but not for presence of shift, which motivates the
-label-efficient triage procedure of Section~\ref{sec:shift-triage}.
+\emph{temperature shift} (a finite change of the optimal temperature with stable predicted proportions);
+\emph{threshold shift with retained ranking} (the ranking survives, but the predicted proportions move and a bias
+correction is needed to fix the decisions); and
+\emph{discrimination collapse} (the score carries no usable information about the target label: the oracle temperature
+diverges and target TS is no better than a constant). A fifth regime, \emph{weak ranking}, emerged from the data: the
+ranking is above chance, but target TS is still no better than a constant in most runs. The operational thresholds that
+assign pairs to regimes were set after inspecting the results, and we report them as such.
