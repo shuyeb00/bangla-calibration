@@ -79,6 +79,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/llm_membership_inference.py` | Contamination checks for the LLMs: Min-K% / Min-K%++ likelihood statistics with word-shuffled references and guided versus general instance completion |
 | `src/few_label_finetuning_analysis.py`, `src/target_demonstration_analysis.py`, `src/membership_inference_analysis.py` | Evaluation of few-label fine-tuning, of in-context learning with target demonstrations, and summary of the contamination checks |
 | `src/source_transfer_regimes.py` | Regime map across four source tasks (BD-SHS, SentNoB, English OLID, SentiMix Hinglish): ranking retention, oracle temperature ratio, predicted-marginal shift and the best label-free or 50-label correction per source and target |
+| `src/source_transfer_validation.py`, `src/prior_shift_stress_test.py` | Leave-source-out validation of the regime map, and batch calibration under resampled target class priors with a prior-aware variant |
 | `src/publication_figures.py`, `src/publication_tables.py` | Publication figures (PDF, PNG) and LaTeX tables generated from the committed tables only |
 | `thesis/figures/`, `thesis/tables/` | Figures and LaTeX tables |
 
