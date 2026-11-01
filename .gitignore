@@ -27,3 +27,6 @@ data/annotation/
 # Error-analysis samples and the duplicate list contain dataset texts.
 results/tables/**/error_analysis_sample_*.csv
 data/duplicate_exclusion_list.json
+
+# Release bundles of model outputs and the anonymised supplementary archive (built locally, uploaded elsewhere).
+release/

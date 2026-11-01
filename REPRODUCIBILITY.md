@@ -11,6 +11,25 @@ The study can be reproduced at three levels. Each level starts from the artefact
 Level 1 was checked on 2026-11-01: running it on a clean clone regenerates the committed figures and tables
 byte-for-byte.
 
+## Saved model outputs (level 2)
+The run and LLM outputs live in private storage during review. `python -m src.export_release_outputs export` bundles
+the logits and item indices of every converged encoder run and every LLM system, the few-label fine-tuning outputs and
+the contamination statistics into deterministic xz-compressed tar shards with a `MANIFEST.json` and `SHA256SUMS`. The
+bundle contains no dataset text and no labels: label arrays are removed and their SHA-256 is recorded, demonstration
+texts and rendered prompts are replaced by row numbers, and completion records keep only their scores. Training-split
+logits and hidden states are left out because no analysis reads them. The bundle will be deposited on Zenodo when the
+paper is accepted. To use it:
+
+1. prepare the datasets with the scripts in `data/DATA_SOURCES.md`;
+2. `python -m src.export_release_outputs restore --bundle <bundle directory>` verifies every shard, unpacks the files
+   into `results/grid_max_length_512/` and rebuilds each label array from the prepared splits, checking it against the
+   recorded hash;
+3. `bash reproduce.sh outputs`.
+
+For double-blind review, `python -m src.export_release_outputs export --anonymise --out release/outputs_anonymised`
+followed by `python -m src.build_supplementary_archive --outputs release/outputs_anonymised` writes an anonymised ZIP
+of the code, tables, figures and the output shards that fit within 100 MB.
+
 ## Environment
 - Analysis (levels 1 and 2): Python 3.11 with `requirements-analysis.txt` (numpy 1.26.4, scipy 1.14.0, pandas 2.2.2,
   scikit-learn 1.5.1, statsmodels 0.14.2, matplotlib 3.9.1, MAPIE 1.1.0, openpyxl 3.1.5, pytest). No GPU, torch or

@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 from src import config  # noqa: E402
 from src import shift_recalibration as sr  # noqa: E402
 from src import source_transfer_regimes as st  # noqa: E402
-from src.publication_tables import REGIMES, regime  # noqa: E402
+from src.publication_tables import regime  # noqa: E402
 
 SECTIONS = ROOT / "paper" / "sections"
 TABLES = ROOT / "results" / "tables" / "grid_max_length_512"
