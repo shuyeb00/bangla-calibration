@@ -174,7 +174,8 @@ def encoder_runs() -> list:
     runs = []
     for run_dir in sorted(p for p in (GRID_DIR / "runs").glob("*") if (p / "config.json").exists()):
         cfg = json.loads((run_dir / "config.json").read_text(encoding="utf-8"))
-        if (run_dir.name not in excluded and cfg.get("model_key") in MODELS
+        # Runs of the cross-definition source task (offensive_olid) share the run folder but not the label space.
+        if (run_dir.name not in excluded and cfg.get("task") in TASKS and cfg.get("model_key") in MODELS
                 and (cfg.get("objective") or "cross_entropy") == "cross_entropy"):
             runs.append({"dir": run_dir, "task": cfg["task"], "model": cfg["model_key"]})
     return runs
