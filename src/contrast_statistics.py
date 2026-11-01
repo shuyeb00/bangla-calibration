@@ -27,6 +27,14 @@ Family "llm_recalibration": for the general LLM systems (FORMAT_FAILURE excluded
   LLM_N_LABELS. Effect = mean paired difference over
   systems; exact two-sided sign-flip test over systems; hierarchical bootstrap CI over models, then
   prompting settings within model.
+Family "architectures": MuRIL and mDeBERTa-v3 against XLM-R-base (the multilingual base encoder of the same size),
+  full FT, cross-entropy, 5 vs 5 runs, exact two-sided permutation test; on the original conditions and on the
+  held-out natural code-mixed targets (SentiMix included). With 5 vs 5 runs the smallest attainable two-sided p is
+  2/252 = 0.0079, so no test of this 120-test family can survive Holm; its effects are reported descriptively.
+Families "recalibration_few_label_natural" and "llm_recalibration_natural": the contrasts of the families
+  "recalibration_few_label" and "llm_recalibration" on the held-out natural code-mixed targets (Code-mixed Chaos in
+  both scripts, MixTox-SA, SentiMix Hinglish and Spanglish), from the *_natural_codemixed tables.
+The added families draw from their own random streams, so the tests of the earlier families are unchanged.
 Holm-Bonferroni is applied within each family over all its (contrast, task, condition, metric) tests.
 
     python -m src.contrast_statistics                     (EVALUATION_GRID selects the grid)
@@ -51,6 +59,11 @@ SCALE_ENDPOINTS = [("macro_f1", "uncalibrated"), ("auroc", "uncalibrated"), ("ec
                    ("nll", "temperature_scaling")]
 SCALE_PAIRS = [("banglabert", "banglabert_large"), ("xlmr_base", "xlmr_large")]
 LARGE_RECIPE = "lr1e-05_warmup0.1"
+ARCHITECTURE_PAIRS = [("xlmr_base", "muril"), ("xlmr_base", "mdeberta")]
+NATURAL_CONDITIONS = {
+    "offensive": ["shift_d4_banglish_test", "shift_d4_banglish_bangla_script_test", "shift_d5_mixtox_test"],
+    "sentiment": ["shift_d6_hinglish_test", "shift_d7_spanglish_test"],
+}
 LABEL_FREE_METHODS = ["vector_scaling", "matrix_scaling", "isotonic", "importance_weighted_ts"]
 N_LABELS = ["10", "25", "50", "100"]
 B_SIGN_FLIP = 100_000
@@ -183,7 +196,29 @@ def recalibration_label_free_contrasts(lf: pd.DataFrame, rng) -> list:
     return rows
 
 
-def recalibration_few_label_contrasts(lf: pd.DataFrame, fl: pd.DataFrame, rng) -> list:
+def architecture_contrasts(lf: pd.DataFrame, conditions: dict, rng) -> list:
+    rows = []
+    for task, conds in conditions.items():
+        for condition in conds:
+            for metric, method in SCALE_ENDPOINTS:
+                s = lf[(lf.task == task) & (lf.condition == condition) & (lf.method == method)
+                       & (lf.ft_method == "full_ft") & (lf.objective == "cross_entropy")]
+                for reference, model in ARCHITECTURE_PAIRS:
+                    ref, arch = s[s.model == reference][metric].to_numpy(), s[s.model == model][metric].to_numpy()
+                    if not len(ref) or not len(arch):
+                        continue
+                    effect, p = stratified_permutation_p([(ref, arch)])
+                    boot = np.array([arch[rng.integers(0, len(arch), len(arch))].mean()
+                                     - ref[rng.integers(0, len(ref), len(ref))].mean() for _ in range(B_BOOTSTRAP)])
+                    rows.append({"family": "architectures", "contrast": f"{model} - {reference}", "task": task,
+                                 "condition": condition, "metric": metric, "method": method,
+                                 "n": len(ref) + len(arch), "effect": effect, "ci_low": np.quantile(boot, 0.025),
+                                 "ci_high": np.quantile(boot, 0.975), "p_exact": p})
+    return rows
+
+
+def recalibration_few_label_contrasts(lf: pd.DataFrame, fl: pd.DataFrame, rng,
+                                      family: str = "recalibration_few_label") -> list:
     lf, fl = base_grid(lf), base_grid(fl)
     fl = fl.assign(n_labels=fl.n_labels.astype(str))
     key = ["model", "ft_method", "seed"]
@@ -194,14 +229,14 @@ def recalibration_few_label_contrasts(lf: pd.DataFrame, fl: pd.DataFrame, rng) -
         for n in N_LABELS:
             shrink = s[(s.method == "shrinkage_ts") & (s.n_labels == n)].set_index(key)["nll"]
             mle = s[(s.method == "mle_ts") & (s.n_labels == n)].set_index(key)["nll"]
-            rows.append(paired_row("recalibration_few_label", f"shrinkage_ts - temperature_scaling (n={n})", task,
+            rows.append(paired_row(family, f"shrinkage_ts - temperature_scaling (n={n})", task,
                                    condition, "nll", f"shrinkage_ts_n{n}", shrink, source, rng))
-            rows.append(paired_row("recalibration_few_label", f"shrinkage_ts - mle_ts (n={n})", task, condition,
+            rows.append(paired_row(family, f"shrinkage_ts - mle_ts (n={n})", task, condition,
                                    "nll", f"shrinkage_ts_n{n}", shrink, mle, rng))
     return rows
 
 
-def llm_recalibration_contrasts(per_system: pd.DataFrame, rng) -> list:
+def llm_recalibration_contrasts(per_system: pd.DataFrame, rng, family: str = "llm_recalibration") -> list:
     s = per_system[(per_system.kind == "llm") & ~per_system.model.isin(FORMAT_FAILURE)]
     s = s.assign(n_labels=s.n_labels.astype(str))
     key = ["model", "setting"]
@@ -217,7 +252,7 @@ def llm_recalibration_contrasts(per_system: pd.DataFrame, rng) -> list:
                 for metric in ("nll", "macro_f1") if reference == "temperature_scaling" else ("nll",):
                     d = (treated[metric] - references[reference][metric]).dropna()
                     lo, hi = hierarchical_bootstrap(d.to_numpy(), np.array([m for m, _ in d.index]), rng)
-                    rows.append({"family": "llm_recalibration", "contrast": f"map_bcts - {reference} (n={n})",
+                    rows.append({"family": family, "contrast": f"map_bcts - {reference} (n={n})",
                                  "task": task, "condition": condition, "metric": metric, "method": f"map_bcts_n{n}",
                                  "n": len(d), "effect": float(d.mean()), "ci_low": lo, "ci_high": hi,
                                  "share_runs_lower": float((d < 0).mean()), "p_exact": sign_flip_p(d.to_numpy())})
@@ -234,6 +269,19 @@ def main():
     llm_path = EVALUATION_TABLES_DIR / "llm_recalibration_per_system.csv"
     if llm_path.exists():
         rows += llm_recalibration_contrasts(pd.read_csv(llm_path, dtype={"n_labels": str}), np.random.default_rng(2))
+    rows += architecture_contrasts(lf, CONDITIONS, np.random.default_rng(3))
+    natural = {name: EVALUATION_TABLES_DIR / f"{name}_natural_codemixed.csv" for name in
+               ("shift_recalibration_label_free_per_run", "shift_recalibration_few_label_per_run",
+                "llm_recalibration_per_system")}
+    if all(path.exists() for path in natural.values()):
+        lf_nat = pd.read_csv(natural["shift_recalibration_label_free_per_run"])
+        fl_nat = pd.read_csv(natural["shift_recalibration_few_label_per_run"])
+        rows += architecture_contrasts(lf_nat, NATURAL_CONDITIONS, np.random.default_rng(4))
+        rows += recalibration_few_label_contrasts(lf_nat, fl_nat, np.random.default_rng(5),
+                                                  family="recalibration_few_label_natural")
+        rows += llm_recalibration_contrasts(pd.read_csv(natural["llm_recalibration_per_system"],
+                                                        dtype={"n_labels": str}), np.random.default_rng(6),
+                                            family="llm_recalibration_natural")
     table = pd.DataFrame(rows)
     table["p_holm"] = table.groupby("family", group_keys=False).p_exact.apply(holm)
     table["significant_holm_05"] = table.p_holm < 0.05
