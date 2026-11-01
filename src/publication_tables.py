@@ -5,6 +5,8 @@ Tables (thesis/tables/):
   cross_definition_contrasts.tex     pooled BD-SHS-trained vs OLID-trained contrasts with Holm-adjusted p-values
   contrast_families_holm.tex         size and number of Holm-significant tests of every contrast family
   shift_triage_policies.tex          deployment policies at n target labels, original and held-out natural conditions
+  correction_ablation_by_regime.tex  which component of the correction matters per regime (temperature, bias, labels)
+  prior_shift_ablation.tex           batch calibration vs a labelled prior estimate vs MAP BCTS under class-prior shift
 
     python -m src.publication_tables
 """
@@ -34,6 +36,20 @@ CONTRAST_NAMES = {"delta_bdshs_test": "BD-SHS test", "delta_olid_test": "OLID te
                   "delta_chaos_banglish": "Chaos (Banglish)", "delta_chaos_bangla_script": "Chaos (Bangla script)",
                   "delta_mixtox": "MixTox-SA",
                   "did_offmix3l_minus_chaos_banglish": "OffMix-3L minus Chaos (Banglish)"}
+
+
+REGIMES = {("offensive", "shift_d1_barishal_test"): "R0", ("offensive", "shift_d1_noakhali_test"): "R0",
+           ("sentiment", "shift_d1_test"): "R0", ("offensive", "shift_d1_chittagong_test"): "R1",
+           ("offensive_olid", "shift_bdshs_test"): "R1", ("sentiment", "shift_d7_spanglish_test"): "R3",
+           ("sentiment_hinglish", "shift_spanglish_test"): "R3", ("sentiment_hinglish", "shift_d1_test"): "R3",
+           ("offensive", "shift_d2_test"): "R4"}
+REGIME_NAMES = {"R0": "R0 no correction", "R1": "R1 temperature shift", "R2": "R2 threshold shift",
+                "R3": "R3 weak ranking", "R4": "R4 collapse"}
+
+
+def regime(source_task: str, condition: str) -> str:
+    """Regime assignment of finding 58; every other shifted cell is a threshold shift (R2)."""
+    return REGIMES.get((source_task, condition), "R2")
 
 
 def tex(text: str) -> str:
@@ -155,8 +171,53 @@ def triage_table(n_labels: int = 50) -> str:
     return tabular("llrrrrrr", header, rows, caption, "tab:shift-triage-policies", r"\small", groups)
 
 
+def correction_ablation_table() -> str:
+    p = pd.read_csv(TABLES / "source_transfer_per_run.csv")
+    p = p[p.condition != "test"].copy()
+    p["regime"] = [regime(a, b) for a, b in zip(p.source_task, p.condition)]
+    methods = [("source_ts", "Source TS", "none", "no"), ("shrinkage_ts", "Shrinkage TS", "temperature", "50"),
+               ("batch_calibration", "Batch calibration", "bias", "no"), ("map_bcts", "MAP BCTS", "temperature + bias", "50")]
+    rows, groups = [], []
+    for reg, d in p.groupby("regime"):
+        groups.append(len(rows))
+        for k, (m, name, part, labels) in enumerate(methods):
+            f1, nll = d[f"{m}_macro_f1"], d[f"{m}_nll"]
+            win = "--" if m == "source_ts" else num((nll < d.source_ts_nll).mean(), 2)
+            rows.append([REGIME_NAMES[reg] if k == 0 else "", str(len(d[["source_task", "condition"]].drop_duplicates())) if k == 0 else "", name, part,
+                         labels, num(f1.mean()), num(nll.mean()), win])
+    header = ["Regime", "Cells", "Correction", "Adjusts", "Labels", "Macro-F1", "NLL", "NLL $<$ source TS"]
+    caption = (r"Which part of the correction matters in each regime (all converged cross-entropy runs of the four "
+               r"source tasks; means over runs and cells of the regime). Shrinkage TS only rescales the temperature "
+               r"and cannot change the decision; batch calibration only shifts the class bias and uses no labels; "
+               r"MAP BCTS does both with 50 target labels. Last column: share of run $\times$ cell units whose NLL is "
+               r"below source TS. Cells: number of (source task, target) pairs in the regime, as assigned in the regime map.")
+    return tabular("lrlllrrr", header, rows, caption, "tab:correction-ablation-by-regime", r"\small", groups)
+
+
+def prior_shift_ablation_table() -> str:
+    p = pd.read_csv(TABLES / "prior_shift_stress_per_run.csv")
+    p = p[p.source_task.isin(["offensive", "offensive_olid"])]
+    methods = [("source_ts", "Source TS"), ("batch_calibration", "Batch calibration (uniform prior)"),
+               ("prior_batch_labels", "Batch calibration + prior from 50 labels"),
+               ("prior_batch_oracle", "Batch calibration + true prior (reference)"), ("map_bcts", "MAP BCTS (50 labels)")]
+    priors = ["pos0.1", "pos0.3", "pos0.5", "pos0.7", "pos0.9"]
+    rows = []
+    for m, name in methods:
+        d = p[p.method == m]
+        cells = [num(d[d.prior == q].macro_f1.mean()) + " / " + num(d[d.prior == q].nll.mean(), 2) for q in priors]
+        rows.append([name] + cells)
+    header = ["Method"] + [f"$\\pi_+ = {q[3:]}$" for q in priors]
+    caption = (r"Batch calibration under class-prior shift (offensive source tasks, BD-SHS and OLID; every target "
+               r"resampled to a positive share $\pi_+$; means over runs, targets and 5 resamples; macro-F1 / NLL). "
+               r"Uniform batch calibration assumes $\pi_+ = 0.5$; a prior estimated from 50 labels removes that "
+               r"assumption and is close to the true-prior reference.")
+    return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small")
+
+
 TABLE_BUILDERS = {"regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
-                  "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table}
+                  "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
+                  "correction_ablation_by_regime": correction_ablation_table,
+                  "prior_shift_ablation": prior_shift_ablation_table}
 
 
 def main():
