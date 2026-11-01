@@ -1,0 +1,9 @@
+outcome,fit_sources,test_sources,threshold,n_fit,n_test,test_positive_share,balanced_accuracy,accuracy,true_positive_rate,true_negative_rate,auroc,majority_rule_accuracy
+needs_bias_correction,bangla,olid+hinglish,0.180986,592,135,0.918519,0.796188,0.777778,0.774194,0.818182,0.844575,0.918519
+needs_bias_correction,olid+hinglish,bangla,0.133333,135,592,0.626689,0.926833,0.935811,0.962264,0.891403,0.976113,0.626689
+needs_bias_correction,bangla,offensive_olid,0.180986,592,75,0.866667,0.734615,0.613333,0.569231,0.9,0.778462,0.866667
+needs_bias_correction,bangla,sentiment_hinglish,0.180986,592,60,0.983333,0.5,0.983333,1,0,0.898305,0.983333
+no_better_than_constant,bangla,olid+hinglish,0.25175,592,135,0.140741,0.788793,0.637037,1,0.577586,0.953267,0.859259
+no_better_than_constant,olid+hinglish,bangla,0.357891,135,592,0.130068,0.759576,0.716216,0.818182,0.700971,0.865868,0.869932
+no_better_than_constant,bangla,offensive_olid,0.25175,592,75,0,0.866667,0.866667,,0.866667,,1
+no_better_than_constant,bangla,sentiment_hinglish,0.25175,592,60,0.316667,0.52439,0.35,1,0.0487805,0.867779,0.683333
