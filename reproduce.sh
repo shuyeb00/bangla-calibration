@@ -53,6 +53,7 @@ if [ "$STAGE" = tables ] || [ "$STAGE" = all ]; then
   run contrast_statistics
   run convergence_sensitivity
   run source_transfer_validation
+  run proposition_simulation_checks
   run publication_figures
   run publication_tables
   "$PYTHON" -m pytest -q tests

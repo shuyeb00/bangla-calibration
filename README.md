@@ -81,6 +81,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/source_transfer_regimes.py` | Regime map across four source tasks (BD-SHS, SentNoB, English OLID, SentiMix Hinglish): ranking retention, oracle temperature ratio, predicted-marginal shift and the best label-free or 50-label correction per source and target |
 | `src/source_transfer_validation.py`, `src/prior_shift_stress_test.py` | Leave-source-out validation of the regime map, and batch calibration under resampled target class priors with a prior-aware variant |
 | `src/publication_figures.py`, `src/publication_tables.py` | Publication figures (PDF, PNG) and LaTeX tables generated from the committed tables only |
+| `src/proposition_simulation_checks.py` | Monte Carlo checks of the four propositions of the triage procedure, using the analysis implementations |
 | `src/export_release_outputs.py` | Release bundle of the saved model outputs (logits and item indices, no text, no labels) as checksummed shards, and its restoration with labels rebuilt from the prepared datasets |
 | `src/build_supplementary_archive.py` | Anonymised supplementary archive for double-blind review (identifying strings removed and scanned for, size limit checked) |
 | `tests/test_manuscript_numbers.py` | Recomputes every number quoted in the manuscript text from the committed tables |

@@ -569,6 +569,45 @@ claim("discussion", "in each of the 16 pairs whose predicted marginal moves by m
       int((table("source_transfer_regime_map").query("condition != 'test'").predicted_marginal_tv > 0.10).sum()), 0.10,
       Bound("atleast", share_by_cell({"R2", "R3", "R4"}, batch_up).min() * 100))
 
+# Appendix: numerical checks of the propositions.
+def sim(check: str, setting: str, statistic: str, column: str = "mean") -> float:
+    return float(one(table("proposition_simulation_checks"), check=check, setting=setting, statistic=statistic)[column])
+
+
+_sim = table("proposition_simulation_checks")
+_unin = _sim[_sim.setting.str.startswith("uninformative_") & (_sim.statistic == "excess_log_loss_over_constant")]
+_shr = _sim[_sim.check == "shrinkage"]
+_val = _sim[_sim.check == "survival_validity"]
+claim("appendix", "label (class prior 0.52 and 0.48) and 200 labelled items", 0.52, 0.48, 200)
+claim("appendix", "on 20000 fresh items beyond Monte Carlo error (smallest excess log-loss $-0.0002$ nats over 100 "
+      "replications), and the selective error at 80\\% coverage is 0.501 against the bound of 0.48", 20000,
+      _unin.minimum.min(), int(_unin.replications.max()), 80,
+      sim("impossibility", "uninformative_selective_error_80pct_coverage", "selective_error"),
+      sim("impossibility", "uninformative_selective_error_80pct_coverage", "selective_error", "reference"))
+claim("appendix", "BCTS beats the constant by 0.215 nats",
+      -sim("impossibility", "informative_bcts", "excess_log_loss_over_constant"))
+claim("appendix", "the six settings tested in which $\\delta^2 < 2\\sigma^2 + \\tau^2/n$", None, None, None, None)
+assert len(_shr) == 6
+claim("appendix", "rejects a true null in 0.0485--0.0510 of 2000 replications at $\\delta = 0.05$", _val["mean"].min(),
+      _val["mean"].max(), int(_val.replications.max()), 0.05)
+claim("appendix", "(AUROC 0.69) the test has power 0.49 with 12 and 0.78 with 25 items per class", 0.69,
+      sim("survival_bound", "auroc=0.69,m=12", "permutation_test_power"), 12,
+      sim("survival_bound", "auroc=0.69,m=25", "permutation_test_power"), 25)
+claim("appendix", "need about 100 labels when half", 100)
+claim("appendix", "two equally good systems on 50 labelled items and calibrating the chosen system's set on the same "
+      "items at $\\alpha = 0.1$ gives mean coverage 0.886, with coverage below 0.85 in 0.189 of deployments", 50, 0.1,
+      sim("selection", "naive,n=50", "mean_coverage"), 0.85, sim("selection", "naive,n=50", "share_below_0.85"))
+claim("appendix", "gives 0.952 and 0.0055, and sample splitting 0.924 and 0.089",
+      sim("selection", "bonferroni,n=50", "mean_coverage"), sim("selection", "bonferroni,n=50", "share_below_0.85"),
+      sim("selection", "split,n=50", "mean_coverage"), sim("selection", "split,n=50", "share_below_0.85"))
+claim("appendix", "number of positives is below $M/\\alpha - 1$", None)
+claim("appendix", "calibrating at $\\alpha/2$ gives", None)
+
+
+def test_every_proposition_check_holds():
+    assert _sim.holds.astype(bool).all()
+
+
 # Appendix: data.
 claim("appendix", "Source (BD-SHS models) & BD-SHS & Bangla, Bangla script & 4718 & 4722", *SIZE("offensive", "test"))
 claim("appendix", "Source (SentNoB models) & SentNoB & Bangla, Bangla script & 1359 & 1360", *SIZE("sentiment", "test"))
@@ -707,7 +746,7 @@ claim("appendix", "changed macro-F1 by $-0.118$ to $+0.092$", _pp.macro_f1_diffe
       _pp.macro_f1_difference_max.max())
 
 MATH_BLOCKS = [re.compile(r"\\begin\{proposition\}.*?\\end\{proposition\}", re.S),
-               re.compile(r"\\section\{Proofs\}.*?(?=\\section\{Data\})", re.S)]
+               re.compile(r"\\section\{Proofs\}.*?(?=\\section\{)", re.S)]
 STRIP = re.compile(r"\\(?:ref|label|citep?|citet|citealp|input|includegraphics(?:\[[^\]]*\])?|url)\{[^}]*\}")
 WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9.\-]*[A-Za-z0-9]|[A-Za-z0-9]")
 NUMBER = re.compile(r"(?:(?<=[\s$(\[{])[+-])?(?<![\w.])\d+(?:\.\d+)?")

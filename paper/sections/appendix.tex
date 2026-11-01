@@ -41,6 +41,23 @@ With sample splitting the chosen candidate is independent of the calibration par
 applies conditionally on the choice. When the same items also decide whether to deploy at all, the bound applies to the
 joint event of deploying and missing; conditionally on deployment it is $\alpha / \Pr(\text{deploy})$. $\square$
 
+\section{Numerical Checks of the Propositions}
+\label{sec:appendix-simulation}
+We checked the propositions by simulation, using the implementations of the analyses. With a score independent of the
+label (class prior 0.52 and 0.48) and 200 labelled items, temperature scaling, BCTS and isotonic regression never beat
+the constant predictor on 20{,}000 fresh items beyond Monte Carlo error (smallest excess log-loss $-0.0002$ nats over 100
+replications), and the selective error at 80\% coverage is 0.501 against the bound of 0.48; with an informative score
+BCTS beats the constant by 0.215 nats. In the Gaussian model of Proposition~\ref{prop:shrinkage}, the MAP estimate has
+the lower Monte Carlo mean squared error in exactly those of the six settings tested in which
+$\delta^2 < 2\sigma^2 + \tau^2/n$. The permutation test of Proposition~\ref{prop:survival} rejects a true null in 0.0485--0.0510 of 2{,}000
+replications at $\delta = 0.05$, and the Hoeffding bound covered the true AUROC in every replication; for a weak
+ranking (AUROC 0.69) the test has power 0.49 with 12 and 0.78 with 25 items per class, which is why weak rankings need
+about 100 labels when half of them are held out. Choosing between two equally good systems on 50 labelled items and
+calibrating the chosen system's set on the same items at $\alpha = 0.1$ gives mean coverage 0.886, with coverage below
+0.85 in 0.189 of deployments; calibrating at $\alpha/2$ gives 0.952 and 0.0055, and sample splitting 0.924 and 0.089.
+The false-negative threshold flags every item exactly when the number of positives is below $M/\alpha - 1$, for one
+and for two candidates.
+
 \section{Data}
 \label{sec:appendix-data}
 
