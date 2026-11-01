@@ -24,3 +24,6 @@ results/grid_max_length_512/
 results/llm_runs/
 # Annotation workbooks and key contain dataset texts; kept out of the public repository.
 data/annotation/
+# Error-analysis samples and the duplicate list contain dataset texts.
+results/tables/**/error_analysis_sample_*.csv
+data/duplicate_exclusion_list.json

@@ -21,6 +21,7 @@ from src.calibration import (
     fit_temperature,
 )
 from src.config import (
+    BASE_DIR,
     EVALUATION_FIGURES_DIR,
     EVALUATION_GRID,
     EVALUATION_TABLES_DIR,
@@ -41,6 +42,7 @@ CALIBRATION_CACHE_VERSION = "stable-sort-1"
 
 FIGURES_DIR = EVALUATION_FIGURES_DIR
 TABLES_DIR = EVALUATION_TABLES_DIR
+ERROR_SAMPLE_DIR = BASE_DIR / "data" / "annotation"
 
 
 def df_to_markdown(df: pd.DataFrame) -> str:
@@ -639,7 +641,7 @@ def generate_extended_figures(
     from sklearn.metrics import cohen_kappa_score
 
     for task in TASKS.keys():
-        err_path = TABLES_DIR / f"error_analysis_sample_{task}.csv"
+        err_path = ERROR_SAMPLE_DIR / f"error_analysis_sample_{task}.csv"
         if not err_path.exists():
             continue
         err_df = pd.read_csv(err_path)

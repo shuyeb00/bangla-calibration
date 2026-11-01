@@ -1,6 +1,6 @@
 """Human error-cause annotation of the 512-token grid error samples.
 
-The samples (results/tables/grid_max_length_512/error_analysis_sample_{task}.csv) hold misclassified
+The samples (data/annotation/error_analysis_sample_{task}.csv, kept out of the public repository) hold misclassified
 test items of BanglaBERT full fine-tuning (seed 42), stratified by confidence within each condition.
 Two annotators code the primary cause of each error independently; the shift condition is hidden and
 the item order is shuffled. Disagreements can optionally be resolved by discussion in an adjudication
@@ -21,8 +21,8 @@ from sklearn.metrics import cohen_kappa_score
 from src.config import RESULTS_DIR
 
 TASKS = ("offensive", "sentiment")
-SAMPLE_PATH = RESULTS_DIR / "tables" / "grid_max_length_512" / "error_analysis_sample_{}.csv"
 AUDIT_DIR = Path(__file__).resolve().parent.parent / "data" / "annotation"
+SAMPLE_PATH = AUDIT_DIR / "error_analysis_sample_{}.csv"
 KEY_PATH = AUDIT_DIR / "error_annotation_key.csv"
 WORKBOOK = "error_annotation_annotator_{}.xlsx"
 ADJUDICATION = AUDIT_DIR / "error_annotation_adjudication.xlsx"

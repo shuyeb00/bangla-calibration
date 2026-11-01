@@ -21,6 +21,7 @@ from src.config import (
 
 FIGURES_DIR = EVALUATION_FIGURES_DIR
 TABLES_DIR = EVALUATION_TABLES_DIR
+ERROR_SAMPLE_DIR = Path(__file__).resolve().parent.parent / "data" / "annotation"
 
 LABEL_MAPS = {
     "sentiment": {0: "Neutral", 1: "Positive", 2: "Negative"},
@@ -305,7 +306,7 @@ def generate_plots_for_task(task: str = "sentiment", seed: int = 42) -> None:
 
 
 def sample_errors_for_annotation(task: str = "sentiment", seed: int = 42, n_per_condition: int = 40) -> None:
-    out_path = TABLES_DIR / f"error_analysis_sample_{task}.csv"
+    out_path = ERROR_SAMPLE_DIR / f"error_analysis_sample_{task}.csv"
     if out_path.exists():
         df_existing = pd.read_csv(out_path)
         if "annotator_1_category" in df_existing.columns and df_existing["annotator_1_category"].notna().any():
