@@ -1,36 +1,40 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Text classifiers for low-resource languages are trained on one variety of a language and deployed on many: regional
-dialects, romanised spellings, code-mixed posts that switch between two or three languages and scripts. Confidence
-scores are what downstream decisions rest on, from abstaining on uncertain items to setting the threshold of a
-moderation system. The standard repair for miscalibrated confidence is temperature scaling \citep{guo2017calibration},
-fitted on a source calibration split or, when a few target labels are available, on the target.
+Take a Bangla offensive-language classifier that ranks in-domain comments almost perfectly (AUROC 0.97). Show it the
+same kind of comments typed in Latin script, as many Bangla speakers write online, and its false-negative control,
+calibrated on its own data, misses more than four out of five toxic comments. Yet it still ranks those comments far
+better than chance (AUROC about 0.8). The model has not forgotten what offensive language looks like; it has kept
+the wrong cut-off. Temperature scaling \citep{guo2017calibration}, the default repair for miscalibrated confidence,
+cannot help here: it rescales confidence without changing a single decision.
 
-We show that under language-variety shift this repair usually addresses the wrong problem. We fine-tune seven encoder
-families on Bangla offensive-language and sentiment data (five seeds each), compare them with four instruction-tuned
-LLMs on identical items, and evaluate them on regional dialects (including a Sylheti set we translated), natural
-Bangla--English code-mixing in two scripts, tri-lingual code-mixing, and other languages. To test whether the findings
-depend on the source language, we repeat the analysis with encoders trained on English (OLID) and on Hindi--English
-code-mixed sentiment (SentiMix Hinglish). Across the four source tasks the failures fall into a small number of
-regimes, and the most common one is not a change of temperature but a shift of the decision threshold with the
-ranking largely intact.
+This paper asks what actually breaks when text classifiers meet the language varieties they were not trained on, and
+what it takes to repair it. We fine-tune seven encoder families (five seeds each) on Bangla offensive-language and
+sentiment data and compare them with four instruction-tuned LLMs on identical items. The test conditions cover regional
+dialects, including a Sylheti set we translated, natural Bangla--English code-mixing written in two scripts,
+tri-lingual Bangla--English--Hindi code-mixing, and other languages. To check that the conclusions are not an artefact
+of one source language, we repeat the analysis with encoders trained on English (OLID) and on Hindi--English code-mixed
+data (SentiMix Hinglish).
 
-\paragraph{Contributions.}
+\paragraph{What we find.}
 \begin{itemize}
-  \item \textbf{A regime map across four source languages} (Section~\ref{sec:results-regimes}). Dialect shifts need no
-  correction; temperature shifts are rare and small; the common failure, found for every source task, is a threshold
-  shift with retained ranking; collapse of the ranking occurs once, under a mismatch of label definitions.
-  \item \textbf{Temperature is the wrong knob} (Section~\ref{sec:results-threshold}). Under threshold shift, temperature
-  scaling with target labels lowers the log-loss but cannot change a decision, whereas a label-free bias correction
-  raises macro-F1 by about 0.09 on average. The label-free correction assumes a balanced target and is harmful when
-  the target class prior is skewed, as in content moderation; a prior estimated from 50 labels repairs it.
-  \item \textbf{Causal evidence for the collapse} (Section~\ref{sec:results-causes}). Changing only the script of the
-  same comments moves the mean encoder AUROC by up to 0.22, and training the same architectures on the label definition of the
-  target dataset restores its ranking (pre-registered difference-in-differences $+0.378$). The code-mixing
-  collapse of Bangla encoders on OffMix-3L is largely a label-definition mismatch on an artifact-laden test set.
-  \item \textbf{A label-efficient triage procedure with guarantees} (Section~\ref{sec:shift-triage}). Shift is detected
-  without labels; about 50 target labels decide between recalibrating, routing to an LLM whose ranking survives, and
-  abstaining, with finite-sample coverage and false-negative-rate guarantees after selection.
+  \item \textbf{Shift has a small number of regimes, and the common one is a threshold shift}
+  (Section~\ref{sec:results-regimes}). Dialects need no correction. Temperature shifts are rare and small. For every
+  source language, the dominant failure keeps the ranking and moves the threshold. A genuine collapse of the ranking
+  occurs once.
+  \item \textbf{Temperature is the wrong knob} (Section~\ref{sec:results-threshold}). Under a threshold shift, fitting
+  the temperature on target labels lowers the log-loss but changes no decision, while a label-free bias correction
+  raises macro-F1 by about 0.09. That correction silently assumes balanced classes and does harm when the target is
+  skewed, as moderation targets are; a class prior estimated from 50 labels repairs it.
+  \item \textbf{The collapse is about definitions, not language} (Section~\ref{sec:results-causes}). Changing only the
+  script of identical comments shifts encoder AUROC by up to 0.22, but retraining the same architectures on the
+  target's definition of offensiveness restores the collapsed ranking (pre-registered difference-in-differences
+  $+0.378$, $p_{\mathrm{Holm}} < 0.001$).
+  \item \textbf{Fifty labels go a long way} (Sections~\ref{sec:results-systems} and~\ref{sec:shift-triage}). Shift is
+  easy to detect without labels but impossible to diagnose from the model's own confidence. About 50 target labels are
+  enough to test whether a system's ranking survived, to choose between the fine-tuned encoder and an LLM, to correct
+  the threshold and to certify coverage and false-negative rates after that choice.
 \end{itemize}
-Code, configurations and all derived tables are released.
+
+Code, configurations, every derived table and a script that rebuilds all figures and tables of this paper are
+released (Appendix~\ref{sec:appendix-reproducibility}).

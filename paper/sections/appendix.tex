@@ -45,3 +45,18 @@ $\alpha / \Pr(\text{deploy})$. $\square$
 
 \input{../thesis/tables/regime_map_source_transfer}
 \input{../thesis/tables/contrast_families_holm}
+
+\section{Reproducibility}
+\label{sec:appendix-reproducibility}
+
+The released code reproduces the study at three levels. (1) From the released tables, a single script rebuilds every
+figure, every table and every contrast statistic in this paper and runs the unit tests in about two minutes on a CPU;
+we checked that a clean run reproduces the released files byte for byte. (2) From the saved model outputs (the logits
+of every encoder run and LLM system), the same script regenerates every table of results; this needs only a CPU.
+(3) From the public datasets, the training and inference scripts rebuild the models on two T4 GPUs. Every run records
+its seed, code version, library versions and an input fingerprint. Dataset texts are not redistributed; preparation
+scripts rebuild every split from the original releases and check them against published checksums. The unit tests
+verify the statistical components against their definitions or against simulation: conformal coverage, conformal risk
+control and its minimum number of positives, bias-corrected temperature scaling, batch calibration and its prior-aware
+variant, E-AURC, the permutation test and Holm's procedure, and the shrinkage condition of
+Proposition~\ref{prop:shrinkage}.

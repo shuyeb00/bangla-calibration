@@ -1,11 +1,13 @@
-Text classifiers for low-resource languages are deployed on dialects, romanised spellings and code-mixed text that
-differ from their training data, and their confidence is usually repaired with temperature scaling. We study seven
-encoder families and four instruction-tuned LLMs on Bangla offensive-language and sentiment tasks, evaluated on
-regional dialects, natural and tri-lingual code-mixing and other languages, and replicate the analysis with encoders
-trained on English and on Hindi--English code-mixed data. Across four source tasks, the dominant failure is a shift of
-the decision threshold with the ranking largely retained; temperature scaling cannot change a single decision there,
-while a bias correction can, and a label-free bias correction becomes harmful when the target class prior is skewed
-unless about 50 labels inform it. A collapse of the ranking occurs once, and two interventions trace it to a mismatch of
-label definitions rather than to language coverage alone. We turn these findings into a label-efficient triage
-procedure that detects shift without labels and uses about 50 target labels to recalibrate, route to an LLM or abstain,
-with finite-sample guarantees on coverage and false-negative rate after selection.
+A classifier trained on one variety of a language is routinely deployed on others: regional dialects, romanised
+spellings, posts that switch languages mid-sentence. When its confidence stops matching its accuracy, the standard
+remedy is to rescale the temperature of its outputs. We find that this remedy usually targets the wrong failure. Across
+seven encoder families, four instruction-tuned LLMs, two tasks and twenty shifted test sets, and with source models
+trained on Bangla, English and Hindi--English data, the typical failure is a displaced decision threshold: the model
+still ranks examples sensibly but labels them with the wrong cut-off. Temperature scaling cannot move that cut-off; a
+bias correction can, and on balanced targets it needs no labels at all. On skewed targets, as in content moderation, the
+label-free correction backfires, and about 50 labelled examples are enough to make it safe. Only once does the ranking
+itself collapse, and two interventions---changing only the script of identical comments, and retraining on the target's
+definition of offensiveness---trace that collapse to a mismatch of label definitions rather than to unfamiliar
+language alone. We turn these findings into a triage procedure that detects shift without labels and, with about 50 target
+labels, decides between recalibrating, switching to an LLM and abstaining, with finite-sample guarantees on coverage
+and missed detections.
