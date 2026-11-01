@@ -59,9 +59,12 @@ The few-label recalibrators fit $\theta = (\log T, b)$ with $z \mapsto z / T + b
 $$\hat\theta_{\mathrm{MAP}} = \arg\min_\theta\; n \hat L_n(\theta) + \tfrac12 (\theta - \theta_s)^\top
 \Sigma^{-1} (\theta - \theta_s),$$
 where $\hat L_n$ is the mean target log-loss on the $n$ labelled items, $\theta_s$ the source estimate and
-$\Sigma$ the prior covariance (diagonal: $\sigma_T^2$ for $\log T$, $\sigma_b^2$ for each free bias), estimated
-by the mean squared oracle deviation $\theta_{\mathrm{target}} - \theta_s$ on the *other* task (empirical Bayes,
-moment estimator under $\theta_{\mathrm{target}} - \theta_s \sim \mathcal N(0, \Sigma)$ across conditions).
+$\Sigma$ the prior covariance (diagonal: $\sigma_T^2$ for $\log T$, $\sigma_b^2$ for each free bias), set to
+the mean squared oracle deviation $\theta_{\mathrm{target}} - \theta_s$ on the *other* task (a moment estimator
+under $\theta_{\mathrm{target}} - \theta_s \sim \mathcal N(0, \Sigma)$ across conditions; empirical Bayes in
+spirit, but estimated on a different task, so it is a cross-task plug-in rather than an estimate from the
+population the target belongs to). $\theta_s$ is treated as fixed; its own sampling error on the source
+calibration split is ignored.
 
 **Proposition 2.** Let $\hat\theta_n$ be the target MLE, $F$ the per-item Fisher information at the target
 optimum $\theta^*$, and suppose $\hat L_n$ is locally quadratic, $\hat L_n(\theta) \approx \hat L_n(\hat\theta_n) +
@@ -84,8 +87,9 @@ $\frac{1 + w_n}{1 - w_n} = 1 + \frac{2 w_n}{1 - w_n} = 1 + \frac{2 n \sigma^2}{\
 1. The condition $\delta^2 < 2\sigma^2 + \tau^2/n$ explains the empirical pattern of finding 18: shrinkage wins on
    every dialect and on Chittagong, where the deviation is small relative to the prior scale, and loses to the
    MLE on OffMix-3L, where the deviation is unbounded (Proposition 1). As $n \to \infty$ the condition becomes
-   $\delta^2 < 2\sigma^2$: a prior estimated from conditions with smaller shifts is harmful for a larger shift
-   however many labels are available, until $w_n \to 1$ removes its influence.
+   $\delta^2 < 2\sigma^2$: for a shift larger than the prior scale the MAP estimate has the larger MSE at every
+   $n$, but the excess $(1 - w_n)^2 \delta^2 = \delta^2 \tau^4 / (n\sigma^2 + \tau^2)^2$ decays as $n^{-2}$ while
+   the MLE's MSE decays as $n^{-1}$, so the ratio of the two MSEs tends to 1.
 2. BCTS can move the decision threshold (the argmax) through $b$; TS cannot. The bias prior is what makes 10–50
    labels sufficient when the ranking survives (finding 35).
 3. The quadratic approximation is local; at the optimiser bound the curvature vanishes (unbounded optimum) and
@@ -96,6 +100,10 @@ $\frac{1 + w_n}{1 - w_n} = 1 + \frac{2 w_n}{1 - w_n} = 1 + \frac{2 n \sigma^2}{\
 Let $\hat A = \frac{1}{n_1 n_0} \sum_{i: Y_i = 1} \sum_{j: Y_j = 0} \left(\mathbb 1[S_i > S_j] +
 \tfrac12 \mathbb 1[S_i = S_j]\right)$ be the empirical AUROC of a scalar score (P(positive) for two classes) on
 the $n$ labelled target items with $n_1$ positives and $n_0$ negatives.
+
+The score function must not depend on the $n$ labelled items (in the procedure it is the source-TS probability,
+fitted on the source calibration split; any strictly increasing transform of the positive-class logit margin, such
+as BCTS in the two-class case, leaves $\hat A$ unchanged).
 
 **Proposition 3.** (a) *Exact test of no association.* Conditionally on the labels and on the multiset of
 scores, if $Y$ and $S$ are independent and the items are exchangeable, every assignment of the observed scores to
@@ -115,23 +123,37 @@ $\Pr(\hat A - A \ge t) \le \exp(-2 m t^2)$, applied to the lower tail gives the 
 
 **Remarks.**
 1. The bound is distribution-free but conservative: with $n = 50$ balanced labels ($m = 25$) and $\delta = 0.05$
-   the half-width is $\sqrt{\log 20 / 50} \approx 0.245$; with $m = 12$ it is $\approx 0.354$. A retained ranking
+   the half-width is $\sqrt{\log 20 / 50} \approx 0.245$; with $m = 12$ it is $\approx 0.353$. A retained ranking
    near 0.9 (the LLMs on OffMix-3L, finding 29) clears 0.5 at $m = 25$; a collapsed one near 0.5 cannot. Part (a)
    is the more powerful decision rule for "collapse vs survival"; part (b) quantifies how much ranking survives.
-2. With several candidate systems the tests are combined with Holm's procedure, which controls the family-wise
-   probability of declaring a collapsed system "surviving" at level $\delta$ (the Learn-then-Test view of
-   Angelopoulos et al., 2021: each system is a configuration, its null is "the configuration is unsafe").
+2. With several candidate systems the tests are combined with Holm's procedure (valid under arbitrary dependence
+   between the p-values, which share the labelled items), which controls the family-wise probability of declaring
+   a collapsed system "surviving" at level $\delta$ (the Learn-then-Test view of Angelopoulos et al., 2021: each
+   system is a configuration, its null is "the configuration is unsafe"). "Collapsed" means exact independence of
+   score and label; a weak but non-zero association (AUROC 0.55, say) is not protected against and may survive.
+3. Part (a) holds for any statistic, including the macro one-vs-rest AUROC used for three classes; part (b) is
+   stated for two classes (for $K$ classes it applies to each one-vs-rest AUROC with $m_k = \min(n_k, n - n_k)$ and
+   a union bound over $k$). The implementation uses part (a) only.
+4. The labelled items are drawn without replacement from the finite target calibration pool; Hoeffding's bound
+   also holds for sampling without replacement (Hoeffding, 1963, Theorem 4), relative to the pool AUROC.
 
 ## P4. Coverage and risk control after choosing a system with the same labels
 
 Let $C_j^{\beta}$ be the split-conformal set of candidate $j \in \{1, \dots, M\}$ calibrated at miscoverage
 $\beta$ on the $n$ labelled items, and $\hat\jmath$ any data-dependent choice that may use those same items.
 
+The nonconformity score of each candidate must be a fixed function that does not depend on the calibration items
+(in the procedure: the source-TS probabilities; a MAP-BCTS map refitted on the same items would break the
+exchangeability argument).
+
 **Proposition 4.** (a) *Bonferroni.* With $\beta = \alpha / M$ and $n \ge M/\alpha - 1$ (so that the conformal
 quantile is finite), $\Pr\!\left(Y_{n+1} \in C_{\hat\jmath}^{\alpha/M}(X_{n+1})\right) \ge 1 - \alpha$.
 (b) *Risk control.* If $\lambda_j$ is the conformal-risk-control threshold of candidate $j$ for a loss
 $L_j \in [0, 1]$ at level $\alpha / M$ (Angelopoulos et al., 2024), then the selected candidate satisfies
-$\mathbb E[L_{\hat\jmath}(\lambda_{\hat\jmath})] \le \alpha$.
+$\mathbb E[L_{\hat\jmath}(\lambda_{\hat\jmath})] \le \alpha$. For the false-negative rate the loss is
+$\mathbb 1[\text{positive item not flagged}]$ and the threshold is calibrated on the positive items only, so the
+guarantee is $\Pr(\text{miss} \mid Y_{n+1} = 1) \le \alpha$ under exchangeability of the positive items; a
+non-trivial threshold needs $n_1 \ge M/\alpha - 1$ positives (otherwise every item is flagged).
 (c) *Sample splitting.* If the choice uses only $n_s$ items and the set (or threshold) of the chosen candidate is
 calibrated on the remaining $n_c = n - n_s$ items, the usual guarantees hold at level $\alpha$ with $n_c$ items.
 
@@ -145,7 +167,15 @@ $\square$
 
 **Remarks.**
 1. Reusing the same $n$ items for choice and calibration at level $\alpha$ (as in finding 35) only guarantees
-   $1 - M\alpha$; (a) costs larger sets, (c) costs labels. For $M = 2$, $\alpha = 0.1$, (a) needs $n \ge 19$.
+   $1 - M\alpha$; (a) costs larger sets, (c) costs labels. For $M = 2$, $\alpha = 0.1$, (a) needs $n \ge 19$ for
+   the sets and $n_1 \ge 19$ positives for the FNR threshold. With $n = 25$ and a balanced target ($n_1 \approx 12$)
+   the FNR threshold is therefore vacuous (flag everything), which is the behaviour reported in finding 49.
+4. *Abstention and conditional validity.* When the same items also decide whether to deploy (survival test of P3
+   on all $n$ items, Bonferroni variant), (a) and (b) bound the joint probability $\Pr(\text{miss} \cap
+   \text{deploy}) \le \alpha$, so conditionally on deploying the bound is $\alpha / \Pr(\text{deploy})$. In the
+   split variant the deploy decision uses only the selection part and the guarantee holds conditionally on
+   deploying. The Bonferroni variant abstains rarely at $n \ge 50$ (finding 49), so the gap is small in practice,
+   but the stated guarantee must be the marginal one.
 2. Selection-adjusted conformal methods (Liang, Zhu & Barber, 2024) can recover efficiency; Bonferroni and
    splitting are the baselines the procedure reports.
 3. All guarantees are marginal over the target calibration and test items and assume exchangeability within the
@@ -167,20 +197,44 @@ budget $n$, levels $\alpha$ (coverage or FNR) and $\delta$ (decision error).
    rejected "survive".
 4. **Abstain under collapse (P1).** If no candidate survives, abstain on the shifted stream (defer to humans); no
    recalibration, conformal set or abstention threshold of these scores can do better than ignoring the input.
-5. **Choose.** Among survivors, choose the candidate with the lowest log-loss after MAP BCTS on the selection
-   part (cross-fitted).
-6. **Recalibrate and certify.** Refit MAP BCTS of the chosen candidate on all $n$ items (P2), then calibrate the
-   conformal set or FNR threshold on the calibration part at level $\alpha$ (P4 c), or on all $n$ items at level
-   $\alpha / M$ (P4 a, b).
+5. **Choose.** Among survivors, choose the candidate with the lowest log-loss after MAP BCTS fitted and evaluated
+   on the selection part (in-sample penalised log-loss; the guarantees below do not depend on the choice rule).
+6. **Recalibrate and certify.** *Split variant:* MAP BCTS of the chosen candidate fitted on the selection part
+   gives the point predictions and the score for the conformal set and FNR threshold, calibrated on the
+   calibration part at level $\alpha$ (P4 c). *Bonferroni variant:* MAP BCTS refitted on all $n$ items gives the
+   point predictions (P2); the conformal set and FNR threshold use the fixed source-TS score, calibrated on all
+   $n$ items at level $\alpha / M$ (P4 a, b).
 
-Guarantees: marginal coverage $\ge 1 - \alpha$ or expected FNR $\le \alpha$ for the deployed system; family-wise
-probability $\le \delta$ of deploying a collapsed candidate; with no surviving candidate, abstention is optimal
-among post-hoc uses of the candidates' scores (P1).
+Guarantees: marginal coverage $\ge 1 - \alpha$ or FNR $\le \alpha$ for the deployed system (conditionally on
+deploying for the split variant, jointly with the deploy event for the Bonferroni variant; P4 remark 4);
+family-wise probability $\le \delta$ of deploying a collapsed candidate; with no surviving candidate, abstention is
+optimal among post-hoc uses of the candidates' scores (P1).
 
 Evaluation (on the saved outputs, no GPU): every condition, encoder run and LLM system, $n \in \{25, 50, 100\}$
 with the resamples of `src/shift_recalibration.py`; realised coverage, FNR and FPR, the rate of wrong survival
 decisions against the full-target AUROC, macro-F1 of the deployed system and the abstention rate; compared with
-always-encoder, always-LLM, the reuse-the-same-labels router of finding 35 and the oracle.
+always-encoder, always-LLM, the reuse-the-same-labels router of finding 35 and the oracle. Step 1 is not part of
+the evaluation: every evaluated condition is shifted and detected (finding 33), so the evaluation starts at step 2.
+
+## Verification record (2026-11-01)
+
+Second reading of P1–P4 against the implementation (`src/shift_triage.py`, `src/shift_recalibration.py`):
+- P1, Corollary 1: the proofs are correct as stated.
+- P2: the algebra (stationarity condition, weight $w_n$, MSE and the condition $\delta^2 < 2\sigma^2 + \tau^2/n$)
+  was re-derived and checked by Monte Carlo in the Gaussian model (400,000 draws per setting; the sign of
+  MSE(MAP) − MSE(MLE) agreed with the condition in every setting, including one next to the boundary). Wording
+  corrected: the prior variance is a cross-task plug-in, and the large-$n$ remark now states the decay rates.
+- P3: correct; added that the score must not be fitted on the labelled items (the implementation uses source-TS
+  probabilities), that the multi-class version uses part (a) only, and the sampling-without-replacement note; the
+  half-width for $m = 12$ is 0.353 (was printed as 0.354).
+- P4: correct for fixed nonconformity scores. Two gaps in the procedure text were closed so that it matches the
+  implementation: the Bonferroni variant certifies the source-TS score (not the refitted MAP-BCTS map) and the
+  split variant fits MAP BCTS on the selection part only. Added the positives-only form of the FNR guarantee with
+  its minimum of $M/\alpha - 1$ positives (checked by simulation: miss rates 0.049–0.051 at the nominal 0.05 and
+  0.096 at 0.1) and the conditional-on-deployment caveat for the Bonferroni variant.
+- Procedure step 5 said "cross-fitted"; the implementation (and now the text) uses the in-sample penalised
+  log-loss on the selection part. This does not affect any guarantee.
+- Still not done: a reading by someone other than the authors.
 
 ## References
 
