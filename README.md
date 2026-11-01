@@ -78,7 +78,9 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/few_label_finetuning.py` | Few-label fine-tuning of the saved base-grid encoders on n labelled target items (equal-budget baseline) |
 | `src/llm_membership_inference.py` | Contamination checks for the LLMs: Min-K% / Min-K%++ likelihood statistics with word-shuffled references and guided versus general instance completion |
 | `src/few_label_finetuning_analysis.py`, `src/target_demonstration_analysis.py`, `src/membership_inference_analysis.py` | Evaluation of few-label fine-tuning, of in-context learning with target demonstrations, and summary of the contamination checks |
-| `thesis/figures/` | Figures |
+| `src/source_transfer_regimes.py` | Regime map across four source tasks (BD-SHS, SentNoB, English OLID, SentiMix Hinglish): ranking retention, oracle temperature ratio, predicted-marginal shift and the best label-free or 50-label correction per source and target |
+| `src/publication_figures.py`, `src/publication_tables.py` | Publication figures (PDF, PNG) and LaTeX tables generated from the committed tables only |
+| `thesis/figures/`, `thesis/tables/` | Figures and LaTeX tables |
 
 Model outputs (`*.npy`) and processed datasets are not tracked. Dataset sources are listed in `data/DATA_SOURCES.md`.
 
@@ -91,4 +93,6 @@ python -m src.evaluate
 python -m src.significance
 python -m src.extended_diagnostics
 python -m src.analysis_and_plots
+python -m src.publication_figures
+python -m src.publication_tables
 ```

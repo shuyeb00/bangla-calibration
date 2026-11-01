@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Contrast families with Holm correction within each family. With 5 vs 5 runs the smallest attainable exact permutation $p$ is $2/252$, so the architectures family cannot reach significance by design and is reported descriptively.}
+\label{tab:contrast-families-holm}
+\begin{tabular}{lrrr}
+\toprule
+Family & Tests & Significant ($\alpha = 0.05$) & Smallest $p_{\mathrm{Holm}}$ \\
+\midrule
+Training objectives & 100 & 40 & 0.006 \\
+Encoder scale & 40 & 1 & 0.015 \\
+Label-free recalibration & 72 & 30 & $<$0.001 \\
+Few-label recalibration & 48 & 44 & $<$0.001 \\
+LLM recalibration & 36 & 16 & 0.001 \\
+Architectures (MuRIL, mDeBERTa) & 120 & 0 & 0.952 \\
+Few-label recalibration, natural targets & 40 & 30 & $<$0.001 \\
+LLM recalibration, natural targets & 30 & 26 & $<$0.001 \\
+\bottomrule
+\end{tabular}
+\end{table}

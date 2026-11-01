@@ -1,0 +1,32 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Deployment policies with $n = 50$ labelled target items (means over conditions, encoder runs $\times$ LLM systems and 20 resamples; target coverage 0.9, offensive FNR target 0.1). Cov. $<$ 0.85: share of deployments whose test coverage falls below 0.85. FNR and FPR are means over the offensive conditions only (-- for sentiment). Natural offensive: Code-mixed Chaos (both scripts) and MixTox-SA; SentiMix: Hinglish and Spanglish; both are held out (nothing fitted on them).}
+\label{tab:shift-triage-policies}
+\begin{tabular}{llrrrrrr}
+\toprule
+Conditions & Policy & Macro-F1 & Coverage & Cov. $<$ 0.85 & FNR & FPR & Abstain \\
+\midrule
+Original shifts & Always encoder & 0.658 & 0.788 & 0.472 & 0.360 & 0.085 & 0.000 \\
+ & Always LLM & 0.715 & 0.903 & 0.102 & 0.089 & 0.541 & 0.000 \\
+ & Reuse router & 0.788 & 0.902 & 0.124 & 0.080 & 0.331 & 0.000 \\
+ & Triage (split) & 0.781 & 0.928 & 0.095 & 0.067 & 0.410 & 0.004 \\
+ & Triage (Bonferroni) & 0.794 & 0.962 & 0.006 & 0.035 & 0.543 & 0.000 \\
+ & Oracle & 0.796 & 0.906 & 0.107 & 0.079 & 0.324 & 0.000 \\
+\midrule
+Natural offensive & Always encoder & 0.582 & 0.664 & 1.000 & 0.742 & 0.022 & 0.000 \\
+ & Always LLM & 0.792 & 0.908 & 0.081 & 0.064 & 0.427 & 0.000 \\
+ & Reuse router & 0.791 & 0.906 & 0.097 & 0.067 & 0.427 & 0.000 \\
+ & Triage (split) & 0.775 & 0.921 & 0.113 & 0.074 & 0.518 & 0.102 \\
+ & Triage (Bonferroni) & 0.787 & 0.961 & 0.004 & 0.024 & 0.671 & 0.005 \\
+ & Oracle & 0.792 & 0.909 & 0.077 & 0.064 & 0.429 & 0.000 \\
+\midrule
+SentiMix & Always encoder & 0.419 & 0.831 & 0.567 & -- & -- & 0.000 \\
+ & Always LLM & 0.579 & 0.912 & 0.156 & -- & -- & 0.000 \\
+ & Reuse router & 0.569 & 0.907 & 0.168 & -- & -- & 0.000 \\
+ & Triage (split) & 0.559 & 0.932 & 0.098 & -- & -- & 0.156 \\
+ & Triage (Bonferroni) & 0.579 & 0.964 & 0.014 & -- & -- & 0.049 \\
+ & Oracle & 0.575 & 0.914 & 0.142 & -- & -- & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
