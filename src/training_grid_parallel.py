@@ -10,6 +10,9 @@ Grids
   cross_definition  XLM-R-base, MuRIL, mDeBERTa-v3 x full FT x 5 seeds trained on English OLID (task offensive_olid),
               each with the recipe of its BD-SHS runs; outputs on BD-SHS, OffMix-3L and the natural code-mixed
               targets (15 runs, 1 shard)
+  cross_language  XLM-R-base, MuRIL, mDeBERTa-v3 x full FT x 5 seeds trained on SentiMix Hinglish (task
+              sentiment_hinglish), base-model recipes; outputs on Hinglish test, Spanglish, SentNoB, SentMix-3L and
+              Sylheti (15 runs, 1 shard)
 Audit only (not launchable; trained with the base-model recipe before FULL_FT_TRAINING existed):
   scale_recipe_base  the same large encoders x 3 seeds (SCALE_SEEDS) at lr 2e-5 without warmup
 
@@ -34,6 +37,8 @@ from src.config import (
     ARCHITECTURE_MODELS,
     CROSS_DEFINITION_MODELS,
     CROSS_DEFINITION_TASKS,
+    CROSS_LANGUAGE_MODELS,
+    CROSS_LANGUAGE_TASKS,
     FT_METHODS,
     MODELS,
     RESULTS_DIR,
@@ -78,6 +83,10 @@ EST_MINUTES = {
     ("offensive_olid", "xlmr_base", "full_ft"): 12.0,
     ("offensive_olid", "muril", "full_ft"): 10.0,
     ("offensive_olid", "mdeberta", "full_ft"): 24.0,
+    # SentiMix Hinglish (about 12.5k tweets) plus output passes over about 14k evaluation items (estimates).
+    ("sentiment_hinglish", "xlmr_base", "full_ft"): 9.0,
+    ("sentiment_hinglish", "muril", "full_ft"): 7.0,
+    ("sentiment_hinglish", "mdeberta", "full_ft"): 18.0,
 }
 GPUS_PER_SHARD = 2
 KEEP = ("=====", "[UPLOADED", "[LOCAL", "[UPLOAD_FAILED", "[UPLOAD RETRY", "[SKIP", "[COLLAPSE",
@@ -97,6 +106,9 @@ def grid_runs(grid: str) -> list:
     if grid == "cross_definition":
         return list(itertools.product(CROSS_DEFINITION_TASKS, CROSS_DEFINITION_MODELS, ["full_ft"],
                                       ["cross_entropy"], SEEDS))
+    if grid == "cross_language":
+        return list(itertools.product(CROSS_LANGUAGE_TASKS, CROSS_LANGUAGE_MODELS, ["full_ft"],
+                                      ["cross_entropy"], SEEDS))
     if grid == "scale_recipe_base":
         return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SCALE_SEEDS))
     raise ValueError(f"Unknown grid {grid!r}")
@@ -108,7 +120,7 @@ def grid_run_id(grid: str, run: tuple) -> str:
     return make_run_id(task, model, ft, seed, objective, recipe)
 
 
-N_SHARDS = {"base": 2, "objectives": 2, "scale": 3, "architectures": 2, "cross_definition": 1}
+N_SHARDS = {"base": 2, "objectives": 2, "scale": 3, "architectures": 2, "cross_definition": 1, "cross_language": 1}
 # Grids audited by src.fetch_run_outputs into the training summary (BD-SHS and SentNoB source tasks only).
 AUDIT_GRIDS = ["base", "objectives", "scale", "architectures", "scale_recipe_base"]
 

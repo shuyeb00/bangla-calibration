@@ -50,9 +50,11 @@ from src.config import (
     RESULTS_DIR,
     SEEDS,
     CROSS_DEFINITION_TASKS,
+    CROSS_LANGUAGE_TASKS,
     TRAIN_HYPERPARAMS,
     TRAINING_TASKS,
     get_cross_definition_paths,
+    get_cross_language_paths,
     get_natural_codemixed_paths,
     get_shift_conditions_paths,
     get_task_splits_paths,
@@ -121,9 +123,12 @@ def load_task_splits(task_name: str) -> dict:
 
 def load_shift_conditions(task_name: str) -> dict:
     """Shift splits scored after training, including the natural code-mixed targets; for a cross-definition
-    source task, the splits of src/config.get_cross_definition_paths."""
+    source task, the splits of src/config.get_cross_definition_paths; for a cross-language source task, those of
+    src/config.get_cross_language_paths."""
     if task_name in CROSS_DEFINITION_TASKS:
         paths = get_cross_definition_paths(task_name)
+    elif task_name in CROSS_LANGUAGE_TASKS:
+        paths = get_cross_language_paths(task_name)
     else:
         paths = {**get_shift_conditions_paths(task_name), **get_natural_codemixed_paths(task_name)}
     return {name: standardize_dataframe(pd.read_csv(path)) for name, path in paths.items()}

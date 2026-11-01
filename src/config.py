@@ -234,8 +234,13 @@ def scoped_table_name(name: str) -> str:
 # Prepared by src/prepare_olid.py into data/processed/offensive_olid/. Kept out of TASKS so that every
 # analysis module and committed table that iterates over TASKS is unchanged.
 CROSS_DEFINITION_TASKS = {"offensive_olid": 2}
-TRAINING_TASKS = {**TASKS, **CROSS_DEFINITION_TASKS}
 CROSS_DEFINITION_MODELS = ["xlmr_base", "muril", "mdeberta"]
+# Cross-language source task: sentiment on the SentiMix Hinglish training split (src/prepare_sentimix.py, data in
+# data/processed/sentiment_hinglish/), a second source language whose models are evaluated on Spanglish, SentNoB,
+# SentMix-3L and Sylheti. Kept out of TASKS for the same reason as the cross-definition task.
+CROSS_LANGUAGE_TASKS = {"sentiment_hinglish": 3}
+CROSS_LANGUAGE_MODELS = ["xlmr_base", "muril", "mdeberta"]
+TRAINING_TASKS = {**TASKS, **CROSS_DEFINITION_TASKS, **CROSS_LANGUAGE_TASKS}
 
 
 def get_cross_definition_paths(task_name: str) -> dict:
@@ -258,6 +263,19 @@ def get_cross_definition_paths(task_name: str) -> dict:
                       for part in ("cal", "test")}
     else:
         candidates = {}
+    return {key: path for key, path in candidates.items() if path.exists()}
+
+
+def get_cross_language_paths(task_name: str) -> dict:
+    """Evaluation splits of the Hinglish-trained encoders: Spanglish (another code-mixed language pair), SentNoB
+    (standard Bangla), SentMix-3L (Bangla-English-Hindi) and Sylheti, each with its calibration split."""
+    sentiment_dir = DATA_DIR / "sentiment"
+    if task_name != "sentiment_hinglish":
+        return {}
+    stems = {"shift_spanglish": "d7_spanglish_{part}", "shift_sentnob": "{part}", "shift_d2": "d2_codemixed_{part}",
+             "shift_d1": "d1_dialectal_{part}"}
+    candidates = {f"{key}_{part}": sentiment_dir / f"{stem.format(part=part)}.csv"
+                  for key, stem in stems.items() for part in ("cal", "test")}
     return {key: path for key, path in candidates.items() if path.exists()}
 
 

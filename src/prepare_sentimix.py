@@ -13,9 +13,15 @@ Bangla-specific). Items with an empty text or a missing label are dropped; exact
 collapsed and groups with conflicting labels dropped. Labels use the SentNoB encoding (0 neutral, 1 positive,
 2 negative).
 
-Outputs (data/processed/sentiment/, distributed via the private artifacts repository):
-  d6_hinglish_{cal,test}.csv, d7_spanglish_{cal,test}.csv   columns tweet_id, text_clean, labels
-  sentimix_preparation.json                                 counts, label shares and checksums
+Cross-language source task (data/processed/sentiment_hinglish/, task sentiment_hinglish of src/config): the
+official Hinglish training split, without texts that occur in the validation or test split, is divided into
+train and a stratified calibration split of SOURCE_CAL_SIZE items (seed 42); validation = official validation split
+(the same items as d6_hinglish_cal), test = official test split (the same items as d6_hinglish_test).
+
+Outputs (distributed via the private artifacts repository):
+  sentiment/d6_hinglish_{cal,test}.csv, sentiment/d7_spanglish_{cal,test}.csv   columns tweet_id, text_clean, labels
+  sentiment/sentimix_preparation.json                                           counts, label shares and checksums
+  sentiment_hinglish/{train,val,cal,test}.csv, sentiment_hinglish/hinglish_source_preparation.json
 
     python -m src.prepare_sentimix
     python -m src.prepare_sentimix --archive <path to Semeval_2020_task9_data.zip>
@@ -40,8 +46,10 @@ LABELS = {"neutral": 0, "positive": 1, "negative": 2}
 ZENODO_URL = "https://zenodo.org/records/3974927/files/Semeval_2020_task9_data.zip?download=1"
 ARCHIVE_MD5 = "4d93553c213b3a966b6d55b7a7c03be7"
 CAL_SIZE = 3000
+SOURCE_CAL_SIZE = 1500
 SEED = 42
 MEMBERS = {
+    "hinglish_train": "Hinglish/Hinglish_train_14k_split_conll.txt",
     "hinglish_dev": "Hinglish/Hinglish_dev_3k_split_conll.txt",
     "hinglish_test": "Hinglish/Hinglish_test_unalbelled_conll_updated.txt",
     "hinglish_test_labels": "Hinglish/Hinglish_test_labels.txt",
@@ -143,6 +151,35 @@ def main():
         print(f"{name}: {info['rows']} rows, label shares {info['label_shares']}, sha256 {info['sha256'][:12]}")
     print(f"archive md5 {report['archive_md5']}; cal-test overlaps "
           f"{report['overlap_d6_hinglish_cal_d6_hinglish_test']} / {report['overlap_d7_spanglish_cal_d7_spanglish_test']}")
+    prepare_hinglish_source(read["hinglish_train"], outputs["d6_hinglish_cal"], outputs["d6_hinglish_test"],
+                            report["archive_md5"])
+
+
+def prepare_hinglish_source(raw_train: str, val: pd.DataFrame, test: pd.DataFrame, archive_md5: str) -> None:
+    from sklearn.model_selection import train_test_split
+
+    train_all, cleaning = finish(parse_conll(raw_train))
+    held = set(val.text_clean) | set(test.text_clean)
+    removed = int(train_all.text_clean.isin(held).sum())
+    train_all = train_all[~train_all.text_clean.isin(held)].reset_index(drop=True)
+    train_idx, cal_idx = train_test_split(train_all.index.to_numpy(), test_size=SOURCE_CAL_SIZE, random_state=SEED,
+                                          stratify=train_all.labels)
+    splits = {"train": train_all.loc[sorted(train_idx)], "val": val, "cal": train_all.loc[sorted(cal_idx)],
+              "test": test}
+    out_dir = DATA_DIR / "sentiment_hinglish"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    report = {"archive_md5": archive_md5, "seed": SEED, "label_encoding": LABELS, "cleaning_train": cleaning,
+              "train_rows_removed_as_in_val_or_test": removed, "splits": {}}
+    for name, frame in splits.items():
+        report["splits"][name] = write(frame.reset_index(drop=True), out_dir / f"{name}.csv")
+    names = list(splits)
+    report["overlaps"] = {f"{a}_{b}": len(set(splits[a].text_clean) & set(splits[b].text_clean))
+                          for i, a in enumerate(names) for b in names[i + 1:]}
+    (out_dir / "hinglish_source_preparation.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    for name, info in report["splits"].items():
+        print(f"sentiment_hinglish {name}: {info['rows']} rows, label shares {info['label_shares']}, "
+              f"sha256 {info['sha256'][:12]}")
+    print(f"sentiment_hinglish: {removed} train rows removed as in val or test; overlaps {report['overlaps']}")
 
 
 if __name__ == "__main__":

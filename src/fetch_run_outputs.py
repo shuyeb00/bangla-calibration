@@ -10,6 +10,7 @@ complete and consistent and writes results/tables/grid_max_length_512_training_s
     python -m src.fetch_run_outputs
     python -m src.fetch_run_outputs --no-download
     python -m src.fetch_run_outputs --hidden-target-splits
+    python -m src.fetch_run_outputs --cross-language-only   (outputs of the Hinglish-trained encoders only)
     python -m src.fetch_run_outputs --natural-codemixed-task sentiment   (encoder and LLM outputs of one task's
         natural code-mixed targets only; no full re-check of the Hub repository)
 """
@@ -48,6 +49,11 @@ CROSS_DEFINITION_PATTERNS = ["runs/offensive_olid_*/*.json", "runs/offensive_oli
                              "runs/offensive_olid_*/*_labels.npy", "runs/offensive_*/english_olid_*.json",
                              "runs/offensive_*/shift_olid_english_*_logits.npy",
                              "runs/offensive_*/shift_olid_english_*_labels.npy"]
+
+
+# Outputs of the Hinglish-trained encoders (cross-language grid).
+CROSS_LANGUAGE_PATTERNS = ["runs/sentiment_hinglish_*/*.json", "runs/sentiment_hinglish_*/*_logits.npy",
+                           "runs/sentiment_hinglish_*/*_labels.npy"]
 
 
 def natural_codemixed_patterns(task: str) -> list:
@@ -138,11 +144,14 @@ def main():
     parser.add_argument("--grids", nargs="+", choices=AUDIT_GRIDS, default=AUDIT_GRIDS)
     parser.add_argument("--cross-definition-only", action="store_true",
                         help="Download only the cross-definition outputs (avoids re-checking every file on the Hub).")
+    parser.add_argument("--cross-language-only", action="store_true",
+                        help="Download only the outputs of the Hinglish-trained encoders.")
     parser.add_argument("--natural-codemixed-task", choices=sorted(NATURAL_CODEMIXED),
                         help="Download only the outputs of this task's natural code-mixed targets.")
     args = parser.parse_args()
     if not args.no_download:
         only = (CROSS_DEFINITION_PATTERNS if args.cross_definition_only
+                else CROSS_LANGUAGE_PATTERNS if args.cross_language_only
                 else natural_codemixed_patterns(args.natural_codemixed_task) if args.natural_codemixed_task else None)
         download(args.with_hidden, args.hidden_target_splits, only)
 
