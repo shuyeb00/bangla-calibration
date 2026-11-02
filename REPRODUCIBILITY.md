@@ -29,6 +29,8 @@ paper is accepted. To use it:
 For double-blind review, `python -m src.export_release_outputs export --anonymise --out release/outputs_anonymised`
 followed by `python -m src.build_supplementary_archive --outputs release/outputs_anonymised` writes an anonymised ZIP
 of the code, tables, figures and the output shards that fit within 100 MB.
+`python -m src.build_arxiv_package` writes the arXiv source archive and the preprint and anonymous PDFs to
+`release/` (needs `pdflatex` and `bibtex`).
 
 ## Environment
 - Analysis (levels 1 and 2): Python 3.11 with `requirements-analysis.txt` (numpy 1.26.4, scipy 1.14.0, pandas 2.2.2,
