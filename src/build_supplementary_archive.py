@@ -27,6 +27,8 @@ DEFAULT_OUT = BASE_DIR / "release" / "supplementary.zip"
 LIMIT_BYTES = 100 * 10**6
 INCLUDE_PREFIXES = ("src/", "tests/", "notebooks/", "data/", "results/", "thesis/", "paper/sections/", "reproduce.sh",
                     "requirements", "REPRODUCIBILITY.md", "README.md", ".gitignore")
+# This builder lists the identifying strings it removes, so it cannot itself be shipped anonymised.
+EXCLUDE = {"src/build_supplementary_archive.py"}
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".csv", ".sh", ".tex", ".json", ".ipynb", ".gitignore", ".cfg", ".toml", ""}
 SHARD_PRIORITY = ("runs_offensive", "runs_sentiment", "runs_offensive_olid", "runs_sentiment_hinglish",
                   "llm_runs_offensive", "llm_runs_sentiment", "few_label_finetuning", "llm_prompt_variants_offensive",
@@ -53,7 +55,8 @@ FORBIDDEN = re.compile(r"suheb|shuyeb|ferdus|ferdous|jakaria|metropolitan|github
 
 def tracked_files() -> list:
     out = subprocess.run(["git", "ls-files"], cwd=BASE_DIR, capture_output=True, text=True, check=True).stdout
-    return [f for f in out.splitlines() if f.startswith(INCLUDE_PREFIXES) and (BASE_DIR / f).is_file()]
+    return [f for f in out.splitlines()
+            if f.startswith(INCLUDE_PREFIXES) and f not in EXCLUDE and (BASE_DIR / f).is_file()]
 
 
 def anonymise_csv(text: str) -> str:
