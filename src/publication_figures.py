@@ -5,6 +5,7 @@ Figures (thesis/figures/grid_max_length_512/publication/, PDF and PNG):
   encoder_llm_auroc_by_condition      encoders vs zero-shot LLMs on identical items, every target condition
   script_intervention_auroc           Code-mixed Chaos in Banglish vs Bangla script (same items and labels)
   cross_definition_auroc              BD-SHS-trained vs OLID-trained encoders of the same architectures
+  collapse_causes                     the two previous figures as panels (a) and (b) of one full-width figure
   few_label_adaptation_curves         macro-F1 vs number of target labels for the label-spending options
 
     python -m src.publication_figures
@@ -78,7 +79,7 @@ def regime_map():
     r = pd.read_csv(TABLES / "source_transfer_regime_map.csv")
     r = r[r.condition != "test"]
     order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
-    fig, axes = plt.subplots(2, 2, figsize=(7.0, 5.6), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.7), sharex=True, sharey=True)
     for ax, src in zip(axes.flat, order):
         d = r[r.source_task == src]
         collapsed = d.at_upper_bound >= 0.5
@@ -93,7 +94,7 @@ def regime_map():
         for _, row in d.iterrows():
             ax.annotate(condition_name(src, row.condition), (row.predicted_marginal_tv, row.auroc_retention),
                         xytext=LABEL_OFFSETS.get((src, row.condition), (4, 3)), textcoords="offset points", fontsize=6.5, color=INK_SECONDARY)
-        ax.set_title(f"{SOURCE_NAMES[src]} ({int(d.n_runs.iloc[0])} runs, {int(d.n_models.iloc[0])} encoders)",
+        ax.set_title(f"{SOURCE_NAMES[src]}: {int(d.n_runs.iloc[0])} runs, {int(d.n_models.iloc[0])} encoders",
                      loc="left")
         ax.set_xlim(-0.02, 0.58)
         ax.set_ylim(0.45, 1.04)
@@ -204,6 +205,64 @@ def cross_definition():
     return save(fig, "cross_definition_auroc")
 
 
+def script_panel(ax):
+    s = pd.read_csv(TABLES / "script_intervention_summary.csv")
+    s = s[(s.item_set == "full") & ((s.kind == "llm") | s.grid.isin(["base", "architectures", "scale"]))]
+    s = s[~s.family.str.contains("few_shot")]
+    s["name"] = s.family.str.replace("encoder_", "", regex=False).str.replace("_zero_shot", "", regex=False)
+    s["name"] = [MODEL_NAMES.get(n.replace("_full_ft", "").replace("_lora", ""), n) + (" LoRA" if n.endswith("_lora") else "")
+                 for n in s.name]
+    s = s.sort_values(["kind", "auroc_banglish"])
+    y = np.arange(len(s))
+    ax.hlines(y, s.auroc_banglish, s.auroc_bangla_script, color=GRID, lw=2.0)
+    ax.scatter(s.auroc_banglish, y, color=SERIES[1], s=26, marker=MARKERS[1], edgecolor="white", zorder=3,
+               label="Banglish (Latin script)")
+    ax.scatter(s.auroc_bangla_script, y, color=SERIES[0], s=26, marker=MARKERS[0], edgecolor="white", zorder=3,
+               label="Same comments, Bangla script")
+    n_enc = int((s.kind == "encoder").sum())
+    ax.axhline(n_enc - 0.5, color=INK_SECONDARY, lw=0.6)
+    ax.text(0.02, n_enc - 0.35, "zero-shot LLMs", ha="left", va="bottom", fontsize=7, color=INK_SECONDARY,
+            transform=ax.get_yaxis_transform())
+    ax.text(0.02, n_enc - 0.65, "encoders", ha="left", va="top", fontsize=7, color=INK_SECONDARY,
+            transform=ax.get_yaxis_transform())
+    ax.set_yticks(y, s.name)
+    ax.set_ylim(-0.7, len(s) - 0.3)
+    ax.set_xlabel("AUROC on Code-mixed Chaos test (8,144 items)")
+    ax.grid(axis="y", visible=False)
+    ax.legend(loc="upper left", bbox_to_anchor=(-0.45, -0.17), ncol=1, handletextpad=0.2)
+    ax.set_title("(a) Same comments, two scripts", loc="left")
+
+
+def definition_panel(ax):
+    c = pd.read_csv(TABLES / "cross_definition_summary.csv")
+    c = c[c.primary.astype(str) == "True"]
+    order = ["bdshs_test", "olid_test", "offmix3l", "chaos_banglish", "chaos_bangla_script", "mixtox"]
+    names = ["BD-SHS\ntest", "OLID\ntest", "OffMix-\n3L", "Chaos\nBanglish", "Chaos\nBangla", "MixTox-\nSA"]
+    x = np.arange(len(order))
+    for i, (src, label) in enumerate([("bdshs", "Trained on BD-SHS (Bangla)"), ("olid", "Trained on OLID (English)")]):
+        d = c[c.source == src]
+        mean = [d[d.condition == k].auroc_mean.mean() for k in order]
+        lo = [d[d.condition == k].auroc_mean.min() for k in order]
+        hi = [d[d.condition == k].auroc_mean.max() for k in order]
+        off = -0.14 if i == 0 else 0.14
+        ax.vlines(x + off, lo, hi, color=SERIES[i], lw=2.0, alpha=0.45)
+        ax.scatter(x + off, mean, color=SERIES[i], s=30, marker=MARKERS[i], edgecolor="white", zorder=3, label=label)
+    ax.axhline(0.5, color=INK_SECONDARY, lw=0.8, ls=":")
+    ax.set_xticks(x, names)
+    ax.set_ylim(0.4, 1.0)
+    ax.set_ylabel("AUROC after source TS")
+    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.17), ncol=1, handletextpad=0.2)
+    ax.set_title("(b) Same architectures, two label definitions", loc="left")
+
+
+def collapse_causes():
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.3), gridspec_kw={"width_ratios": [0.85, 1.25]})
+    script_panel(axes[0])
+    definition_panel(axes[1])
+    fig.tight_layout(w_pad=1.5)
+    return save(fig, "collapse_causes")
+
+
 def few_label_curves():
     f = pd.read_csv(TABLES / "few_label_finetuning_comparison.csv")
     sf = pd.concat([pd.read_csv(TABLES / "surface_feature_baseline.csv"),
@@ -245,7 +304,7 @@ def few_label_curves():
 
 
 FIGURES = {"regime_map": regime_map, "encoder_llm_auroc": encoder_llm_auroc, "script_intervention": script_intervention,
-           "cross_definition": cross_definition, "few_label_curves": few_label_curves}
+           "cross_definition": cross_definition, "collapse_causes": collapse_causes, "few_label_curves": few_label_curves}
 
 
 def main():

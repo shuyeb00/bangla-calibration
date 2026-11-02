@@ -46,13 +46,11 @@ Hinglish models (53\%). A discrimination collapse occurs for exactly one pair, B
 (0.387--0.589 across runs) with an unbounded oracle temperature in every run.
 
 \paragraph{Against the pre-registered reading.}
-We had decided to call the findings independent of the source language only if the English and Hinglish sources showed
-the same regimes and the same ranking of corrections as the Bangla ones. The threshold shift, with the same ranking of
-corrections, appears for all four sources and the temperature shift for a Bangla and the English source. No-correction
-appears only for Bangla sources, the only ones with a same-language mild variety among their targets, and collapse
-appears for one Bangla source and disappears when the source uses the target's label definition
-(Section~\ref{sec:results-causes}). The strong form of the prediction is not met, and we restrict these two regimes to
-the Bangla sources.
+We had required the same regimes and the same ranking of corrections for every source before calling the findings
+source-independent. The threshold shift and its ranking of corrections appear for all four sources; no-correction and
+collapse only for Bangla sources (the only ones with a same-language mild variety among their targets; collapse
+disappears with a matching label definition, Section~\ref{sec:results-causes}). The strong prediction is not met, and
+we restrict these two regimes to Bangla sources.
 
 \subsection{Under a threshold shift, temperature is the wrong knob}
 \label{sec:results-threshold}
@@ -60,7 +58,11 @@ the Bangla sources.
 Table~\ref{tab:correction-ablation-by-regime} adds the two components of a correction one at a time. In the
 threshold-shift regime, shrinkage TS with 50 target labels lowers NLL from 0.892 to 0.728 but leaves macro-F1 at
 0.527, as it must. Label-free batch calibration, which shifts only the class bias, raises macro-F1 to 0.620; MAP BCTS
-with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). The temperature is not merely
+with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). Batch calibration's lead in macro-F1 is
+partly a property of the metric, which rewards balanced predictions on these near-balanced targets; it reverses on
+skewed targets (Table~\ref{tab:prior-shift-ablation}). Nor does any bias term help: vector and matrix scaling have
+one, but fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS on the five
+threshold-shift targets of the BD-SHS and SentNoB base encoders (Appendix~\ref{sec:appendix-recalibration}). The temperature is not merely
 insufficient but the wrong axis: label-free batch calibration has lower NLL than the oracle temperature fitted on all
 target labels, for example 0.848 against 1.008 for the Hinglish models on SentMix-3L and 0.573 against 0.647 for the
 OLID models on OffMix-3L. Training-time remedies that act like a temperature behave the same way: focal loss and label
@@ -83,12 +85,10 @@ estimated from 50 labels repairs it (0.661 and 0.27) and performs like the true 
 \input{../thesis/tables/prior_shift_ablation}
 
 \paragraph{The predicted marginal cannot tell when to correct.}
-A threshold on the predicted-marginal shift, fitted on the Bangla sources and applied to the OLID and Hinglish sources,
-identifies the pairs that need a bias correction with AUROC 0.845 and balanced accuracy 0.796. Yet 92\% of the held-out
-units need one, so always correcting after a detected shift is more accurate (0.919 against 0.778). The same statistic
-does not identify the units in which even target TS is no better than a constant (balanced accuracy 0.524 on the
-Hinglish source). Recognising weak ranking and collapse requires labels, as Proposition~\ref{prop:impossibility}
-anticipates.
+Fitted on the Bangla sources and applied to the others, a threshold on the predicted-marginal shift flags the units
+that need a bias correction with AUROC 0.845 and balanced accuracy 0.796, but 92\% of the held-out units need one, so
+always correcting is more accurate (0.919 against 0.778). It does not identify units where target TS is no better than
+a constant (balanced accuracy 0.524 on the Hinglish source); that needs labels (Proposition~\ref{prop:impossibility}).
 
 \subsection{What causes the collapse: script in part, label definition above all}
 \label{sec:results-causes}
@@ -97,7 +97,7 @@ anticipates.
 Code-mixed Chaos exists in Banglish and in a row-aligned Bangla-script transliteration with identical labels. Changing
 only the script raises encoder AUROC by 0.212--0.225 for IndicBERT (four training variants), 0.159 for mDeBERTa-v3,
 0.071--0.096 for XLM-R-base, 0.043 for MuRIL and 0.022--0.036 for BanglaBERT, while the LLMs change by $-0.001$ to $+0.055$
-(Figure~\ref{fig:script}). Script coverage explains part of the encoders' difficulty with romanised text, but not the
+(Figure~\ref{fig:causes}a). Script coverage explains part of the encoders' difficulty with romanised text, but not the
 OffMix-3L collapse: MuRIL, which was pretrained with transliterated text, still ranks OffMix-3L at 0.546.
 
 \paragraph{Label definition.}
@@ -107,7 +107,7 @@ speech \citep{romim2022bdshs}. Training the same three architectures on
 English OLID instead of BD-SHS raises OffMix-3L AUROC from 0.519 to 0.819 (pooled difference $+0.300$, 95\% CI
 $[0.275, 0.326]$) while lowering it on Banglish Chaos; the pre-registered difference-in-differences is $+0.378$
 ($[0.351, 0.404]$, $p_{\mathrm{Holm}} < 0.001$; Table~\ref{tab:cross-definition-contrasts},
-Figure~\ref{fig:cross-definition}). The crossover is complete: BD-SHS-trained models rank BD-SHS test at 0.972 and OLID
+Figure~\ref{fig:causes}b). The crossover is complete: BD-SHS-trained models rank BD-SHS test at 0.972 and OLID
 test at 0.686, OLID-trained models at 0.779 and 0.869. The collapse is therefore a source--target mismatch of the label
 concept, shown by intervention and without relying on our own judgement of the labels. Matching the definition restores
 the ranking but not the threshold: OLID-trained models label 8.4\% of OffMix-3L as offensive, against 47.8\% in the gold
@@ -115,18 +115,12 @@ labels.
 
 \begin{figure}[t]
 \centering
-\begin{minipage}[t]{0.46\linewidth}
-\centering
-\includegraphics[width=\linewidth]{script_intervention_auroc.pdf}
-\caption{Same comments, two scripts: AUROC on Code-mixed Chaos in Banglish and in Bangla script.}
-\label{fig:script}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.49\linewidth}
-\centering
-\includegraphics[width=\linewidth]{cross_definition_auroc.pdf}
-\caption{Same architectures, two label definitions: encoders trained on BD-SHS or on English OLID.}
-\label{fig:cross-definition}
-\end{minipage}
+\includegraphics[width=\linewidth]{collapse_causes.pdf}
+\caption{Two interventions. (a) AUROC of every encoder (BD-SHS-trained) and zero-shot LLM on the same Code-mixed
+Chaos comments written in Banglish and in Bangla script, after each system's source TS. (b) AUROC of XLM-R-base, MuRIL
+and mDeBERTa-v3 trained on BD-SHS or on English OLID; points are means over the three architectures, bars the range
+of the architecture means.}
+\label{fig:causes}
 \end{figure}
 
 \input{../thesis/tables/cross_definition_contrasts}
@@ -149,7 +143,7 @@ inverted on tri-lingual code-mixing (0.352 offensive, 0.318 sentiment), meaning 
 shifted inputs. Under collapse, abstaining on low confidence gives no protection: on OffMix-3L the encoders' selective
 risk at 80\% coverage is 0.476, against an overall error of 0.475.
 
-\paragraph{LLMs keep the ranking that encoders lose; encoders win in domain.}
+\paragraph{LLMs rank shifted text better; encoders win in domain.}
 On identical items (Figure~\ref{fig:encoder-llm}), zero-shot LLMs rank OffMix-3L at 0.857--0.941 against 0.481 for the
 BD-SHS encoders, Banglish at 0.886--0.970 against 0.773, MixTox-SA at 0.795--0.831 against 0.687, and Hinglish at
 0.843--0.890 against 0.735. In domain and on the dialects the encoders are better (BD-SHS test 0.970 against
@@ -169,7 +163,8 @@ The LLMs' rankings come with a shifted threshold. On OffMix-3L, MAP BCTS raises 
 three of the four LLMs (0.66 for Qwen3-8B), against 0.94 for the encoders. Spending the same 50 labels as in-context
 demonstrations improves the ranking (AUROC 0.966 against 0.913) but gives lower macro-F1 (0.693 against 0.794) and NLL
 2.005 against 0.429. Fine-tuning the encoder on the target labels cures the collapse only with about 200 labels (AUROC
-0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200 labels; Figure~\ref{fig:few-label}). With up to 100 labels the
+0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200 labels; macro-F1 up to 100 labels in
+Figure~\ref{fig:few-label}). With up to 100 labels the
 better use of them is to route to a system whose ranking survives and to correct its bias.
 
 \begin{figure}[t]

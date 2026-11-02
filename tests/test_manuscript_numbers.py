@@ -458,7 +458,7 @@ claim("results", "estimated from 50 labels repairs it (0.661 and 0.27)", st.N_LA
 claim("results", "MAP BCTS does as well (0.665 and 0.25). At $\\pi_+ = 0.9$ the prior-aware variant reaches 0.615 against "
       "0.482", stress("pos0.1", "map_bcts", "macro_f1"), stress("pos0.1", "map_bcts", "nll"), 0.9,
       stress("pos0.9", "prior_batch_labels", "macro_f1"), stress("pos0.9", "batch_calibration", "macro_f1"))
-claim("results", "with AUROC 0.845 and balanced accuracy 0.796. Yet 92\\%",
+claim("results", "with AUROC 0.845 and balanced accuracy 0.796, but 92\\%",
       validation("needs_bias_correction", "bangla", "olid+hinglish", "auroc"),
       validation("needs_bias_correction", "bangla", "olid+hinglish", "balanced_accuracy"),
       100 * validation("needs_bias_correction", "bangla", "olid+hinglish", "test_positive_share"))
@@ -466,6 +466,26 @@ claim("results", "(0.919 against 0.778)", validation("needs_bias_correction", "b
       "majority_rule_accuracy"), validation("needs_bias_correction", "bangla", "olid+hinglish", "accuracy"))
 claim("results", "(balanced accuracy 0.524 on the Hinglish source)",
       validation("no_better_than_constant", "bangla", "sentiment_hinglish", "balanced_accuracy"))
+
+def source_bias_effects() -> list:
+
+    t = pd.concat([table("shift_recalibration_label_free_per_run"),
+                   table("shift_recalibration_label_free_per_run_natural_codemixed")])
+    t = t[t.model.isin(BASE_MODELS) & (t.objective == "cross_entropy")]
+    targets = [("offensive", "shift_d4_banglish_test"), ("offensive", "shift_d4_banglish_bangla_script_test"),
+               ("offensive", "shift_d5_mixtox_test"), ("sentiment", "shift_d2_test"),
+               ("sentiment", "shift_d6_hinglish_test")]
+    assert all(regime(s, c) == "R2" for s, c in targets)
+    out = []
+    for task, cond in targets:
+        d = t[(t.task == task) & (t.condition == cond)].pivot_table(index="run_id", columns="method", values="macro_f1")
+        out += [float((d[m] - d.temperature_scaling).mean()) for m in ("vector_scaling", "matrix_scaling")]
+    return out
+
+
+claim("results", "fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS",
+      min(source_bias_effects()), max(source_bias_effects()))
+
 
 # Results: causes.
 _ib = [f for f in table("script_intervention_summary").family if f.startswith("encoder_indicbert")]
@@ -494,8 +514,6 @@ _cd_offmix = cross_def_offmix("olid")
 claim("results", "label 8.4\\% of OffMix-3L as offensive, against 47.8\\%",
       100 * float(np.average(_cd_offmix.predicted_positive_share_mean, weights=_cd_offmix.n_runs)),
       100 * float(_cd_offmix.gold_positive_share_mean.mean()))
-claim("results", "\\begin{minipage}[t]{0.46\\linewidth}", None)
-claim("results", "\\begin{minipage}[t]{0.49\\linewidth}", None)
 claim("results", "trained on 50 OffMix-3L items reaches AUROC 0.976", 50, surface("50"))
 claim("results", "(adjusted mutual information 0.47--0.81 for 5 to 50 clusters, against 0.19--0.28 on BD-SHS)",
       *cluster_nmi("offensive", "shift_d2_test"), 5, 50, *cluster_nmi("offensive", "test"))
@@ -532,6 +550,7 @@ claim("results", "only with about 200 labels (AUROC 0.505, 0.621, 0.743 and 0.89
       SIZE("offensive", "shift_d2_test")[0], finetune("25"), finetune("50"), finetune("100"), finetune("all"), 25, 50,
       100, SIZE("offensive", "shift_d2_test")[0])
 claim("results", "With up to 100 labels the better use", 100)
+claim("results", "macro-F1 up to 100 labels in", 100)
 
 # Triage.
 _orig, _nat = ("", ("offensive", "sentiment")), ("_natural_codemixed", ("offensive",))

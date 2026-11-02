@@ -41,11 +41,11 @@ target inputs and on the source calibration split, which needs no target labels;
 
 \paragraph{Regimes.}
 These quantities define four regimes, which we named before the cross-source experiments:
-\emph{no correction needed} (ranking and calibration transfer);
-\emph{temperature shift} (a finite change of the optimal temperature with stable predicted proportions);
-\emph{threshold shift with retained ranking} (the ranking survives, but the predicted proportions move and a bias
+(R0) \emph{no correction needed} (ranking and calibration transfer);
+(R1) \emph{temperature shift} (a finite change of the optimal temperature with stable predicted proportions);
+(R2) \emph{threshold shift with retained ranking} (the ranking survives, but the predicted proportions move and a bias
 correction is needed to fix the decisions); and
-\emph{discrimination collapse} (the score carries no usable information about the target label: the oracle temperature
-diverges and target TS is no better than a constant). A fifth regime, \emph{weak ranking}, emerged from the data: the
-ranking is above chance, but target TS is still no better than a constant in most runs. The operational thresholds that
+(R4) \emph{discrimination collapse} (the score carries no usable information about the target label: the oracle
+temperature diverges and target TS is no better than a constant). A fifth regime, (R3) \emph{weak ranking}, emerged
+from the data: the ranking is above chance, but target TS is still no better than a constant in most runs. The operational thresholds that
 assign pairs to regimes were set after inspecting the results, and we report them as such.

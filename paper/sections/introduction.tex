@@ -6,8 +6,9 @@ A Bangla offensive-language classifier fine-tuned on Bangla-script comments rank
 toxic comments written in Banglish, Bangla typed in Latin letters as many speakers write online. It now misses 78\% of
 them. Its ranking of those comments is still far from chance (AUROC 0.771): the model has not lost the notion of
 offensiveness, it has kept the wrong cut-off. Temperature scaling \citep{guo2017calibration}, the default repair for
-confidence that no longer matches accuracy, cannot help. It rescales every score by the same factor, so it changes
-neither the predicted class nor the order of the scores, and therefore no decision that depends on them.
+confidence that no longer matches accuracy, cannot help. For a binary classifier it divides the logit by a constant,
+so it changes neither the predicted class nor the order of the scores, and therefore no decision that depends on
+them.
 
 This paper asks what breaks when text classifiers meet language varieties they were not trained on, and what it takes
 to repair it. We fine-tune seven encoders (five seeds each) on Bangla offensive-language and sentiment data and
