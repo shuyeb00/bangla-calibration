@@ -1,8 +1,9 @@
 """Anonymised supplementary archive for double-blind review.
 
-Packs the tracked code, committed tables, figures, LaTeX tables, theory notes and the manuscript sections (whose
-numbers tests/test_manuscript_numbers.py checks; the title page with the author list is left out) into a deterministic
-ZIP. Author names, e-mail addresses, institution, repository and Hugging Face identifiers and git commit hashes are
+Packs the tracked code, the tables and figures of the submitted study, LaTeX tables, theory notes and the manuscript
+sections (whose numbers tests/test_manuscript_numbers.py checks; the title page with the author list is left out) into
+a deterministic ZIP. The superseded max_length-128 grid and the repository README stay out: OpenReview shows the
+supplement to the public, and it should hold only material that supports the submission. Author names, e-mail addresses, institution, repository and Hugging Face identifiers and git commit hashes are
 replaced, and the archive is scanned afterwards; the build fails if any identifying string remains or the archive
 exceeds the size limit. With --outputs, shards of the released model outputs (src/export_release_outputs.py export
 --anonymise) are added in priority order while they fit, with a manifest reduced to the shards included; their JSON
@@ -26,9 +27,19 @@ from src.config import BASE_DIR
 DEFAULT_OUT = BASE_DIR / "release" / "supplementary.zip"
 LIMIT_BYTES = 100 * 10**6
 INCLUDE_PREFIXES = ("src/", "tests/", "notebooks/", "data/", "results/", "thesis/", "paper/sections/", "reproduce.sh",
-                    "requirements", "REPRODUCIBILITY.md", "README.md", ".gitignore")
+                    "requirements", "REPRODUCIBILITY.md")
 # This builder lists the identifying strings it removes, so it cannot itself be shipped anonymised.
-EXCLUDE = {"src/build_supplementary_archive.py"}
+EXCLUDE = {"src/build_supplementary_archive.py", "notebooks/01_pipeline_validation.ipynb",
+           "results/all_runs_summary.json"}
+SUPERSEDED_GRID = re.compile(
+    r"results/(offensive|sentiment)_[^/]+_seed\d+/"
+    r"|results/pipeline_validation/"
+    r"|thesis/figures/[^/]+$"
+    r"|results/tables/(BENCHMARK_SUMMARY_REPORT\.md|EXTENDED_DIAGNOSTICS_REPORT\.md"
+    r"|conformal_lac_aps_raps_\w+\.csv|conformal_mapie_crosscheck\.csv|extended_calibration_\w+\.csv"
+    r"|mahalanobis_percentile_\w+\.csv|mechanistic_shift_correlations\.csv|metrics_\w+\.csv"
+    r"|representation_distance_metrics\.csv|shift_quantification\.csv|significance_results\.csv"
+    r"|weighted_conformal_metrics\.csv)$")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".csv", ".sh", ".tex", ".json", ".ipynb", ".gitignore", ".cfg", ".toml", ""}
 SHARD_PRIORITY = ("runs_offensive", "runs_sentiment", "runs_offensive_olid", "runs_sentiment_hinglish",
                   "llm_runs_offensive", "llm_runs_sentiment", "few_label_finetuning", "llm_prompt_variants_offensive",
@@ -56,7 +67,8 @@ FORBIDDEN = re.compile(r"suheb|shuyeb|ferdus|ferdous|jakaria|metropolitan|github
 def tracked_files() -> list:
     out = subprocess.run(["git", "ls-files"], cwd=BASE_DIR, capture_output=True, text=True, check=True).stdout
     return [f for f in out.splitlines()
-            if f.startswith(INCLUDE_PREFIXES) and f not in EXCLUDE and (BASE_DIR / f).is_file()]
+            if f.startswith(INCLUDE_PREFIXES) and f not in EXCLUDE and not SUPERSEDED_GRID.match(f)
+            and (BASE_DIR / f).is_file()]
 
 
 def anonymise_csv(text: str) -> str:
@@ -103,10 +115,15 @@ def reduced_manifest(bundle: Path, shards: list) -> bytes:
 
 
 def readme(shards: list, left_out: list) -> bytes:
-    text = ["# Supplementary material (anonymised for review)", "",
-            "Contents: analysis code (`src/`), unit tests (`tests/`), every derived table (`results/tables/`), "
-            "figures and LaTeX tables (`thesis/`), dataset documentation (`data/`) and the reproduction script "
-            "(`reproduce.sh`). Identifying names, links and commit hashes are replaced.", "",
+    text = ["# Supplementary material for \"Temperature Is the Wrong Knob: How Text Classifiers Fail Across Dialects, "
+            "Scripts and Code-Mixing\"", "", "Anonymised for review.", "",
+            "Contents: code (`src/`, `notebooks/00_data_preparation.ipynb`), tests (`tests/`, including the "
+            "recomputation of every number in the manuscript text from the tables), the manuscript sections "
+            "(`paper/sections/`), derived tables (`results/tables/grid_max_length_512/` for the study, "
+            "`results/tables/` for data, tokenizer and human-validation tables, `results/lora_lr_sweep*/` for the "
+            "learning-rate selection), figures, LaTeX tables and theory notes (`thesis/`), dataset documentation "
+            "(`data/`) and the reproduction script (`reproduce.sh`). Identifying names, links and commit hashes are "
+            "replaced. See `REPRODUCIBILITY.md` for the levels of reproduction.", "",
             "Level 1 (tables to figures and LaTeX tables, about two minutes on a CPU): "
             "`pip install -r requirements-analysis.txt && bash reproduce.sh tables`.", ""]
     if shards:
@@ -156,7 +173,7 @@ def build(out: Path, outputs: Path, limit: int) -> None:
         sums = [f"{hashlib.sha256(extra[f'outputs/{n}']).hexdigest()}  {n}" for n in shards]
         sums.append(f"{hashlib.sha256(manifest).hexdigest()}  MANIFEST.json")
         extra["outputs/SHA256SUMS"] = ("\n".join(sums) + "\n").encode()
-    members["README_SUPPLEMENT.md"] = readme(shards, left_out)
+    members["README.md"] = readme(shards, left_out)
     data = zip_bytes(members, extra)
     leaks = [n for n, d in members.items() if is_text(n) and FORBIDDEN.search(d.decode("utf-8", "replace"))]
     for name, blob in extra.items():
