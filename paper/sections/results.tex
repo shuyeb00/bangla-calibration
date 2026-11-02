@@ -25,7 +25,8 @@ temperature in every run.}
 \paragraph{Mild varieties need nothing; pure temperature shifts are rare.}
 Encoders trained on BD-SHS keep their ranking on the Barishal and Noakhali dialects (retention 0.994 and 0.990, marginal
 shift at most 0.035), and SentNoB encoders keep 0.957 of their ranking on Sylheti; no correction improves on source TS
-there by more than 0.0035 nats. Only two pairs show a temperature shift with stable predicted proportions: the
+there by more than 0.0035 nats, and spending 50 labels on the temperature makes NLL slightly worse (0.450 against
+0.442). Only two pairs show a temperature shift with stable predicted proportions: the
 Chittagong dialect ($\log T^*_Q/T_P = 0.297$, marginal shift 0.029) and BD-SHS as a target of the OLID-trained models
 (0.407 and 0.082).
 
@@ -45,7 +46,7 @@ models), but target TS is no better than a constant in 56\% and 73\% of runs; Sy
 Hinglish models (53\%). A discrimination collapse occurs for exactly one pair, BD-SHS models on OffMix-3L: AUROC 0.496
 (0.387--0.589 across runs) with an unbounded oracle temperature in every run.
 
-\paragraph{Against the pre-registered reading.}
+\paragraph{Against the pre-specified reading.}
 We had required the same regimes and the same ranking of corrections for every source before calling the findings
 source-independent. The threshold shift and its ranking of corrections appear for all four sources; no-correction and
 collapse only for Bangla sources (the only ones with a same-language mild variety among their targets; collapse
@@ -58,9 +59,10 @@ we restrict these two regimes to Bangla sources.
 Table~\ref{tab:correction-ablation-by-regime} adds the two components of a correction one at a time. In the
 threshold-shift regime, shrinkage TS with 50 target labels lowers NLL from 0.892 to 0.728 but leaves macro-F1 at
 0.527, as it must. Label-free batch calibration, which shifts only the class bias, raises macro-F1 to 0.620; MAP BCTS
-with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). Batch calibration's lead in macro-F1 is
+with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). These means weight pairs by their number
+of runs; weighting every pair or every source equally gives 0.526 to 0.630 and 0.506 to 0.610. Batch calibration's lead in macro-F1 is
 partly a property of the metric, which rewards balanced predictions on these near-balanced targets; it reverses on
-skewed targets (Table~\ref{tab:prior-shift-ablation}). Nor does any bias term help: vector and matrix scaling have
+skewed targets (Table~\ref{tab:prior-shift-ablation}). The bias must come from the target: vector and matrix scaling have
 one, but fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS on the five
 threshold-shift targets of the BD-SHS and SentNoB base encoders (Appendix~\ref{sec:appendix-recalibration}). The temperature is not merely
 insufficient but the wrong axis: label-free batch calibration has lower NLL than the oracle temperature fitted on all
@@ -74,23 +76,24 @@ offensive conditions, and no objective, scale or architecture lifts the BD-SHS m
 \input{../thesis/tables/correction_ablation_by_regime}
 
 \paragraph{When label-free bias correction backfires.}
-Batch calibration equalises the predicted class proportions, so it assumes a balanced target. To test this assumption we
+Batch calibration pulls the predicted class proportions towards uniform, so it assumes a balanced target. To test this assumption we
 resampled every target of the two offensive source tasks to a fixed positive share $\pi_+$
 (Table~\ref{tab:prior-shift-ablation}). At $\pi_+ = 0.5$ batch calibration comes close to MAP BCTS (macro-F1 0.699
 against 0.709). At $\pi_+ = 0.1$, the typical situation in content moderation, it is harmful: macro-F1 drops to 0.631
 from 0.654 with source TS, NLL rises from 0.31 to 0.56, and it lowers NLL in none of the run--target units. A class prior
 estimated from 50 labels repairs it (0.661 and 0.27) and performs like the true prior; MAP BCTS does as well (0.665 and
-0.25). At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615 against 0.482 for the uniform one.
+0.25). At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for MAP
+BCTS.
 
 \input{../thesis/tables/prior_shift_ablation}
 
 \paragraph{The predicted marginal cannot tell when to correct.}
 Fitted on the Bangla sources and applied to the others, a threshold on the predicted-marginal shift flags the units
-that need a bias correction with AUROC 0.845 and balanced accuracy 0.796, but 92\% of the held-out units need one, so
+that need a bias correction with AUROC 0.845 and balanced accuracy 0.796, but almost all held-out units need one, so
 always correcting is more accurate (0.919 against 0.778). It does not identify units where target TS is no better than
 a constant (balanced accuracy 0.524 on the Hinglish source); that needs labels (Proposition~\ref{prop:impossibility}).
 
-\subsection{What causes the collapse: script in part, label definition above all}
+\subsection{What the two interventions say about the collapse}
 \label{sec:results-causes}
 
 \paragraph{Script.}
@@ -101,16 +104,23 @@ only the script raises encoder AUROC by 0.212--0.225 for IndicBERT (four trainin
 OffMix-3L collapse: MuRIL, which was pretrained with transliterated text, still ranks OffMix-3L at 0.546.
 
 \paragraph{Label definition.}
-OffMix-3L derives its notion of offensiveness from OLID \citep{goswami2023offmix}, which counts any
-non-acceptable language as offensive, including untargeted profanity \citep{zampieri2019olid}; BD-SHS annotates hate
-speech \citep{romim2022bdshs}. Training the same three architectures on
+BD-SHS annotates hate speech \citep{romim2022bdshs}. OffMix-3L shares the label set of OLID, and its authors build their
+synthetic training data from English corpora with those labels \citep{goswami2023offmix}; OLID counts any non-acceptable
+language as offensive, including untargeted profanity \citep{zampieri2019olid}. Training the same three architectures on
 English OLID instead of BD-SHS raises OffMix-3L AUROC from 0.519 to 0.819 (pooled difference $+0.300$, 95\% CI
-$[0.275, 0.326]$) while lowering it on Banglish Chaos; the pre-registered difference-in-differences is $+0.378$
-($[0.351, 0.404]$, $p_{\mathrm{Holm}} < 0.001$; Table~\ref{tab:cross-definition-contrasts},
-Figure~\ref{fig:causes}b). The crossover is complete: BD-SHS-trained models rank BD-SHS test at 0.972 and OLID
-test at 0.686, OLID-trained models at 0.779 and 0.869. The collapse is therefore a source--target mismatch of the label
-concept, shown by intervention and without relying on our own judgement of the labels. Matching the definition restores
-the ranking but not the threshold: OLID-trained models label 8.4\% of OffMix-3L as offensive, against 47.8\% in the gold
+$[0.275, 0.326]$) while lowering it on Banglish Chaos; the pre-specified difference-in-differences is $+0.378$
+($[0.351, 0.404]$, $p_{\mathrm{Holm}} < 0.001$; Figure~\ref{fig:causes}b, Table~\ref{tab:cross-definition-contrasts}
+in the appendix). The crossover is complete: BD-SHS-trained models rank BD-SHS test at 0.972 and OLID
+test at 0.686, OLID-trained models at 0.779 and 0.869.
+
+This intervention changes the training language and corpus together with the definition, so it does not isolate the
+definition. Three further results narrow the alternatives. English vocabulary does not explain the gain: across
+tertiles of the English share of OffMix-3L, OLID-trained models stay at 0.808--0.829 and BD-SHS-trained models at
+0.503--0.526. Writing-style clusters do not explain it either (below). And broadening the LLM prompt to count harsh
+criticism raises OffMix-3L AUROC and lowers BD-SHS AUROC for all four LLMs, although the OLID guideline itself changed
+nothing, against our prediction (Appendix~\ref{sec:appendix-results}). We therefore read the collapse as most likely a
+source--target mismatch of the label concept; one corpus annotated under both definitions would settle it. Matching the
+definition restores the ranking but not the threshold: OLID-trained models label 8.4\% of OffMix-3L as offensive, against 47.8\% in the gold
 labels.
 
 \begin{figure}[t]
@@ -123,15 +133,14 @@ of the architecture means.}
 \label{fig:causes}
 \end{figure}
 
-\input{../thesis/tables/cross_definition_contrasts}
-
 \paragraph{OffMix-3L is also artifact-laden.}
 A character n-gram classifier trained on 50 OffMix-3L items reaches AUROC 0.976, and label-free writing-style clusters
 explain much of its label (adjusted mutual information 0.47--0.81 for 5 to 50 clusters, against 0.19--0.28 on BD-SHS).
 The comparisons above survive this artifact: within five clusters the zero-shot LLMs still rank offensive items above
 non-offensive ones (AUROC 0.910--0.950) whereas the BD-SHS encoders do not (0.470 on average), and the OLID-trained
-encoders do (Appendix~\ref{sec:appendix-artifacts}). Because the natural code-mixed targets carry much weaker artifacts,
-we treat them, not OffMix-3L, as the main evidence about code-mixing.
+encoders do (Appendix~\ref{sec:appendix-artifacts}). The natural code-mixed targets carry weaker artifacts, MixTox-SA
+almost none, so we treat them, not OffMix-3L, as the main evidence about code-mixing; Code-mixed Chaos is not free of
+them, because part of its non-toxic class comes from another corpus.
 
 \subsection{Detecting the shift and choosing a system}
 \label{sec:results-systems}
@@ -163,15 +172,5 @@ The LLMs' rankings come with a shifted threshold. On OffMix-3L, MAP BCTS raises 
 three of the four LLMs (0.66 for Qwen3-8B), against 0.94 for the encoders. Spending the same 50 labels as in-context
 demonstrations improves the ranking (AUROC 0.966 against 0.913) but gives lower macro-F1 (0.693 against 0.794) and NLL
 2.005 against 0.429. Fine-tuning the encoder on the target labels cures the collapse only with about 200 labels (AUROC
-0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200 labels; macro-F1 up to 100 labels in
-Figure~\ref{fig:few-label}). With up to 100 labels the
+0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200 labels; Appendix~\ref{sec:appendix-few-label}). With up to 100 labels the
 better use of them is to route to a system whose ranking survives and to correct its bias.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{few_label_adaptation_curves.pdf}
-\caption{Ways of spending $n$ target labels, macro-F1 on the target test items. Dashed line: encoder with source TS.
-The character n-gram classifier is trained on the same labels and shows how much of each label is predictable from
-surface features.}
-\label{fig:few-label}
-\end{figure}

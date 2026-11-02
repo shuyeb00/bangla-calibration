@@ -105,27 +105,36 @@ source uses the official SentiMix training split without texts that occur in the
 the development split for validation (2{,}998) and the official test split. Bangla texts are cleaned by URL removal and
 whitespace normalisation followed by the normaliser required by BanglaBERT; other texts are normalised with NFKC. The
 natural code-mixed corpora are deduplicated (conflicting duplicates are dropped) and split 20/80 into calibration and
-test, stratified by label; the two scripts of Code-mixed Chaos share one split. For SentiMix Spanglish, whose official
+test, stratified by label; the two scripts of Code-mixed Chaos share one split (10{,}179 of its 10{,}234 rows remain).
+For SentiMix Spanglish, whose official
 test labels are not distributed, the official development split is the test split and the calibration split is drawn
 from the training split, so the two come from different releases. Of the BIDWESH test items, 8.6\% are translations of
 BD-SHS training sentences; removing them changes macro-F1 by at most 0.0053 and AUROC by at most 0.0033 in any run.
 
+\paragraph{How the targets were built.}
+These facts limit what each target can show. BIDWESH renders the same BD-SHS sentences in three dialects, so its three
+targets are not independent. Code-mixed Chaos is balanced (5{,}117 toxic, 5{,}117 non-toxic) by adding non-toxic comments
+from a public emotion corpus, so its label is partly tied to the source corpus. MixTox-SA has three classes; we count
+neutral as non-toxic, which gives the toxic share of 0.342. OffMix-3L was written by ten undergraduate students;
+three annotators agreed on 1{,}106 of 1{,}734 items (raw agreement 63.7\%), only those were kept, and a second round left
+1{,}001 items, so it contains unusually clear-cut items.
+
 \paragraph{The Sylheti test set.}
-We drew 760 items uniformly at random from the SentNoB test split; the two authors, both native Sylheti speakers,
+We drew 760 items uniformly at random from the SentNoB test split; two of the authors, both native Sylheti speakers,
 translated the first 401 of them in the random order into Sylheti written in Bangla script, keeping the source's
-non-standard spelling where possible. Each translation was made by one author. The 401 items do not differ from the
+non-standard spelling where possible. Each translation was made by one of them. The 401 items do not differ from the
 untranslated remainder in label distribution or length. They are split by label into 200 calibration and 201 test items.
-To check label validity without relying on the translators' own judgement of the source, both authors labelled a
+To check label validity without relying on the translators' own judgement of the source, both labelled a
 stratified sample of 100 Sylheti items without seeing the gold label. Their agreement with the SentNoB gold label was
 0.650 and 0.616 (Cohen's $\kappa$ 0.498 and 0.422), against 0.483 and 0.533 for the same annotators on a blind sample of
 SentNoB's own test items; the inter-annotator $\kappa$ was 0.589. The disagreement concentrates at the boundary between
-positive and neutral, as in the source data. The Sylheti set is a derivative of SentNoB and will be released if the
-SentNoB licence permits it.
+positive and neutral, as in the source data. The Sylheti set is a derivative of SentNoB, whose repository states no
+licence, so its texts are not redistributed; we will release them if the SentNoB authors agree.
 
 \paragraph{Licences.}
 OffMix-3L and SentMix-3L are distributed under CC BY-NC-ND 4.0 and are not redistributed; Code-mixed Chaos, MixTox-SA and
 SentiMix are under CC BY 4.0. Released files contain model outputs and item indices but no text; preparation scripts
-rebuild every split from the original releases and verify checksums.
+rebuild every split except the Sylheti texts from the original releases and verify checksums.
 
 \section{Models, Training and Prompting}
 \label{sec:appendix-training}
@@ -141,7 +150,7 @@ whereas its pretraining normalisation removes only the hasanta and the nukta; we
 normalisation before tokenisation.
 
 \paragraph{Convergence.}
-One of the 60 base-grid runs (IndicBERT with LoRA, offensive, one seed) did not converge by the pre-registered rule and
+One of the 60 base-grid runs (IndicBERT with LoRA, offensive, one seed) did not converge by the rule fixed before training and
 is excluded; the configuration is reported over four seeds. One label-smoothing run did not converge. Under the
 base-model recipe, three of six XLM-R-large runs collapsed to a single class; these runs are reported only as a recipe
 sensitivity check, and the large-encoder results use the large-encoder recipe, under which all 20 runs converged. All
@@ -151,7 +160,8 @@ architecture, OLID and Hinglish runs converged.
 Each prompt contains an English instruction, the text and a one-word answer format. For offensive language the
 instruction asks whether the text ``contains hate speech, insults, abuse, threats, or vulgar language''; for sentiment it
 asks for the sentiment that the text expresses. The class score is the log-probability of the label word at the answer
-position (summed over its tokens when it has several), and the probability of producing any label is recorded. The four
+position (summed over its tokens when it has several), and the probability of producing any label is recorded. Thinking
+is disabled through the chat template for Qwen3 and Qwen3.5. The four
 general LLMs place at least 0.97 of their probability on a label word on average on every split of the original
 conditions; the exception among the held-out targets is Llama-3.1-8B on Spanglish. TigerLLM-1B, a Bangla-specific
 instruction-tuned model, did not follow the format in the few-shot setting and its zero-shot accuracy was at chance;
@@ -170,9 +180,16 @@ AUROC). Few-label methods use 20 resamples of the labelled target items, drawn w
 \text{resample})$ so that every system sees the same items. Five-versus-five permutation tests have a smallest
 attainable $p$ of $2/252$, so a family of 120 such tests cannot reach significance after correction; we report it
 descriptively. In the two LLM recalibration families the sign-flip test treats the 16 systems (four LLMs, four
-prompting settings) as exchangeable, although they come from four models. The hierarchical bootstrap intervals, which
+prompting settings) as exchangeable, although they come from four models; a test over the four models alone could not
+go below $p = 1/8$, so these families describe these models rather than a population of LLMs. The hierarchical
+bootstrap intervals, which
 resample models, exclude zero for all 16 significant contrasts on the original targets but for only 24 of the 26 on the
-natural targets; the two exceptions are NLL contrasts on MixTox-SA with 25 labels.
+natural targets; the two exceptions are NLL contrasts on MixTox-SA with 25 labels. Intervals of the cross-definition
+contrasts are over items; variation across seeds and architectures enters through the stratified permutation test.
+
+Shrinkage TS and MAP BCTS use Gaussian priors on $\log T$ and on each free bias, with $b_0 = 0$ for identifiability. The
+variances are empirical-Bayes estimates from the other task: for encoders, on $\log T$ and the bias, 0.433 and 1.24 for
+offensive language and 1.55 and 0.063 for sentiment.
 
 \input{../thesis/tables/contrast_families_holm}
 
@@ -180,6 +197,24 @@ natural targets; the two exceptions are NLL contrasts on MixTox-SA with 25 label
 \label{sec:appendix-results}
 
 \input{../thesis/tables/regime_map_source_transfer}
+
+\subsection{Cross-definition contrasts and triage policies}
+\input{../thesis/tables/cross_definition_contrasts}
+
+\input{../thesis/tables/shift_triage_policies}
+
+\subsection{Spending labels}
+\label{sec:appendix-few-label}
+Figure~\ref{fig:few-label} compares the ways of spending target labels.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{few_label_adaptation_curves.pdf}
+\caption{Ways of spending $n$ target labels, macro-F1 on the target test items. Dashed line: encoder with source TS.
+The character n-gram classifier is trained on the same labels and shows how much of each label is predictable from
+surface features.}
+\label{fig:few-label}
+\end{figure}
 
 \subsection{Training objectives, scale and architectures}
 \label{sec:appendix-objectives}
@@ -219,13 +254,15 @@ architecture. On the natural code-mixed targets the same audit finds much weaker
 0.37 adjusted mutual information, MixTox-SA at most 0.083).
 
 \subsection{Human reading of the OffMix-3L labels}
-Before the cross-definition experiment, the two authors relabelled random OffMix-3L test items without seeing the gold
-label, using an insult-based definition that matches BD-SHS. Their agreement with the gold label was at chance (0.44 and
+Before the cross-definition experiment, two of the authors relabelled 100 random OffMix-3L test items without seeing the
+gold label, using an insult-based definition that matches BD-SHS. Neither reads Hindi in Devanagari, and one marked 61
+items as not judgeable. Their agreement with the gold label was at chance (0.44 and
 0.41, $\kappa$ 0.015 and 0.078), against 0.825 and 0.848 on BD-SHS test items. With complete English translations of 100
 further items, one annotator recovered part of the gold label (agreement 0.677, $\kappa$ 0.359), the other applied the
 insult-based definition and labelled almost every item non-offensive; the two annotators agreed with each other at
 $\kappa = 0.030$. We report this round as consistent with, but much weaker than, the cross-definition intervention of
-Section~\ref{sec:results-causes}, which does not depend on our judgement.
+Section~\ref{sec:results-causes}, which does not depend on our judgement. Chance agreement also fits noisy labels, not
+only a different definition.
 
 \subsection{Contamination}
 \label{sec:appendix-contamination}
@@ -244,19 +281,22 @@ unchanged (AUROC 0.916 against 0.913; 6.7\% predicted offensive against 47.8\% i
 prediction. A broader definition that also counts hostile or harshly critical remarks raised OffMix-3L AUROC by 0.040 for
 all four LLMs and lowered BD-SHS AUROC by 0.027 for all four, a sign crossover consistent with the label-definition
 account. A paraphrase of the default instruction changed macro-F1 by $-0.118$ to $+0.092$ per model and target, so
-zero-shot thresholds are sensitive to wording while rankings are not.
+zero-shot thresholds are sensitive to wording while rankings are not. The sentiment prompt calls the text Bangla;
+removing that statement did not help on Hinglish or Spanglish (macro-F1 changes of $-0.011$ and $-0.018$).
+
 
 \section{Reproducibility}
 \label{sec:appendix-reproducibility}
 
-The released code reproduces the study at three levels. (1) From the released tables, a single script rebuilds every
+The released code reproduces the study at three levels. The supplement carries the anonymised model outputs. (1) From the released tables, a single script rebuilds every
 figure, every table and every contrast statistic in this paper and runs the unit tests in about two minutes on a CPU;
 a clean run reproduces the released files byte for byte, and a test checks every number quoted in the text against
 those tables. (2) From the saved model outputs (the logits and item indices of every encoder run and LLM system), the
-same script regenerates every table of results on a CPU. (3) From the public datasets, the training and inference
+same script regenerates every table of results on a CPU, given the prepared datasets; while the Sylheti texts are
+unreleased, the conditions that need them stay at level 1. (3) From the public datasets, the training and inference
 scripts rebuild the models on two T4 GPUs. Every run records its seed, code version, library versions and an input
-fingerprint. Dataset texts are not redistributed; preparation scripts rebuild every split from the original releases.
+fingerprint. Dataset texts are not redistributed; preparation scripts rebuild the splits from the original releases.
 The unit tests verify the statistical components against their definitions or against simulation: conformal coverage,
 conformal risk control and its minimum number of positives, bias-corrected temperature scaling, batch calibration and
-its prior-aware variant, E-AURC, the permutation test and Holm's procedure, and the shrinkage condition of
+its prior-aware variant, the excess area under the risk--coverage curve, the permutation test and Holm's procedure, and the shrinkage condition of
 Proposition~\ref{prop:shrinkage}.

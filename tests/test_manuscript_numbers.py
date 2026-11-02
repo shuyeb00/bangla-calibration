@@ -9,6 +9,7 @@ the same tables by src.publication_tables and checked byte for byte by the repro
     python tests/test_manuscript_numbers.py          (prints every claim with its recomputed values)
 """
 
+import math
 import re
 import sys
 from functools import lru_cache
@@ -16,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.stats import binom
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -24,6 +26,7 @@ from src import config  # noqa: E402
 from src import shift_recalibration as sr  # noqa: E402
 from src import source_transfer_regimes as st  # noqa: E402
 from src.publication_tables import regime  # noqa: E402
+from src.triage_prevalence_stress_test import labels_needed, positives_needed  # noqa: E402
 
 SECTIONS = ROOT / "paper" / "sections"
 TABLES = ROOT / "results" / "tables" / "grid_max_length_512"
@@ -341,7 +344,9 @@ claim("abstract", "In 12 of the 21 pairs", len(cells("R2")), n_shifted_pairs())
 claim("abstract", "raises macro-F1 from 0.527 to 0.620 on average", ablation("R2", "source_ts", "macro_f1"),
       ablation("R2", "batch_calibration", "macro_f1"))
 claim("abstract", "a class prior estimated from 50 labelled examples", st.N_LABELS)
-claim("abstract", "with about 50 target labels,", st.N_LABELS)
+claim("abstract", "with about 50 target labels on a balanced target", st.N_LABELS)
+claim("abstract", "the latter need 19 labelled positives, so about 245 labels at 10\\% prevalence", positives_needed(2),
+      labels_needed(0.1, 2), 10)
 _intro_runs = label_free_runs()
 _intro_runs = _intro_runs[(_intro_runs.task == "offensive") & (_intro_runs.condition == "test")]
 _banglish = label_free_runs(True)
@@ -349,7 +354,7 @@ _banglish = _banglish[_banglish.condition == "shift_d4_banglish_test"]
 _rc = table("risk_control_under_shift_per_run_natural_codemixed")
 _rc = _rc[_rc.model.isin(BASE_MODELS) & (_rc.objective == "cross_entropy") & (_rc.method == "source_risk_control")
           & (_rc.condition == "shift_d4_banglish_test")]
-claim("introduction", "(AUROC 0.969, mean over 29 runs)", _intro_runs.auroc.mean(), len(_intro_runs))
+claim("introduction", "(AUROC 0.969, mean over the 29 converged runs", _intro_runs.auroc.mean(), len(_intro_runs))
 claim("introduction", "We set its false-negative rate to 10\\%", sr.ALPHA * 100)
 claim("introduction", "It now misses 78\\% of them", _rc.fnr.mean() * 100)
 claim("introduction", "(AUROC 0.771)", _banglish.auroc.mean())
@@ -362,8 +367,8 @@ claim("introduction", "moves encoder AUROC by up to 0.225",
       max(script(f) for f in table("script_intervention_summary").query("kind == 'encoder' and item_set == 'full'").family))
 claim("introduction", "$+0.378$, $p_{\\mathrm{Holm}} < 0.001$", cross_def("did_offmix3l_minus_chaos_banglish", "estimate"),
       Bound("lt", cross_def("did_offmix3l_minus_chaos_banglish", "p_holm")))
-claim("introduction", "About 50 labels decide what to do", st.N_LABELS)
-claim("introduction", "About 50 target labels suffice", st.N_LABELS)
+claim("introduction", "about 50 labels suffice to test", st.N_LABELS)
+claim("introduction", "certificate needs 19 labelled positives", positives_needed(2))
 claim("introduction", "test set of 401 items", sum(SIZE("sentiment", "shift_d1_test")))
 
 # Setting and design.
@@ -374,6 +379,7 @@ claim("problem_setting", "and for $K = 2$ it preserves", 2)
 claim("problem_setting", "changes no predicted class and, for $K = 2$,", 2)
 claim("problem_setting", "intact for $K = 2$", 2)
 claim("problem_setting", "(macro one-vs-rest for $K = 3$)", 3)
+claim("problem_setting", "a fixed probability cut-off other than 0.5 moves", None)
 claim("problem_setting", "reaches the bound $T = 20$", float(np.exp(st.LOG_T_BOUNDS[1])))
 claim("problem_setting", "explained label entropy} $1 - \\mathrm{NLL}", None)
 claim("problem_setting", "a value $\\le 0$ means", None)
@@ -392,6 +398,14 @@ claim("experimental_design", "$n \\in \\{10, 25, 50, 100, \\text{all}\\}$ target
 claim("experimental_design", "LAC sets at $\\alpha = 0.1$", sr.ALPHA)
 claim("experimental_design", "of the offensive class at 0.1,", sr.ALPHA)
 claim("experimental_design", "ECE with 15 bins", 15)
+_cohort_o = _intro_runs
+_cohort_s = label_free_runs()
+_cohort_s = _cohort_s[(_cohort_s.task == "sentiment") & (_cohort_s.condition == "test")]
+claim("experimental_design", "(29 BD-SHS, 30 SentNoB) on the LLM items, and the cross-definition test uses the 15 runs",
+      len(_cohort_o), len(_cohort_s), n_runs("offensive_olid"))
+claim("experimental_design", "BD-SHS models on OffMix-3L rank at 0.496, 0.481 and 0.519",
+      rmap("offensive", "shift_d2_test", "auroc"), llm_vs_encoder("offensive", "shift_d2_test")[2],
+      cross_def("delta_offmix3l", "bdshs_mean"))
 
 # Results: regimes.
 claim("results", "places each of the 21 shifted source--target pairs", n_shifted_pairs())
@@ -405,6 +419,8 @@ claim("results", "(retention 0.994 and 0.990, marginal shift at most 0.035)", rm
                                                                               "shift_d1_noakhali_test"))))
 claim("results", "keep 0.957 of their ranking on Sylheti", rmap("sentiment", "shift_d1_test", "auroc_retention"))
 claim("results", "by more than 0.0035 nats", Bound("atmost", r0_max_gain()))
+claim("results", "spending 50 labels on the temperature makes NLL slightly worse (0.450 against 0.442)", st.N_LABELS,
+      ablation("R0", "shrinkage_ts", "nll"), ablation("R0", "source_ts", "nll"))
 claim("results", "($\\log T^*_Q/T_P = 0.297$, marginal shift 0.029)", rmap("offensive", "shift_d1_chittagong_test",
       "oracle_log_ratio"), rmap("offensive", "shift_d1_chittagong_test", "predicted_marginal_tv"))
 claim("results", "(0.407 and 0.082)", rmap("offensive_olid", "shift_bdshs_test", "oracle_log_ratio"),
@@ -437,6 +453,12 @@ claim("results", "shrinkage TS with 50 target labels lowers NLL from 0.892 to 0.
 claim("results", "raises macro-F1 to 0.620; MAP BCTS with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL "
       "(0.684)", ablation("R2", "batch_calibration", "macro_f1"), st.N_LABELS, ablation("R2", "map_bcts", "macro_f1"),
       ablation("R2", "map_bcts", "nll"))
+_r2_runs = per_run_regimes().query("regime == 'R2'")
+_r2_pair = _r2_runs.groupby(["source_task", "condition"])[["source_ts_macro_f1", "batch_calibration_macro_f1"]].mean()
+_r2_source = _r2_pair.groupby("source_task").mean()
+claim("results", "weighting every pair or every source equally gives 0.526 to 0.630 and 0.506 to 0.610",
+      _r2_pair.source_ts_macro_f1.mean(), _r2_pair.batch_calibration_macro_f1.mean(), _r2_source.source_ts_macro_f1.mean(),
+      _r2_source.batch_calibration_macro_f1.mean())
 claim("results", "for example 0.848 against 1.008 for the Hinglish models on SentMix-3L and 0.573 against 0.647",
       rmap("sentiment_hinglish", "shift_d2_test", "batch_calibration_nll"),
       rmap("sentiment_hinglish", "shift_d2_test", "target_ts_nll"),
@@ -455,13 +477,13 @@ claim("results", "macro-F1 drops to 0.631 from 0.654 with source TS, NLL rises f
       stress("pos0.1", "source_ts", "nll"), stress("pos0.1", "batch_calibration", "nll"))
 claim("results", "estimated from 50 labels repairs it (0.661 and 0.27)", st.N_LABELS,
       stress("pos0.1", "prior_batch_labels", "macro_f1"), stress("pos0.1", "prior_batch_labels", "nll"))
-claim("results", "MAP BCTS does as well (0.665 and 0.25). At $\\pi_+ = 0.9$ the prior-aware variant reaches 0.615 against "
-      "0.482", stress("pos0.1", "map_bcts", "macro_f1"), stress("pos0.1", "map_bcts", "nll"), 0.9,
-      stress("pos0.9", "prior_batch_labels", "macro_f1"), stress("pos0.9", "batch_calibration", "macro_f1"))
-claim("results", "with AUROC 0.845 and balanced accuracy 0.796, but 92\\%",
+claim("results", "MAP BCTS does as well (0.665 and 0.25). At $\\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against "
+      "0.482 for the uniform one and 0.572 for MAP BCTS", stress("pos0.1", "map_bcts", "macro_f1"),
+      stress("pos0.1", "map_bcts", "nll"), 0.9, stress("pos0.9", "prior_batch_labels", "macro_f1"),
+      stress("pos0.9", "batch_calibration", "macro_f1"), stress("pos0.9", "map_bcts", "macro_f1"))
+claim("results", "with AUROC 0.845 and balanced accuracy 0.796, but almost all",
       validation("needs_bias_correction", "bangla", "olid+hinglish", "auroc"),
-      validation("needs_bias_correction", "bangla", "olid+hinglish", "balanced_accuracy"),
-      100 * validation("needs_bias_correction", "bangla", "olid+hinglish", "test_positive_share"))
+      validation("needs_bias_correction", "bangla", "olid+hinglish", "balanced_accuracy"))
 claim("results", "(0.919 against 0.778)", validation("needs_bias_correction", "bangla", "olid+hinglish",
       "majority_rule_accuracy"), validation("needs_bias_correction", "bangla", "olid+hinglish", "accuracy"))
 claim("results", "(balanced accuracy 0.524 on the Hinglish source)",
@@ -510,6 +532,9 @@ claim("results", "$+0.378$ ($[0.351, 0.404]$, $p_{\\mathrm{Holm}} < 0.001$",
 claim("results", "rank BD-SHS test at 0.972 and OLID test at 0.686, OLID-trained models at 0.779 and 0.869",
       cross_def("delta_bdshs_test", "bdshs_mean"), cross_def("delta_olid_test", "bdshs_mean"),
       cross_def("delta_bdshs_test", "olid_mean"), cross_def("delta_olid_test", "olid_mean"))
+_tertile = table("cross_definition_english_share").groupby(["source", "tertile"]).auroc.mean()
+claim("results", "OLID-trained models stay at 0.808--0.829 and BD-SHS-trained models at 0.503--0.526",
+      _tertile["olid"].min(), _tertile["olid"].max(), _tertile["bdshs"].min(), _tertile["bdshs"].max())
 _cd_offmix = cross_def_offmix("olid")
 claim("results", "label 8.4\\% of OffMix-3L as offensive, against 47.8\\%",
       100 * float(np.average(_cd_offmix.predicted_positive_share_mean, weights=_cd_offmix.n_runs)),
@@ -550,7 +575,6 @@ claim("results", "only with about 200 labels (AUROC 0.505, 0.621, 0.743 and 0.89
       SIZE("offensive", "shift_d2_test")[0], finetune("25"), finetune("50"), finetune("100"), finetune("all"), 25, 50,
       100, SIZE("offensive", "shift_d2_test")[0])
 claim("results", "With up to 100 labels the better use", 100)
-claim("results", "macro-F1 up to 100 labels in", 100)
 
 # Triage.
 _orig, _nat = ("", ("offensive", "sentiment")), ("_natural_codemixed", ("offensive",))
@@ -563,22 +587,38 @@ claim("shift_triage", "With $n = 50$ on the original shifts, the Bonferroni vari
                                                     "always_encoder")],
       0.85, *[triage(*_orig, 50, p, "coverage_below_target") for p in ("triage_bonferroni", "reuse_router",
                                                                       "always_encoder")])
-claim("shift_triage", "always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant loses 0.006 of macro-F1 "
-      "in exchange for coverage that falls below 0.85 in 0.004 of deployments instead of 0.081",
-      triage(*_nat, 50, "oracle", "macro_f1"),
-      triage(*_nat, 50, "always_llm", "macro_f1") - triage(*_nat, 50, "triage_bonferroni", "macro_f1"), 0.85,
+claim("shift_triage", "always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange "
+      "for coverage that falls below 0.85 in 0.004 of deployments instead of 0.081",
+      triage(*_nat, 50, "oracle", "macro_f1"), triage(*_nat, 50, "triage_bonferroni", "macro_f1"), 0.85,
       triage(*_nat, 50, "triage_bonferroni", "coverage_below_target"),
       triage(*_nat, 50, "always_llm", "coverage_below_target"))
 claim("shift_triage", "it raises the FPR from 0.324 for the oracle to 0.543. With $n = 25$",
       triage(*_orig, 50, "oracle", "fpr"), triage(*_orig, 50, "triage_bonferroni", "fpr"), 25)
 claim("shift_triage", "which reaches 0.34 of resamples on the natural offensive targets at $n = 25$",
       triage(*_nat, 25, "triage_split", "abstention_rate"), 25)
-claim("shift_triage", "needs about 50 labelled target items", 50)
+claim("shift_triage", "steps 2--4 use one half", None, None)
+claim("shift_triage", "log-loss of step 4 affects", None)
+claim("shift_triage", "Passing step 2 shows", None)
+claim("shift_triage", "for $K = 2$ the Bonferroni threshold", 2)
+claim("shift_triage", "with 12 items per class its half-width is 0.353", 12, math.sqrt(math.log(1 / 0.05) / (2 * 12)))
+_mixtox_share = float(table("cross_definition_summary").query("condition == 'mixtox'")
+                      .gold_positive_share_mean.mean())
+claim("shift_triage", "19 for two candidates at $\\alpha = 0.1$. On a balanced target 50 random labels contain them with "
+      "probability 0.97; at the 34\\% toxic share of MixTox-SA, 0.33; at 10\\% prevalence 50 labels contain five positives on "
+      "average and about 245 labels are needed for probability 0.9", positives_needed(2), sr.ALPHA, 50,
+      float(binom.sf(18, 50, 0.5)), 100 * _mixtox_share, float(binom.sf(18, 50, _mixtox_share)), 10, 50,
+      labels_needed(0.1, 2), 0.9)
+_fnr_n, _fpr_n = triage(*_nat, 50, "triage_bonferroni", "fnr"), triage(*_nat, 50, "triage_bonferroni", "fpr")
+claim("shift_triage", "an FNR of 0.024 with an FPR of 0.671, as on the natural targets, would mean that only 14\\% of flagged "
+      "posts are offensive at 10\\% prevalence", _fnr_n, _fpr_n,
+      100 * 0.1 * (1 - _fnr_n) / (0.1 * (1 - _fnr_n) + 0.9 * _fpr_n), 10)
 
 # Related work, discussion.
 claim("related_work", "and that 50 labels make it safe", 50)
 claim("discussion", "otherwise about 50 labels suffice", 50)
-claim("discussion", "The same 50 labels test", 50)
+claim("discussion", "the same 50 labels test the ranking", 50)
+claim("discussion", "certificate needs 19 labelled positives", positives_needed(2))
+claim("discussion", "The 12 threshold-shift pairs rest on seven corpora", len(cells("R2")))
 claim("discussion", "label 16.4\\% of the Banglish Chaos comments as toxic and 26.1\\% of the same comments in Bangla "
       "script, against 50\\% in the gold labels", 100 * predicted_share("shift_d4_banglish_test"),
       100 * predicted_share("shift_d4_banglish_bangla_script_test"), 50)
@@ -653,6 +693,11 @@ claim("appendix", "development or test sets (12480), the development split for v
       SIZE("sentiment", "shift_d6_hinglish_test")[0])
 claim("appendix", "split 20/80 into calibration and test", 100 * float(code_constant("src/prepare_natural_codemixed.py", "CAL_SHARE")),
       100 - 100 * float(code_constant("src/prepare_natural_codemixed.py", "CAL_SHARE")))
+claim("appendix", "(10179 of its 10234 rows remain)", sum(SIZE("offensive", "shift_d4_banglish_test")), None)
+claim("appendix", "(5117 toxic, 5117 non-toxic)", None, None)
+claim("appendix", "which gives the toxic share of 0.342", _mixtox_share)
+claim("appendix", "agreed on 1106 of 1734 items (raw agreement 63.7\\%), only those were kept, and a second round left 1001 "
+      "items", None, None, None, SIZE("offensive", "shift_d2_test")[0] + SIZE("offensive", "shift_d2_test")[1] + 1)
 claim("appendix", "Of the BIDWESH test items, 8.6\\% are translations of BD-SHS training sentences; removing them changes "
       "macro-F1 by at most 0.0053 and AUROC by at most 0.0033", 100 * bidwesh_overlap_share(),
       Bound("atmost", subset_max("bidwesh_source_not_in_train", "macro_f1_difference_max_abs")),
@@ -713,6 +758,12 @@ claim("appendix", "treats the 16 systems (four LLMs, four prompting settings)", 
 claim("appendix", "exclude zero for all 16 significant contrasts on the original targets but for only 24 of the 26 on the "
       "natural targets", _llm_o[0] if _llm_o[0] == _llm_o[1] else -1, _llm_n[1], _llm_n[0])
 claim("appendix", "on MixTox-SA with 25 labels", 25)
+claim("appendix", "could not go below $p = 1/8$", None, None)
+_pv = table("llm_recalibration_prior").query("kind == 'encoder'").set_index("task")
+claim("appendix", "with $b_0 = 0$ for identifiability", None)
+claim("appendix", "0.433 and 1.24 for offensive language and 1.55 and 0.063 for sentiment",
+      _pv.prior_variance_bcts_log_t["offensive"], _pv.prior_variance_bcts_bias["offensive"],
+      _pv.prior_variance_bcts_log_t["sentiment"], _pv.prior_variance_bcts_bias["sentiment"])
 
 # Appendix: additional results.
 _ls_all = _obj_ts[(_obj_ts.contrast == "label_smoothing - cross_entropy") & (_obj_ts.task == "offensive")
@@ -751,6 +802,8 @@ _nat_chaos = max(cluster_nmi("offensive", c, True)[1] for c in ("shift_d4_bangli
                                                               "shift_d4_banglish_bangla_script_test"))
 claim("appendix", "(Code-mixed Chaos at most 0.37 adjusted mutual information, MixTox-SA at most 0.083)", Bound("atmost", _nat_chaos),
       Bound("atmost", cluster_nmi("offensive", "shift_d5_mixtox_test", True)[1]))
+claim("appendix", "relabelled 100 random OffMix-3L test items", int(audit("offensive", "D2", "n_items")))
+claim("appendix", "marked 61 items as not judgeable", 100 * audit("offensive", "D2", "annotator_2_cannot_judge_rate"))
 claim("appendix", "at chance (0.44 and 0.41, $\\kappa$ 0.015 and 0.078), against 0.825 and 0.848",
       audit("offensive", "D2", "annotator_1_agreement_with_gold"), audit("offensive", "D2", "annotator_2_agreement_with_gold"),
       audit("offensive", "D2", "annotator_1_kappa_with_gold"), audit("offensive", "D2", "annotator_2_kappa_with_gold"),
@@ -779,6 +832,11 @@ claim("appendix", "raised OffMix-3L AUROC by 0.040 for all four LLMs and lowered
 _pp = table("prompt_variant_summary").query("instruction == 'paraphrase'")
 claim("appendix", "changed macro-F1 by $-0.118$ to $+0.092$", _pp.macro_f1_difference_min.min(),
       _pp.macro_f1_difference_max.max())
+
+_sp = table("sentiment_prompt_variant_summary").query("instruction == 'language_neutral'").set_index("condition")
+claim("appendix", "(macro-F1 changes of $-0.011$ and $-0.018$)", _sp.macro_f1_difference["shift_d6_hinglish_test"],
+      _sp.macro_f1_difference["shift_d7_spanglish_test"])
+claim("appendix", "the conditions that need them stay at level 1", 1)
 
 MATH_BLOCKS = [re.compile(r"\\begin\{proposition\}.*?\\end\{proposition\}", re.S),
                re.compile(r"\\section\{Proofs\}.*?(?=\\section\{)", re.S)]

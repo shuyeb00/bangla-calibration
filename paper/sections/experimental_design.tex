@@ -11,14 +11,16 @@ training, validation, calibration and test splits (sizes in Appendix~\ref{sec:ap
 \paragraph{Targets.}
 Every target has a labelled calibration split, used only by the few-label methods and the oracle quantities, and a
 disjoint test split.
-\emph{Dialects}: the Barishal, Chittagong and Noakhali dialects of BIDWESH \citep{bidwesh}, translations of BD-SHS
-sentences, for the offensive task; and Sylheti for sentiment, a set we created by human translation of a uniform random
+\emph{Dialects}: the Barishal, Chittagong and Noakhali dialects of BIDWESH \citep{bidwesh}, three parallel translations
+of the same BD-SHS sentences, for the offensive task; and Sylheti for sentiment, a set we created by human translation of a uniform random
 sample of 401 SentNoB test items (calibration 200, test 201; Appendix~\ref{sec:appendix-data}).
 \emph{Natural Bangla--English code-mixing}: Code-mixed Chaos \citep{codemixedchaos}, toxic and non-toxic social-media
 comments in Banglish together with a row-aligned Bangla-script transliteration, which gives a script intervention with
-identical content and labels; and MixTox-SA \citep{mixtox}, multilingual comments in native and romanised scripts.
-\emph{Tri-lingual code-mixing}: OffMix-3L and SentMix-3L \citep{goswami2023offmix}, Bangla--English--Hindi texts in three
-scripts written by students for the benchmark.
+identical content and labels; and MixTox-SA \citep{mixtox}, multilingual comments in native and romanised scripts, with
+toxic against non-toxic and neutral as the binary label.
+\emph{Tri-lingual code-mixing}: OffMix-3L \citep{goswami2023offmix} and SentMix-3L \citep{raihan2023sentmix},
+Bangla--English--Hindi texts in three scripts written by students for the benchmark (construction details in
+Appendix~\ref{sec:appendix-data}).
 \emph{Other languages}: SentiMix Hinglish and Spanglish as targets of the SentNoB models, SentNoB and Sylheti as targets
 of the Hinglish models, OLID as a target of the BD-SHS models and BD-SHS as a target of the OLID models.
 The 21 shifted source--target pairs all have a labelled calibration split. The natural code-mixed and cross-language
@@ -36,12 +38,12 @@ one LoRA run is affected (Appendix~\ref{sec:appendix-training}). The regime anal
 cross-entropy run: 49 BD-SHS and 50 SentNoB runs of seven encoders, and 15 runs each for OLID and Hinglish.
 
 \paragraph{LLMs.}
-Qwen3-8B, Qwen3-4B-Instruct \citep{qwen3}, Llama-3.1-8B-Instruct \citep{llama3} and Qwen3.5-9B, prompted zero-shot and
+Qwen3-8B, Qwen3-4B-Instruct \citep{qwen3}, Llama-3.1-8B-Instruct \citep{llama3} and Qwen3.5-9B \citep{qwen35}, prompted zero-shot and
 few-shot (three demonstrations per class from the source training split; three demonstration seeds). The class score is
 the log-probability of each label word at the answer position, so each LLM yields a score vector that is recalibrated
 with the same methods as the encoders, starting from its own source TS. LLMs and encoders are compared on identical items
-(at most 1{,}500 per split). A fifth, Bangla-specific model (TigerLLM-1B) did not follow the answer format and is
-reported only in the appendix.
+(at most 1{,}500 per split). A fifth, Bangla-specific model (TigerLLM-1B; \citealp{raihan2025tigerllm}) did not follow the
+answer format and is reported only in the appendix.
 
 \paragraph{Methods and metrics.}
 Label-free corrections: source TS, vector and matrix scaling, isotonic regression, importance-weighted TS with a
@@ -59,4 +61,11 @@ Means are over converged runs. Contrasts between training choices and between co
 permutation or sign-flip tests, with Holm's correction \citep{holm1979} within each pre-defined family of contrasts and
 bootstrap confidence intervals over runs or items (Appendix~\ref{sec:appendix-statistics}). The expected outcomes
 of the label-definition intervention, the prompt-definition variants and the cross-source regime map were written down
-before those experiments were run; refuted predictions are reported.
+in our internal plan before those experiments were run (pre-specified, not publicly registered); refuted predictions
+are reported.
+
+\paragraph{Which runs a number refers to.}
+Regime and correction numbers use every converged run on the full target test split. Comparisons with LLMs use the
+runs of the three base encoders (29 BD-SHS, 30 SentNoB) on the LLM items, and the cross-definition test uses the 15 runs
+of each source on the three shared architectures. The same pair therefore has slightly different means across
+sections: BD-SHS models on OffMix-3L rank at 0.496, 0.481 and 0.519 respectively.

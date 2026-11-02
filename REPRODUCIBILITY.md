@@ -12,7 +12,7 @@ Level 1 was checked on 2026-11-01: running it on a clean clone regenerates the c
 byte-for-byte.
 
 ## Saved model outputs (level 2)
-The run and LLM outputs live in private storage during review. `python -m src.export_release_outputs export` bundles
+The anonymised supplement for review carries these outputs under `outputs/`; they are otherwise in private storage until the deposit described below. `python -m src.export_release_outputs export` bundles
 the logits and item indices of every converged encoder run and every LLM system, the few-label fine-tuning outputs and
 the contamination statistics into deterministic xz-compressed tar shards with a `MANIFEST.json` and `SHA256SUMS`. The
 bundle contains no dataset text and no labels: label arrays are removed and their SHA-256 is recorded, demonstration
@@ -28,7 +28,11 @@ paper is accepted. To use it:
 
 For double-blind review, `python -m src.export_release_outputs export --anonymise --out release/outputs_anonymised`
 followed by `python -m src.build_supplementary_archive --outputs release/outputs_anonymised` writes an anonymised ZIP
-of the code, tables, figures and the output shards that fit within 100 MB.
+of the code, tables, figures and the output shards that fit within 100 MB. That builder lists the identifying strings it
+removes, so it is not part of the anonymised supplement, and `--anonymise` works only in the full repository.
+
+Level 2 needs every dataset prepared. The Sylheti texts are derived from SentNoB, whose repository states no licence, and
+are not redistributed; until they can be released, the tables that depend on them are reproducible at level 1 only.
 `python -m src.build_arxiv_package` writes the arXiv source archive and the preprint and anonymous PDFs to
 `release/` (needs `pdflatex` and `bibtex`).
 

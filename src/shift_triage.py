@@ -6,6 +6,7 @@ with every general LLM system of PAIR_SETTINGS (two candidates), every label bud
 resample of src/shift_recalibration.subset_indices, the labelled target items are split at random into a
 selection half (n_s = n // 2) and a calibration half. Policies:
   always_encoder      encoder with source TS; conformal set and FNR threshold from the source calibration split
+  encoder_labels      encoder with MAP BCTS on the n items; conformal set and FNR threshold on the n items
   always_llm          LLM with MAP BCTS on the n items; conformal set and FNR threshold on the n items
   reuse_router        finding 35: choose by source-TS NLL on the n items, MAP BCTS on the n items, conformal set
                       and FNR threshold on the same n items at level alpha (no selection correction)
@@ -70,7 +71,7 @@ N_RESAMPLES = 20
 PAIR_SETTINGS = ("zero_shot", "few_shot_seed0")
 DELTA = 0.05
 N_PERMUTATIONS = 999
-POLICIES = ("always_encoder", "always_llm", "reuse_router", "triage_split", "triage_bonferroni", "oracle")
+POLICIES = ("always_encoder", "encoder_labels", "always_llm", "reuse_router", "triage_split", "triage_bonferroni", "oracle")
 DEPLOYED = ("accuracy", "macro_f1", "nll", "coverage", "set_size", "fnr", "fpr", "flag_rate")
 
 
@@ -193,6 +194,7 @@ def deployed(metric_row: dict, set_row: dict) -> dict:
 def policies(enc: Candidate, llm: Candidate, n: int, r: int, seed: int) -> list:
     e, l = enc.resample(n, r, seed), llm.resample(n, r, seed + 1)
     rows = [("always_encoder", "encoder", deployed(enc.source_metrics, enc.source_sets)),
+            ("encoder_labels", "encoder", deployed(e["map_all"], e["sets_all_llm"])),
             ("always_llm", "llm", deployed(l["map_all"], l["sets_all_llm"]))]
     choice = "llm" if l["source_nll_all"] < e["source_nll_all"] else "encoder"
     c = l if choice == "llm" else e

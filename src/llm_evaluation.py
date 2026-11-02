@@ -81,6 +81,8 @@ def llm_sets(llm_dir, gold: dict) -> dict:
     for run_dir in sorted(p for p in llm_dir.iterdir() if (p / "config.json").exists()):
         cfg = json.loads((run_dir / "config.json").read_text(encoding="utf-8"))
         task, model, setting = cfg["task"], cfg["model_key"], cfg["ft_method"]
+        if task not in gold:
+            continue
         for split, labels in gold[task].items():
             primary = load_part(run_dir, split)
             if primary is None:

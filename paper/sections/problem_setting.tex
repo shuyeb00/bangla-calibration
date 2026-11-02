@@ -14,16 +14,19 @@ Bias-corrected temperature scaling (BCTS; \citealp{alexandari2020maximum}) predi
 $n$ target labels we fit both by maximum a posteriori estimation, with Gaussian priors centred on the source estimates
 (\emph{shrinkage TS} and \emph{MAP BCTS}); the prior variances are the mean squared oracle deviations measured on the
 \emph{other} task, so nothing is fitted on the target being evaluated. Batch calibration \citep{zhou2024batch} needs no
-labels: it divides the source-TS probabilities by their mean over unlabeled target inputs and renormalises. This
-equalises the predicted class marginals and therefore assumes a uniform target class prior. Its prior-aware variant
+labels: it divides the source-TS probabilities by their mean over a batch of unlabeled target inputs and renormalises.
+This pulls the predicted class marginals towards uniform, so it assumes a balanced target and needs a batch of target
+inputs rather than a single item. Its prior-aware variant
 multiplies the result by a class prior estimated from the $n$ labels, a Saerens-type prior adjustment
 \citep{saerens2002adjusting}.
 
 \paragraph{What a temperature cannot change.}
 For every $T > 0$, $\mathrm{softmax}(z/T)$ preserves the order of the classes within an item, and for $K = 2$ it
 preserves the order of the scores across items, since the logit difference is divided by the same positive constant.
-Temperature scaling therefore changes no predicted class and, for $K = 2$, neither the AUROC nor any decision made by
-thresholding the score, including the thresholds of conformal risk control. A bias term $b$ moves the boundary between classes and changes
+Temperature scaling therefore changes no predicted class and, for $K = 2$, neither the AUROC nor the set of decisions
+reachable by thresholding the score: a fixed probability cut-off other than 0.5 moves with $T$, but only to another
+point of the same ranking, and a threshold calibrated on the scores, as in conformal risk control, flags the same
+items. A bias term $b$ moves the boundary between classes and changes
 decisions; it leaves the ranking of items intact for $K = 2$. A failure whose cause is the location of the decision
 threshold is therefore invisible to every temperature-only method, however many labels it is fitted on.
 

@@ -4,9 +4,10 @@
 \paragraph{What to do in practice.}
 Detect shift with a domain classifier, not with the model's confidence. After a detected shift, correct the class bias
 rather than only the temperature. Without labels, batch calibration is appropriate only if the target classes are
-believed to be roughly balanced; otherwise about 50 labels suffice to estimate the prior or to fit MAP BCTS. The same 50
-labels test whether the ranking survived, choose between the fine-tuned encoder and an LLM, and certify coverage and
-the false-negative rate. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+believed to be roughly balanced; otherwise about 50 labels suffice to estimate the prior or to fit MAP BCTS. On a
+near-balanced target the same 50 labels test the ranking, choose between the fine-tuned encoder and an LLM, and certify
+coverage and the false-negative rate; on a skewed target the false-negative certificate needs 19 labelled positives,
+hence hundreds of random labels. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
 
 \paragraph{Why thresholds move.}
 Our evidence locates the failure but does not explain why the threshold moves. One plausible account is that
@@ -23,11 +24,12 @@ work.
   \item \emph{Regimes.} The regime names and the reading rule were fixed in advance, but the operational thresholds were
   set after inspecting the results. The conclusion that matters for practice does not depend on where they are drawn:
   in each of the 16 pairs whose predicted marginal moves by more than 0.10, label-free bias correction raises macro-F1
-  in at least 93\% of runs, while temperature scaling changes no decision anywhere.
-  \item \emph{Data.} The Sylheti set is small and was translated by the authors; a blind re-annotation matched the gold
+  in at least 93\% of runs, while temperature scaling changes no predicted class anywhere. The 12 threshold-shift pairs
+  rest on seven corpora, so they are not independent evidence.
+  \item \emph{Data.} The Sylheti set is small and was translated by two of the authors; a blind re-annotation matched the gold
   labels about as well as the same annotators matched SentNoB in domain (Appendix~\ref{sec:appendix-data}). OffMix-3L
-  carries strong writing-style artifacts, so we rely on the natural code-mixed targets for claims about code-mixing. The
-  Spanglish calibration and test splits come from different releases, so their exchangeability is not guaranteed.
+  carries strong writing-style artifacts, so we rely on the natural code-mixed targets for claims about code-mixing.
+  Most targets are close to balanced, which favours label-free batch calibration. The Spanglish calibration and test splits come from different releases, so their exchangeability is not guaranteed.
   \item \emph{Statistics.} Many results are descriptive means over runs. Formal tests with multiplicity control are
   reported for pre-defined families; five-versus-five comparisons cannot reach significance after correction in large
   families and are reported descriptively.

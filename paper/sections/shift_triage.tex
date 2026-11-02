@@ -16,7 +16,7 @@ acceptance event $A \in \sigma(S)$ with $Q(A) > 0$ the selective error is at lea
 
 \begin{proposition}[Shrinkage versus maximum likelihood]
 \label{prop:shrinkage}
-In a locally quadratic approximation with per-item Fisher information $\tau^{-2}$ and prior variance $\sigma^2$, the MAP
+For a scalar parameter in a locally quadratic approximation with per-item Fisher information $\tau^{-2}$ and prior variance $\sigma^2$, the MAP
 estimate is $w_n \hat\theta_n + (1 - w_n)\theta_P$ with $w_n = n\sigma^2 / (n\sigma^2 + \tau^2)$, and it has lower mean
 squared error than the maximum-likelihood estimate $\hat\theta_n$ if and only if $\delta^2 < 2\sigma^2 + \tau^2/n$, where
 $\delta$ is the distance between the target optimum and the source estimate $\theta_P$.
@@ -41,33 +41,46 @@ $\alpha$ conditionally on the choice.
 \end{proposition}
 
 Proposition~\ref{prop:impossibility} explains why recalibration and abstention fail on OffMix-3L
-(Section~\ref{sec:results-systems}); Proposition~\ref{prop:shrinkage} explains why shrinkage helps on dialects, where
-the target optimum is near the source estimate, and loses to maximum likelihood under collapse, where it is unbounded.
+(Section~\ref{sec:results-systems}); Proposition~\ref{prop:shrinkage} explains why shrinkage beats maximum likelihood on dialects, where
+the target optimum is near the source estimate, and loses to it under collapse, where the optimum is unbounded.
 
 \paragraph{Procedure.}
-(1) Detect shift without labels with a character n-gram domain classifier; if a shift is detected, request $n$ target
-labels. (2) Test each candidate system, the fine-tuned encoder and an LLM, for ranking survival
-(Proposition~\ref{prop:survival}, Holm over candidates at $\delta = 0.05$). (3) If no candidate survives, abstain: by
-Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold of these scores is better
-than ignoring the input. (4) Otherwise choose the surviving candidate with the lowest penalised log-loss after MAP BCTS,
-recalibrate it with MAP BCTS, and certify the conformal sets and the FNR threshold either on all $n$ items at level
-$\alpha/M$ (\emph{Bonferroni}) or on a held-out half at level $\alpha$ (\emph{split}).
+(1) Detect shift without labels with a character n-gram domain classifier trained to separate unlabeled source and
+target inputs; if it does, request $n$ randomly chosen target labels. (2) Test each candidate system, the fine-tuned
+encoder and an LLM, for a ranking above chance (Proposition~\ref{prop:survival}, Holm over candidates at
+$\delta = 0.05$). (3) If no candidate passes, abstain: the labels give no evidence that either score is informative,
+and if neither is, by Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold is
+better than ignoring the input. With few labels this also abstains on weak but real rankings. (4) Otherwise choose the
+passing candidate with the lowest log-loss on the labelled items after MAP BCTS and predict with its MAP BCTS
+probabilities. (5) Certify a fixed score. In the \emph{Bonferroni} variant the conformal sets and the FNR threshold use
+the candidate's source-TS score on all $n$ items at level $\alpha/M$. In the \emph{split} variant steps 2--4 use one
+half of the items, and the sets use the resulting MAP BCTS score on the other half at level $\alpha$. The guarantees of
+Proposition~\ref{prop:selection} hold for any data-dependent choice, so the in-sample log-loss of step 4 affects the
+quality of the choice but not their validity; for $K = 2$ the Bonferroni threshold on the source-TS score flags the
+same items as a threshold on any monotone recalibration of it.
+
+Passing step 2 shows that a score carries information about the label, not that it is good enough to deploy. The lower
+bound of Proposition~\ref{prop:survival} could set a minimum AUROC, but with 12 items per class its half-width is 0.353.
 
 \paragraph{Evaluation.}
 We run the procedure on every shifted condition with a target calibration split, for every converged encoder run paired
 with each general LLM and 20 resamples of $n \in \{25, 50, 100\}$ target labels. It is compared with always using the
 encoder, always using the LLM, a router that reuses the same labels for choice and calibration without correction, and
-an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies}). With $n = 50$ on the
+an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies} in the appendix). With $n = 50$ on the
 original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, reuse router 0.788, always-LLM 0.715,
 always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
 always-encoder 0.472). On the held-out natural offensive targets, where the LLM is almost always the better system,
-always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant loses 0.006 of macro-F1 in exchange for
-coverage that falls below 0.85 in 0.004 of deployments instead of 0.081.
+always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange for coverage that
+falls below 0.85 in 0.004 of deployments instead of 0.081: on these targets the procedure buys a guarantee, not
+accuracy. The abstention branch is barely exercised, because at least one system keeps a ranking on every target.
 
 The guarantees have a price that the numbers make explicit. Bonferroni-valid FNR control is conservative: on the
 original shifts it raises the FPR from 0.324 for the oracle to 0.543. With $n = 25$ and about twelve offensive items it
 flags every item, as Proposition~\ref{prop:selection} predicts. The split variant pays for its conditional guarantee
-with abstention, which reaches 0.34 of resamples on the natural offensive targets at $n = 25$. The procedure therefore needs about
-50 labelled target items in this design, and we state that as its label requirement.
+with abstention, which reaches 0.34 of resamples on the natural offensive targets at $n = 25$.
 
-\input{../thesis/tables/shift_triage_policies}
+The label requirement is therefore a number of positives, not of items: 19 for two candidates at $\alpha = 0.1$. On a
+balanced target 50 random labels contain them with probability 0.97; at the 34\% toxic share of MixTox-SA, 0.33; at
+10\% prevalence 50 labels contain five positives on average and about 245 labels are needed for probability 0.9. The
+FPR scales just as badly: an FNR of 0.024 with an FPR of 0.671, as on the natural targets, would mean that only 14\% of
+flagged posts are offensive at 10\% prevalence if the class-conditional rates carried over.

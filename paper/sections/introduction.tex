@@ -2,16 +2,16 @@
 \label{sec:introduction}
 
 A Bangla offensive-language classifier fine-tuned on Bangla-script comments ranks held-out comments almost perfectly
-(AUROC 0.969, mean over 29 runs). We set its false-negative rate to 10\% on its own calibration data and show it
+(AUROC 0.969, mean over the 29 converged runs of three base encoders). We set its false-negative rate to 10\% on its own calibration data and show it
 toxic comments written in Banglish, Bangla typed in Latin letters as many speakers write online. It now misses 78\% of
 them. Its ranking of those comments is still far from chance (AUROC 0.771): the model has not lost the notion of
 offensiveness, it has kept the wrong cut-off. Temperature scaling \citep{guo2017calibration}, the default repair for
 confidence that no longer matches accuracy, cannot help. For a binary classifier it divides the logit by a constant,
-so it changes neither the predicted class nor the order of the scores, and therefore no decision that depends on
-them.
+so it changes neither the predicted class nor the order of the scores, and a threshold recalibrated on those scores
+selects the same items.
 
 This paper asks what breaks when text classifiers meet language varieties they were not trained on, and what it takes
-to repair it. We fine-tune seven encoders (five seeds each) on Bangla offensive-language and sentiment data and
+to repair it. We fine-tune seven encoders (ten configurations, five seeds each) on Bangla offensive-language and sentiment data and
 compare them with four instruction-tuned LLMs on identical items. The targets cover regional dialects, including a
 Sylheti set we translated, natural Bangla--English code-mixing written in two scripts, tri-lingual
 Bangla--English--Hindi code-mixing, and other languages. To check that the conclusions are not a property of one
@@ -30,17 +30,19 @@ threshold shift), or its ranking can collapse.
   the temperature on 50 target labels lowers the log-loss but leaves macro-F1 at 0.527; a label-free bias correction
   raises it to 0.620. The label-free correction assumes balanced classes and is harmful on skewed targets, which is the
   normal case in content moderation; a class prior estimated from 50 labels removes the problem.
-  \item \textbf{The one collapse is a mismatch of label definitions} (Section~\ref{sec:results-causes}). Changing only
-  the script of identical comments moves encoder AUROC by up to 0.225, but retraining the same architectures on the
-  target's definition of offensiveness restores the collapsed ranking (pre-registered difference-in-differences
-  $+0.378$, $p_{\mathrm{Holm}} < 0.001$).
-  \item \textbf{About 50 labels decide what to do} (Sections~\ref{sec:results-systems} and~\ref{sec:shift-triage}).
-  Shift is easy to detect without labels but cannot be diagnosed from the model's own confidence. About 50 target
-  labels suffice to test whether a system's ranking survived, to choose between the fine-tuned encoder and an LLM, to
-  correct the threshold, and to certify coverage and false-negative rate after that choice.
+  \item \textbf{The one collapse points to a mismatch of label definitions} (Section~\ref{sec:results-causes}). Changing
+  only the script of identical comments moves encoder AUROC by up to 0.225, but retraining the same architectures on a
+  source that shares the target's labels restores the collapsed ranking (pre-specified difference-in-differences
+  $+0.378$, $p_{\mathrm{Holm}} < 0.001$). That retraining also changes the language and the corpus, so we read it as
+  strong but not conclusive evidence.
+  \item \textbf{A few labels decide what to do} (Sections~\ref{sec:results-systems} and~\ref{sec:shift-triage}).
+  Shift is easy to detect without labels but cannot be diagnosed from the model's own confidence. On a balanced target,
+  about 50 labels suffice to test whether a system's ranking is above chance, to choose between the fine-tuned encoder
+  and an LLM, to correct the threshold, and to certify coverage and false-negative rate after that choice. The
+  false-negative certificate needs 19 labelled positives, so its cost grows as the offensive class gets rarer.
 \end{itemize}
 
-Beyond these findings we contribute a triage procedure with an impossibility result, a ranking-survival test and
-selection-valid conformal guarantees (Section~\ref{sec:shift-triage}), and a human-translated Sylheti sentiment test set
-of 401 items. Code, every derived table and a script that rebuilds every figure and table are released
+We turn these findings into a triage procedure with a limit on post-hoc repair, a ranking test and selection-valid
+conformal guarantees (Section~\ref{sec:shift-triage}), and we built a human-translated Sylheti sentiment test set of
+401 items. Code, every derived table and a script that rebuilds every figure and table are released
 (Appendix~\ref{sec:appendix-reproducibility}).

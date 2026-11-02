@@ -27,9 +27,12 @@ if [ "$STAGE" = outputs ] || [ "$STAGE" = all ]; then
   run topic_cluster_analysis systems
   run label_free_severity
   run shift_triage
+  run triage_prevalence_stress_test
+  run map_bcts_prior_sensitivity
+  run llm_label_token_audit
   for module in shift_recalibration llm_evaluation shift_aware_routing llm_shift_recalibration \
                 selective_prediction_under_shift batch_calibration surface_feature_baseline last_layer_retraining \
-                label_free_severity shift_triage; do
+                label_free_severity shift_triage triage_prevalence_stress_test map_bcts_prior_sensitivity; do
     run "$module" --natural-codemixed
   done
   run topic_cluster_analysis clusters --natural-codemixed

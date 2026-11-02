@@ -26,7 +26,7 @@ SOURCE_SHORT = {"offensive": "BD-SHS (bn)", "offensive_olid": "OLID (en)", "sent
                 "sentiment_hinglish": "SentiMix (hi-en)"}
 METHOD_NAMES = {"source_ts": "source TS", "batch_calibration": "batch calib.", "shrinkage_ts": "shrinkage TS",
                 "map_bcts": "MAP BCTS"}
-POLICY_NAMES = {"always_encoder": "Always encoder", "always_llm": "Always LLM", "reuse_router": "Reuse router",
+POLICY_NAMES = {"always_encoder": "Always encoder", "encoder_labels": "Encoder + labels", "always_llm": "Always LLM", "reuse_router": "Reuse router",
                 "triage_split": "Triage (split)", "triage_bonferroni": "Triage (Bonferroni)", "oracle": "Oracle"}
 FAMILY_NAMES = {"objectives": "Training objectives", "scale": "Encoder scale",
                 "recalibration_label_free": "Label-free recalibration", "recalibration_few_label": "Few-label recalibration",
@@ -127,7 +127,7 @@ def cross_definition_table() -> str:
     caption = (r"Cross-definition test: AUROC of encoders trained on BD-SHS vs on English OLID (XLM-R-base, MuRIL, "
                r"mDeBERTa-v3; 5 seeds each). Differences are OLID-trained minus BD-SHS-trained; CIs from a paired "
                r"item bootstrap; $p$ from a stratified permutation test, Holm-adjusted over the seven contrasts. The "
-               r"last row is the pre-registered difference-in-differences.")
+               r"last row is the pre-specified difference-in-differences.")
     return tabular("lrrrcr", header, rows, caption, "tab:cross-definition-contrasts", colsep="4pt")
 
 
