@@ -44,7 +44,9 @@ MODEL_NAMES = {"banglabert": "BanglaBERT", "banglabert_large": "BanglaBERT-large
                "xlmr_base": "XLM-R-base", "xlmr_large": "XLM-R-large", "muril": "MuRIL", "mdeberta": "mDeBERTa-v3",
                "llama3_1_8b_instruct": "Llama-3.1-8B", "qwen3_4b_instruct": "Qwen3-4B", "qwen3_5_9b": "Qwen3.5-9B",
                "qwen3_8b": "Qwen3-8B"}
-LABEL_OFFSETS = {("offensive", "shift_d1_barishal_test"): (-2, 6), ("offensive", "shift_d1_noakhali_test"): (6, -3), ("offensive", "shift_olid_english_test"): (4, -9)}
+LABEL_OFFSETS = {("offensive", "shift_d1_barishal_test"): (-2, 5), ("offensive", "shift_d1_noakhali_test"): (6, -2),
+                 ("offensive", "shift_d1_chittagong_test"): (5, -6), ("offensive", "shift_olid_english_test"): (4, -9),
+                 ("offensive_olid", "shift_d4_banglish_test"): (4, -8)}
 
 
 def condition_name(task: str, condition: str) -> str:
@@ -78,12 +80,14 @@ def save(fig, name: str) -> list:
 def regime_map():
     r = pd.read_csv(TABLES / "source_transfer_regime_map.csv")
     r = r[r.condition != "test"]
+    runs = pd.read_csv(TABLES / "source_transfer_per_run.csv")
+    no_gain = (runs.explained_label_entropy <= 0).groupby([runs.source_task, runs.condition]).mean()
     order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
-    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.2), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.0), sharex=True, sharey=True)
     for ax, src in zip(axes.flat, order):
         d = r[r.source_task == src]
         collapsed = d.at_upper_bound >= 0.5
-        weak = d.explained_label_entropy <= 0
+        weak = pd.Series([no_gain[(src, c)] > 0.5 for c in d.condition], index=d.index)
         ax.axhline(0.5 / d.auroc_in_domain.mean(), color=INK_SECONDARY, lw=0.8, ls=":")
         ax.scatter(d.predicted_marginal_tv[~collapsed & ~weak], d.auroc_retention[~collapsed & ~weak], s=36,
                    color=SERIES[0], edgecolor="white", linewidth=1.0, zorder=3)
@@ -100,16 +104,15 @@ def regime_map():
         ax.set_ylim(0.45, 1.04)
     for ax in axes[1]:
         ax.set_xlabel("Shift of the predicted-label marginal (total variation)")
-    for ax in axes[:, 0]:
-        ax.set_ylabel("AUROC retention (target / in domain)")
+    fig.supylabel("AUROC retention (target / in domain)", fontsize=8, x=0.012, color=INK)
     handles = [plt.Line2D([], [], marker="o", ls="", color=SERIES[0], markersize=6, label="ranking retained"),
                plt.Line2D([], [], marker="o", ls="", markerfacecolor="white", markeredgecolor=SERIES[0], markersize=6,
-                          label="target TS no better than a constant (mean)"),
+                          label="target TS no better than a constant (most runs)"),
                plt.Line2D([], [], marker="X", ls="", color=SERIES[1], markersize=6,
                           label="oracle temperature unbounded (collapse)"),
                plt.Line2D([], [], color=INK_SECONDARY, ls=":", lw=0.8, label="chance AUROC")]
     fig.legend(handles=handles, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.03))
-    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.tight_layout(rect=(0.012, 0.04, 1, 1))
     return save(fig, "regime_map_source_transfer")
 
 
@@ -123,7 +126,7 @@ def encoder_llm_auroc():
                       "shift_d2_test"],
         "sentiment": ["test", "shift_d1_test", "shift_d6_hinglish_test", "shift_d2_test", "shift_d7_spanglish_test"],
     }
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0),
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.85),
                              gridspec_kw={"width_ratios": [len(conditions["offensive"]), len(conditions["sentiment"])]})
     for ax, (task, conds) in zip(axes, conditions.items()):
         x = np.arange(len(conds))
@@ -145,7 +148,7 @@ def encoder_llm_auroc():
         ax.set_xticks(x, [condition_name(task, k) for k in conds], rotation=40, ha="right")
         ax.set_title("Offensive (source BD-SHS)" if task == "offensive" else "Sentiment (source SentNoB)", loc="left")
         ax.set_ylim(0.4, 1.0)
-    axes[0].set_ylabel("AUROC after source TS (identical items)")
+    axes[0].set_ylabel("AUROC after source TS")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04))
     fig.tight_layout(rect=(0, 0.07, 1, 1))
@@ -256,7 +259,7 @@ def definition_panel(ax):
 
 
 def collapse_causes():
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.3), gridspec_kw={"width_ratios": [0.85, 1.25]})
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.1), gridspec_kw={"width_ratios": [0.85, 1.25]})
     script_panel(axes[0])
     definition_panel(axes[1])
     fig.tight_layout(w_pad=1.5)

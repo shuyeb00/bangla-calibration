@@ -1,7 +1,7 @@
 """Stress test of batch calibration under target class-prior imbalance, with a prior-aware variant.
 
 Batch calibration divides source-TS probabilities by their mean over an unlabeled target batch, which equalises the
-predicted class marginals and therefore assumes a uniform target prior (finding 38). Here every target condition of
+predicted class marginals and therefore assumes a uniform target prior. Here every target condition of
 src/source_transfer_regimes.py is resampled to fixed class priors (binary: positive share in PRIORS_BINARY; three
 classes: uniform, one class at 0.6 and one class at 0.8), for every converged cross-entropy run of the four source
 tasks. Test items and an unlabeled calibration batch are drawn at the prior (stratified, without replacement, at most

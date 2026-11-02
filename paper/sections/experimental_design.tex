@@ -16,7 +16,7 @@ of the same BD-SHS sentences, for the offensive task; and Sylheti for sentiment,
 sample of 401 SentNoB test items (calibration 200, test 201; Appendix~\ref{sec:appendix-data}).
 \emph{Natural Bangla--English code-mixing}: Code-mixed Chaos \citep{codemixedchaos}, toxic and non-toxic social-media
 comments in Banglish together with a row-aligned Bangla-script transliteration, which gives a script intervention with
-identical content and labels; and MixTox-SA \citep{mixtox}, multilingual comments in native and romanised scripts, with
+near-identical content and identical labels; and MixTox-SA \citep{mixtox}, multilingual comments in native and romanised scripts, with
 toxic against non-toxic and neutral as the binary label.
 \emph{Tri-lingual code-mixing}: OffMix-3L \citep{goswami2023offmix} and SentMix-3L \citep{raihan2023sentmix},
 Bangla--English--Hindi texts in three scripts written by students for the benchmark (construction details in
@@ -38,7 +38,7 @@ one LoRA run is affected (Appendix~\ref{sec:appendix-training}). The regime anal
 cross-entropy run: 49 BD-SHS and 50 SentNoB runs of seven encoders, and 15 runs each for OLID and Hinglish.
 
 \paragraph{LLMs.}
-Qwen3-8B, Qwen3-4B-Instruct \citep{qwen3}, Llama-3.1-8B-Instruct \citep{llama3} and Qwen3.5-9B \citep{qwen35}, prompted zero-shot and
+Qwen3-8B \citep{qwen3}, Qwen3-4B-Instruct-2507 \citep{qwen34b2507}, Llama-3.1-8B-Instruct \citep{llama3} and Qwen3.5-9B \citep{qwen35}, prompted zero-shot and
 few-shot (three demonstrations per class from the source training split; three demonstration seeds). The class score is
 the log-probability of each label word at the answer position, so each LLM yields a score vector that is recalibrated
 with the same methods as the encoders, starting from its own source TS. LLMs and encoders are compared on identical items

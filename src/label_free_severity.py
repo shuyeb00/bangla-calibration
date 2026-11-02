@@ -7,7 +7,7 @@ in-domain test split, using source-TS probabilities and no target labels:
   rank_agreement_drop    Spearman correlation of the two systems' class scores (P(class 1) for two classes,
                          mean over classes otherwise), in-domain minus target
   marginal_tv_shift      total-variation shift of the encoder's predicted-label marginal from the source
-                         calibration split (finding 20), for comparison
+                         calibration split, for comparison
 Outcomes, computed with the target labels only to validate the indicators:
   llm_better             the LLM has the lower target NLL
   encoder_auroc_drop     encoder AUROC in-domain minus target

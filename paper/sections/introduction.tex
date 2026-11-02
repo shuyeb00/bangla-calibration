@@ -32,13 +32,13 @@ threshold shift), or its ranking can collapse.
   raises it to 0.620. The label-free correction assumes balanced classes and is harmful when positives are rare, the normal
   case in content moderation; a class prior estimated from 50 labels repairs it on average, not in every run.
   \item \textbf{The one collapse points to a mismatch of label definitions} (Section~\ref{sec:results-causes}). Changing
-  only the script of identical comments moves encoder AUROC by up to 0.225, but retraining the same architectures on a
+  only the script of the same comments moves encoder AUROC by up to 0.225, but retraining the same architectures on a
   source that shares the target's labels restores the collapsed ranking (pre-specified difference-in-differences
   $+0.378$, $p_{\mathrm{Holm}} < 0.001$). That retraining also changes the language and the corpus, so we read it as
   strong but not conclusive evidence.
   \item \textbf{A few labels decide what to do} (Sections~\ref{sec:results-systems} and~\ref{sec:shift-triage}).
   Shift is easy to detect without labels but cannot be diagnosed from the model's own confidence. On a balanced target,
-  about 50 labels suffice to test whether a system's ranking is above chance, to choose between the fine-tuned encoder
+  about 50 labels suffice to test whether a strong ranking is above chance (weak rankings need about 100), to choose between the fine-tuned encoder
   and an LLM, to correct the threshold, and to certify coverage and false-negative rate after that choice. The
   false-negative certificate needs 19 labelled positives, so its cost grows as the offensive class gets rarer.
 \end{itemize}

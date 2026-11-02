@@ -40,9 +40,10 @@ positives. If the choice and the calibration use disjoint parts of the labelled 
 $\alpha$ conditionally on the choice.
 \end{proposition}
 
-Proposition~\ref{prop:impossibility} explains why recalibration and abstention fail on OffMix-3L
-(Section~\ref{sec:results-systems}); Proposition~\ref{prop:shrinkage} explains why shrinkage beats maximum likelihood on dialects, where
-the target optimum is near the source estimate, and loses to it under collapse, where the optimum is unbounded.
+Proposition~\ref{prop:impossibility} is consistent with the failure of recalibration and abstention on OffMix-3L
+(Section~\ref{sec:results-systems}), and Proposition~\ref{prop:shrinkage} with shrinkage beating maximum likelihood on
+dialects, where the target optimum is near the source estimate; under collapse the optimum is unbounded, the quadratic
+approximation does not apply, and shrinkage loses.
 
 \paragraph{Procedure.}
 (1) Detect shift without labels with a character n-gram domain classifier trained to separate unlabeled source and
@@ -69,7 +70,8 @@ calibrated on the source, the encoder with the same labels, the LLM with the sam
 for choice and calibration without correction, and an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies} in the appendix). With $n = 50$ on the
 original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, reuse router 0.788, always-LLM 0.715,
 encoder with labels 0.682, always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
-always-encoder 0.472). On the held-out natural offensive targets, where the LLM is almost always the better system,
+always-encoder 0.472). Most of that gap is the nominal level, not selection: Bonferroni calibrates at $\alpha/2$, and even a
+valid set at $\alpha$ falls below 0.85 with probability 0.112 on 50 items (Appendix~\ref{sec:appendix-triage-tables}). On the held-out natural offensive targets, where the LLM is almost always the better system,
 always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange for coverage that
 falls below 0.85 in 0.004 of deployments instead of 0.081: on these targets the procedure buys a guarantee, not
 accuracy. Abstention here comes only from low power: no target in this study defeats both systems, so that branch is
@@ -86,6 +88,6 @@ there the Bonferroni variant flags nearly everything (FPR 0.947); at 10\% preval
 average and about 245 labels are needed for probability 0.9. A stress test that resamples the natural offensive targets
 to a fixed prevalence confirms this (Table~\ref{tab:triage-prevalence-stress} in the appendix). At 10\% prevalence the
 threshold flags every item in every deployment with 50 labels, in 0.35 of deployments with 200 and in none with 400; with
-400 labels the FNR is 0.034 at an FPR of 0.558, so 18.5\% of flagged posts are offensive. The point predictions need far
+400 labels the FNR is 0.034 at an FPR of 0.558, and on average over deployments 18.5\% of flagged posts are offensive. The point predictions need far
 fewer labels: macro-F1 is 0.723 with 50 labels and 0.728 with 400. On a skewed target, therefore, about 50 labels
 suffice to choose a system and correct its threshold, and several hundred are needed to certify it.

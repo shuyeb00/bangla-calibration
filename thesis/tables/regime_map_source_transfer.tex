@@ -2,37 +2,37 @@
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
-\caption{Shift regimes across four source tasks (means over converged cross-entropy runs, each after its own source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_t/T_s$: oracle temperature ratio from all target calibration labels ($^{\dagger}$ fit at the upper bound in most runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; TV$_{\pi}$: total variation between the target and source class priors, which needs target labels; Expl.: share of target label entropy explained by target-TS probabilities ($\le 0$: no better than a constant); F1: macro-F1 after source TS; $\Delta$F1: change from label-free batch calibration on the unlabeled target calibration split and from MAP bias-corrected TS with 50 target labels (20 resamples). Best: method with the best mean macro-F1 / NLL; differences below 0.005 are practically ties.}
+\caption{Shift regimes across four source tasks (means over converged cross-entropy runs, each after its own source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_Q/T_P$: oracle temperature ratio from all target calibration labels ($^{\dagger}$ fit at the upper bound in most runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; TV$_{\pi}$: total variation between the target and source class priors, which needs target labels; Expl.: share of target label entropy explained by target-TS probabilities ($\le 0$: no better than a constant); F1: macro-F1 after source TS; $\Delta$F1: change from label-free batch calibration on the unlabeled target calibration split and from MAP bias-corrected TS with 50 target labels (20 resamples). Best: method with the best mean macro-F1 / NLL; differences below 0.005 are practically ties.}
 \label{tab:regime-map-source-transfer}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrrrrrrrll}
 \toprule
-Source & Target & AUROC & Ret. & $\log T^{*}_t/T_s$ & TV & TV$_{\pi}$ & Expl. & F1 & $\Delta$F1 batch & $\Delta$F1 BCTS & Best F1 & Best NLL \\
+Source & Target & AUROC & Ret. & $\log T^{*}_Q/T_P$ & TV & TV$_{\pi}$ & Expl. & F1 & $\Delta$F1 batch & $\Delta$F1 BCTS & Best F1 & Best NLL \\
 \midrule
-BD-SHS (bn) & Barishal & 0.965 & 0.99 & +0.08 & 0.02 & 0.01 & 0.64 & 0.907 & +0.000 & +0.000 & batch calib. & batch calib. \\
- & Noakhali & 0.961 & 0.99 & +0.10 & 0.03 & 0.01 & 0.61 & 0.893 & +0.001 & +0.002 & MAP BCTS & batch calib. \\
- & Chittagong & 0.902 & 0.93 & +0.30 & 0.03 & 0.01 & 0.42 & 0.826 & +0.000 & +0.000 & batch calib. & shrinkage TS \\
- & Chaos (Bangla script) & 0.883 & 0.91 & +0.97 & 0.23 & 0.02 & 0.23 & 0.738 & +0.019 & +0.044 & MAP BCTS & MAP BCTS \\
- & Chaos (Banglish) & 0.797 & 0.82 & +1.39 & 0.31 & 0.02 & 0.10 & 0.577 & +0.090 & +0.109 & MAP BCTS & MAP BCTS \\
- & MixTox-SA & 0.694 & 0.71 & +1.36 & 0.45 & 0.14 & 0.05 & 0.483 & +0.102 & +0.059 & batch calib. & batch calib. \\
- & OLID (English) & 0.679 & 0.70 & +1.16 & 0.46 & 0.20 & 0.05 & 0.494 & +0.117 & +0.067 & batch calib. & shrinkage TS \\
- & OffMix-3L & 0.496 & 0.51 & +2.46$^{\dagger}$ & 0.47 & 0.00 & 0.00 & 0.367 & +0.106 & +0.081 & batch calib. & MAP BCTS \\
+BD-SHS (bn) & Barishal & 0.965 & 0.99 & +0.08 & 0.02 & 0.01 & +0.642 & 0.907 & +0.000 & +0.000 & batch calib. & batch calib. \\
+ & Noakhali & 0.961 & 0.99 & +0.10 & 0.03 & 0.01 & +0.609 & 0.893 & +0.001 & +0.002 & MAP BCTS & batch calib. \\
+ & Chittagong & 0.902 & 0.93 & +0.30 & 0.03 & 0.01 & +0.419 & 0.826 & +0.000 & +0.000 & batch calib. & shrinkage TS \\
+ & Chaos (Bangla script) & 0.883 & 0.91 & +0.97 & 0.23 & 0.02 & +0.234 & 0.738 & +0.019 & +0.044 & MAP BCTS & MAP BCTS \\
+ & Chaos (Banglish) & 0.797 & 0.82 & +1.39 & 0.31 & 0.02 & +0.101 & 0.577 & +0.090 & +0.109 & MAP BCTS & MAP BCTS \\
+ & MixTox-SA & 0.694 & 0.71 & +1.36 & 0.45 & 0.14 & +0.050 & 0.483 & +0.102 & +0.059 & batch calib. & batch calib. \\
+ & OLID (English) & 0.679 & 0.70 & +1.16 & 0.46 & 0.20 & +0.049 & 0.494 & +0.117 & +0.067 & batch calib. & shrinkage TS \\
+ & OffMix-3L & 0.496 & 0.51 & +2.46$^{\dagger}$ & 0.47 & 0.00 & -0.003 & 0.367 & +0.106 & +0.081 & batch calib. & MAP BCTS \\
 \midrule
-OLID (en) & Chaos (Bangla script) & 0.854 & 0.98 & +0.53 & 0.10 & 0.17 & 0.14 & 0.655 & +0.084 & +0.091 & MAP BCTS & MAP BCTS \\
- & OffMix-3L & 0.819 & 0.94 & +0.89 & 0.24 & 0.15 & 0.07 & 0.501 & +0.210 & +0.203 & batch calib. & MAP BCTS \\
- & BD-SHS & 0.779 & 0.90 & +0.41 & 0.08 & 0.15 & 0.15 & 0.681 & +0.019 & +0.018 & batch calib. & batch calib. \\
- & MixTox-SA & 0.744 & 0.86 & +0.49 & 0.21 & 0.01 & 0.10 & 0.582 & +0.082 & +0.028 & batch calib. & MAP BCTS \\
- & Chaos (Banglish) & 0.706 & 0.81 & +1.18 & 0.18 & 0.17 & 0.03 & 0.486 & +0.128 & +0.106 & batch calib. & batch calib. \\
+OLID (en) & Chaos (Bangla script) & 0.854 & 0.98 & +0.53 & 0.10 & 0.17 & +0.144 & 0.655 & +0.084 & +0.091 & MAP BCTS & MAP BCTS \\
+ & OffMix-3L & 0.819 & 0.94 & +0.89 & 0.24 & 0.15 & +0.065 & 0.501 & +0.210 & +0.203 & batch calib. & MAP BCTS \\
+ & BD-SHS & 0.779 & 0.90 & +0.41 & 0.08 & 0.15 & +0.151 & 0.681 & +0.019 & +0.018 & batch calib. & batch calib. \\
+ & MixTox-SA & 0.744 & 0.86 & +0.49 & 0.21 & 0.01 & +0.101 & 0.582 & +0.082 & +0.028 & batch calib. & MAP BCTS \\
+ & Chaos (Banglish) & 0.706 & 0.81 & +1.18 & 0.18 & 0.17 & +0.033 & 0.486 & +0.128 & +0.106 & batch calib. & batch calib. \\
 \midrule
-SentNoB (bn) & Sylheti & 0.811 & 0.96 & -0.04 & 0.09 & 0.04 & 0.25 & 0.614 & -0.005 & -0.004 & source TS & source TS \\
- & Hinglish & 0.760 & 0.90 & +0.53 & 0.19 & 0.13 & 0.16 & 0.534 & +0.029 & +0.011 & batch calib. & batch calib. \\
- & SentMix-3L & 0.718 & 0.85 & +0.86 & 0.40 & 0.01 & 0.07 & 0.352 & +0.141 & +0.075 & batch calib. & batch calib. \\
- & Spanglish & 0.609 & 0.72 & +0.68 & 0.35 & 0.18 & 0.00 & 0.374 & +0.039 & +0.006 & batch calib. & MAP BCTS \\
+SentNoB (bn) & Sylheti & 0.811 & 0.96 & -0.04 & 0.09 & 0.04 & +0.245 & 0.614 & -0.005 & -0.004 & source TS & source TS \\
+ & Hinglish & 0.760 & 0.90 & +0.53 & 0.19 & 0.13 & +0.158 & 0.534 & +0.029 & +0.011 & batch calib. & batch calib. \\
+ & SentMix-3L & 0.718 & 0.85 & +0.86 & 0.40 & 0.01 & +0.066 & 0.352 & +0.141 & +0.075 & batch calib. & batch calib. \\
+ & Spanglish & 0.609 & 0.72 & +0.68 & 0.35 & 0.18 & -0.004 & 0.374 & +0.039 & +0.006 & batch calib. & MAP BCTS \\
 \midrule
-SentiMix (hi-en) & SentMix-3L & 0.818 & 0.95 & +0.74 & 0.33 & 0.14 & 0.06 & 0.434 & +0.162 & +0.057 & batch calib. & batch calib. \\
- & SentNoB & 0.760 & 0.88 & +0.68 & 0.33 & 0.14 & 0.06 & 0.469 & +0.085 & +0.032 & batch calib. & batch calib. \\
- & Sylheti & 0.706 & 0.82 & +0.85 & 0.33 & 0.17 & 0.00 & 0.408 & +0.061 & +0.038 & batch calib. & batch calib. \\
- & Spanglish & 0.648 & 0.75 & +0.81 & 0.40 & 0.17 & -0.01 & 0.351 & +0.091 & +0.023 & batch calib. & MAP BCTS \\
+SentiMix (hi-en) & SentMix-3L & 0.818 & 0.95 & +0.74 & 0.33 & 0.14 & +0.059 & 0.434 & +0.162 & +0.057 & batch calib. & batch calib. \\
+ & SentNoB & 0.760 & 0.88 & +0.68 & 0.33 & 0.14 & +0.060 & 0.469 & +0.085 & +0.032 & batch calib. & batch calib. \\
+ & Sylheti & 0.706 & 0.82 & +0.85 & 0.33 & 0.17 & +0.001 & 0.408 & +0.061 & +0.038 & batch calib. & batch calib. \\
+ & Spanglish & 0.648 & 0.75 & +0.81 & 0.40 & 0.17 & -0.014 & 0.351 & +0.091 & +0.023 & batch calib. & MAP BCTS \\
 \bottomrule
 \end{tabular}
 }

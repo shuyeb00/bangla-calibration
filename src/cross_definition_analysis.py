@@ -23,7 +23,7 @@ architecture). The confirmatory family is the seven pooled contrasts (Holm); per
 (with 5 vs 5 runs the smallest attainable p is 1/126). Intervals: 95% paired item bootstrap (the same resampled
 items for both groups).
 Reading fixed before the results: definition evidence needs delta_offmix3l > 0 and did > 0; OLID-trained encoders
-near 0.5 on OffMix-3L mean that its labels do not carry the OLID definition (cluster artifact, finding 41).
+near 0.5 on OffMix-3L mean that its labels do not carry the OLID definition (cluster artifact).
 
 English-share check (cross_definition_english_share.csv; needs data/processed/offensive_olid from src.prepare_olid):
 the OffMix-3L test items are split into tertiles of their English share (share of word tokens that occur at least

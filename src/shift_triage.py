@@ -8,7 +8,7 @@ selection half (n_s = n // 2) and a calibration half. Policies:
   always_encoder      encoder with source TS; conformal set and FNR threshold from the source calibration split
   encoder_labels      encoder with MAP BCTS on the n items; conformal set and FNR threshold on the n items
   always_llm          LLM with MAP BCTS on the n items; conformal set and FNR threshold on the n items
-  reuse_router        finding 35: choose by source-TS NLL on the n items, MAP BCTS on the n items, conformal set
+  reuse_router        choose by source-TS NLL on the n items, MAP BCTS on the n items, conformal set
                       and FNR threshold on the same n items at level alpha (no selection correction)
   triage_split        ranking-survival test (exact-null Monte Carlo permutation test of AUROC, Holm over the two
                       candidates at DELTA) on the selection half; abstain when no candidate survives; among

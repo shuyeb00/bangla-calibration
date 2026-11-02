@@ -33,13 +33,15 @@ removes, so it is not part of the anonymised supplement, and `--anonymise` works
 
 Level 2 needs every dataset prepared. The Sylheti texts are derived from SentNoB, whose repository states no licence, and
 are not redistributed; until they can be released, the tables that depend on them are reproducible at level 1 only.
-`python -m src.build_arxiv_package` writes the arXiv source archive and the preprint and anonymous PDFs to
-`release/` (needs `pdflatex` and `bibtex`).
+In the full repository, `python -m src.build_arxiv_package` writes the arXiv source archive and the preprint and
+anonymous PDFs to `release/` (needs `pdflatex`, `bibtex` and `paper/main.tex`, which the anonymised supplement omits
+because it carries the title page; the supplement contains the section sources).
 
 ## Environment
 - Analysis (levels 1 and 2): Python 3.11 with `requirements-analysis.txt` (numpy 1.26.4, scipy 1.14.0, pandas 2.2.2,
   scikit-learn 1.5.1, statsmodels 0.14.2, matplotlib 3.9.1, MAPIE 1.1.0, openpyxl 3.1.5, pytest). No GPU, torch or
-  transformers is needed; every analysis module runs without them.
+  transformers is needed; every analysis module runs without them. `requirements-analysis-lock.txt` pins every
+  transitive dependency too, for byte-identical PNG and PDF figures in the future.
 - Training and inference (level 3): Kaggle image with Python 3.13, torch 2.11.0+cu128, transformers 5.16.1, tokenizers
   0.23.1, peft 0.20.0, huggingface_hub 1.29.0; `torchao` must be uninstalled first (it breaks LoRA construction in
   peft). Every run records its library versions, input fingerprint and code commit in `config.json`.
@@ -77,7 +79,7 @@ they are reported and excluded from aggregates by every analysis module.
   `shift_recalibration.subset_indices` and are identical across systems.
 - Sorting that decides ties uses stable sorts, so adaptive-binning metrics agree across platforms.
 - Results of levels 1 and 2 are identical between the authors' Windows laptop and a Linux machine for the modules
-  checked on both (documented in the commit history); level-3 training is not bit-reproducible on GPUs, and repeated
+  checked on both; level-3 training is not bit-reproducible on GPUs, and repeated
   training gives seed-level variation of the size reported in the paper.
 
 ## Tests

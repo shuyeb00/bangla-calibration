@@ -43,14 +43,14 @@ flat at the level of a predictor that ignores the input when $h$ always predicts
 $\pi_Q(h(S)) \le \max_k \pi_Q(k)$. $\square$
 
 **Remarks.**
-1. Proposition 1 formalises the "discrimination collapse" reading of the encoders on OffMix-3L (findings 16, 37):
+1. Proposition 1 formalises the "discrimination collapse" reading of the encoders on OffMix-3L:
    with all target labels, TS stays at the level of the constant predictor, the target temperature is unbounded
    (the minimiser of the target likelihood over $T$ moves to $T \to \infty$, i.e. towards a constant), and
    confidence-based abstention leaves the selective risk at the overall error.
 2. A ranking AUROC of 0.5 is necessary but not sufficient for independence; the bound is stated in terms of
    $I_Q(Y; S)$, which the procedure below tests through the exact permutation null of no association.
 3. The result applies to the score that is recalibrated. It does not apply to a new head fitted on the
-   representation (finding 39) or to another system (an LLM), which is why the procedure routes instead of
+   representation or to another system (an LLM), which is why the procedure routes instead of
    recalibrating when the score is uninformative.
 
 ## P2. MAP bias-corrected temperature scaling as empirical-Bayes shrinkage, and when it loses to the MLE
@@ -84,14 +84,14 @@ $(1 - w_n)^2 \delta^2 < (1 - w_n^2)\tau^2 / n$ is $\delta^2 < \frac{\tau^2}{n}\f
 $\frac{1 + w_n}{1 - w_n} = 1 + \frac{2 w_n}{1 - w_n} = 1 + \frac{2 n \sigma^2}{\tau^2}$. $\square$
 
 **Remarks.**
-1. The condition $\delta^2 < 2\sigma^2 + \tau^2/n$ explains the empirical pattern of finding 18: shrinkage wins on
+1. The condition $\delta^2 < 2\sigma^2 + \tau^2/n$ explains the empirical pattern: shrinkage wins on
    every dialect and on Chittagong, where the deviation is small relative to the prior scale, and loses to the
    MLE on OffMix-3L, where the deviation is unbounded (Proposition 1). As $n \to \infty$ the condition becomes
    $\delta^2 < 2\sigma^2$: for a shift larger than the prior scale the MAP estimate has the larger MSE at every
    $n$, but the excess $(1 - w_n)^2 \delta^2 = \delta^2 \tau^4 / (n\sigma^2 + \tau^2)^2$ decays as $n^{-2}$ while
    the MLE's MSE decays as $n^{-1}$, so the ratio of the two MSEs tends to 1.
 2. BCTS can move the decision threshold (the argmax) through $b$; TS cannot. The bias prior is what makes 10–50
-   labels sufficient when the ranking survives (finding 35).
+   labels sufficient when the ranking survives.
 3. The quadratic approximation is local; at the optimiser bound the curvature vanishes (unbounded optimum) and
    the approximation fails, which is the collapse case of P1.
 
@@ -124,7 +124,7 @@ $\Pr(\hat A - A \ge t) \le \exp(-2 m t^2)$, applied to the lower tail gives the 
 **Remarks.**
 1. The bound is distribution-free but conservative: with $n = 50$ balanced labels ($m = 25$) and $\delta = 0.05$
    the half-width is $\sqrt{\log 20 / 50} \approx 0.245$; with $m = 12$ it is $\approx 0.353$. A retained ranking
-   near 0.9 (the LLMs on OffMix-3L, finding 29) clears 0.5 at $m = 25$; a collapsed one near 0.5 cannot. Part (a)
+   near 0.9 (the LLMs on OffMix-3L) clears 0.5 at $m = 25$; a collapsed one near 0.5 cannot. Part (a)
    is the more powerful decision rule for "collapse vs survival"; part (b) quantifies how much ranking survives.
 2. With several candidate systems the tests are combined with Holm's procedure (valid under arbitrary dependence
    between the p-values, which share the labelled items), which controls the family-wise probability of declaring
@@ -134,8 +134,9 @@ $\Pr(\hat A - A \ge t) \le \exp(-2 m t^2)$, applied to the lower tail gives the 
 3. Part (a) holds for any statistic, including the macro one-vs-rest AUROC used for three classes; part (b) is
    stated for two classes (for $K$ classes it applies to each one-vs-rest AUROC with $m_k = \min(n_k, n - n_k)$ and
    a union bound over $k$). The implementation uses part (a) only.
-4. The labelled items are drawn without replacement from the finite target calibration pool; Hoeffding's bound
-   also holds for sampling without replacement (Hoeffding, 1963, Theorem 4), relative to the pool AUROC.
+4. The labelled items are a random subset of the finite target calibration pool. If the pool is an i.i.d. sample of
+   the target, so is the subset, and the bound holds for the population AUROC. No statement is made about the AUROC of
+   the finite pool: Hoeffding's (1963) Theorem 4 covers sums, not two-sample U-statistics.
 
 ## P4. Coverage and risk control after choosing a system with the same labels
 
@@ -166,15 +167,15 @@ independent of the calibration items, so the single-candidate guarantee applies 
 $\square$
 
 **Remarks.**
-1. Reusing the same $n$ items for choice and calibration at level $\alpha$ (as in finding 35) only guarantees
+1. Reusing the same $n$ items for choice and calibration at level $\alpha$ only guarantees
    $1 - M\alpha$; (a) costs larger sets, (c) costs labels. For $M = 2$, $\alpha = 0.1$, (a) needs $n \ge 19$ for
    the sets and $n_1 \ge 19$ positives for the FNR threshold. With $n = 25$ and a balanced target ($n_1 \approx 12$)
-   the FNR threshold is therefore vacuous (flag everything), which is the behaviour reported in finding 49.
+   the FNR threshold is therefore vacuous (flag everything), which is the behaviour reported in the evaluation.
 4. *Abstention and conditional validity.* When the same items also decide whether to deploy (survival test of P3
    on all $n$ items, Bonferroni variant), (a) and (b) bound the joint probability $\Pr(\text{miss} \cap
    \text{deploy}) \le \alpha$, so conditionally on deploying the bound is $\alpha / \Pr(\text{deploy})$. In the
    split variant the deploy decision uses only the selection part and the guarantee holds conditionally on
-   deploying. The Bonferroni variant abstains rarely at $n \ge 50$ (finding 49), so the gap is small in practice,
+   deploying. The Bonferroni variant abstains rarely at $n \ge 50$, so the gap is small in practice,
    but the stated guarantee must be the marginal one.
 2. Selection-adjusted conformal methods (Liang, Zhu & Barber, 2024) can recover efficiency; Bonferroni and
    splitting are the baselines the procedure reports.
@@ -187,7 +188,7 @@ Input: candidate systems (source-calibrated encoder runs and LLM systems), an un
 budget $n$, levels $\alpha$ (coverage or FNR) and $\delta$ (decision error).
 
 1. **Label-free screening.** Fit the character n-gram domain classifier (source cal vs unlabeled target cal) and
-   compute the encoder's predicted-marginal shift (findings 33, 42). If neither indicates a shift, deploy the
+   compute the encoder's predicted-marginal shift. If neither indicates a shift, deploy the
    encoder with source TS; otherwise request $n$ target labels. Label-free indicators only trigger label
    collection; they never replace the tests below.
 2. **Split.** Divide the labelled items into a selection part ($n_s$) and a calibration part ($n_c$), or keep all
@@ -213,8 +214,8 @@ optimal among post-hoc uses of the candidates' scores (P1).
 Evaluation (on the saved outputs, no GPU): every condition, encoder run and LLM system, $n \in \{25, 50, 100\}$
 with the resamples of `src/shift_recalibration.py`; realised coverage, FNR and FPR, the rate of wrong survival
 decisions against the full-target AUROC, macro-F1 of the deployed system and the abstention rate; compared with
-always-encoder, always-LLM, the reuse-the-same-labels router of finding 35 and the oracle. Step 1 is not part of
-the evaluation: every evaluated condition is shifted and detected (finding 33), so the evaluation starts at step 2.
+always-encoder, always-LLM, the reuse-the-same-labels router and the oracle. Step 1 is not part of
+the evaluation: every evaluated condition is shifted and detected, so the evaluation starts at step 2.
 
 ## Verification record (2026-11-01)
 
@@ -225,7 +226,7 @@ Second reading of P1–P4 against the implementation (`src/shift_triage.py`, `sr
   MSE(MAP) − MSE(MLE) agreed with the condition in every setting, including one next to the boundary). Wording
   corrected: the prior variance is a cross-task plug-in, and the large-$n$ remark now states the decay rates.
 - P3: correct; added that the score must not be fitted on the labelled items (the implementation uses source-TS
-  probabilities), that the multi-class version uses part (a) only, and the sampling-without-replacement note; the
+  probabilities), that the multi-class version uses part (a) only, and the note on the random subset of the pool; the
   half-width for $m = 12$ is 0.353 (was printed as 0.354).
 - P4: correct for fixed nonconformity scores. Two gaps in the procedure text were closed so that it matches the
   implementation: the Bonferroni variant certifies the source-TS score (not the refitted MAP-BCTS map) and the

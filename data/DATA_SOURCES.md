@@ -13,7 +13,7 @@ the SHA-256 prefixes given here.
 | Target, offensive (Bangla dialects) | BIDWESH (Barishal, Chittagong, Noakhali) | Fayaz et al., arXiv:2507.16183 | Mendeley Data, doi:10.17632/bpkrvf882k | see release | `notebooks/00_data_preparation.ipynb`; source overlap: `src/bidwesh_source_overlap.py` |
 | Target, sentiment (Sylheti) | Sylheti translation of 401 SentNoB test items | this study | created by the authors | derived from SentNoB, whose repository states no licence; not redistributed | `src/prepare_sylheti.py` |
 | Target, tri-lingual code-mixing | OffMix-3L, SentMix-3L | Goswami et al., SocialNLP 2023; Raihan et al., SEALP 2023 | authors' release | CC BY-NC-ND 4.0 (not redistributed) | `notebooks/00_data_preparation.ipynb` |
-| Target, natural code-mixing (Banglish, Bangla script) | Code-mixed Chaos | Nuha, Anjum and Ullah, 2025 | Mendeley Data, doi:10.17632/23dp3t88vk.1 | CC BY 4.0 | `python -m src.prepare_natural_codemixed` |
+| Target, natural code-mixing (Banglish, Bangla script) | Code-mixed Chaos | Rabbani Nuha, Anjum and Aman Ullah, 2025 | Mendeley Data, doi:10.17632/23dp3t88vk.1 | CC BY 4.0 | `python -m src.prepare_natural_codemixed` |
 | Target, natural code-mixing (multilingual) | MixTox-SA | Nahar et al., 2025 | Mendeley Data, doi:10.17632/bsdcd7zkyz.1 | CC BY 4.0 | `python -m src.prepare_natural_codemixed` |
 
 Character-noise conditions are generated from the BD-SHS and SentNoB test splits by the notebook (seed 42).

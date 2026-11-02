@@ -9,7 +9,8 @@ marginal, which needs no target labels, and by its AUROC retention; Table~\ref{t
 (Appendix~\ref{sec:appendix-results}) lists every coordinate and the best correction per pair. The post-hoc thresholds
 are: retention $\ge 0.95$, $|\log T^*_Q/T_P| \le 0.15$ and marginal shift $\le 0.10$ for no correction; a ratio of
 at least 0.25 with a marginal shift $\le 0.10$ for a temperature shift; and a marginal shift $\ge 0.10$ with
-target TS better than a constant in most runs and a finite oracle temperature for a threshold shift.
+target TS better than a constant and a finite oracle temperature in most runs for a threshold shift.
+Appendix~\ref{sec:appendix-regime-sensitivity} gives the rules for weak ranking and collapse and varies the thresholds.
 
 \begin{figure}[t]
 \centering
@@ -17,7 +18,7 @@ target TS better than a constant in most runs and a finite oracle temperature fo
 \caption{Regime map of the 21 shifted source--target pairs. Each point is a target of one source task (mean over the
 converged cross-entropy runs of that source, each after its own source temperature scaling). Horizontal: total-variation
 shift of the predicted-label marginal, computed without target labels. Vertical: target AUROC divided by in-domain
-AUROC. Hollow: target temperature scaling is on average no better than a constant predictor. Cross: unbounded oracle
+AUROC. Hollow: target temperature scaling is no better than a constant predictor in most runs. Cross: unbounded oracle
 temperature in every run.}
 \label{fig:regime-map}
 \end{figure}
@@ -66,10 +67,10 @@ with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). Th
 of runs; weighting every pair or every source equally gives 0.526 to 0.630 and 0.506 to 0.610. Batch calibration's lead in macro-F1 is
 partly a property of the metric, which rewards balanced predictions on these near-balanced targets; it reverses on
 skewed targets (Table~\ref{tab:prior-shift-ablation}). The bias must come from the target: vector and matrix scaling have
-one, but fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS on the five
-threshold-shift targets of the BD-SHS and SentNoB base encoders (Appendix~\ref{sec:appendix-recalibration}). The temperature is not merely
-insufficient but the wrong axis: label-free batch calibration has lower NLL than the oracle temperature fitted on all
-target labels, for example 0.848 against 1.008 for the Hinglish models on SentMix-3L and 0.573 against 0.647 for the
+one, but fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS for the base encoders on Banglish, Bangla-script Chaos,
+MixTox-SA, SentMix-3L and Hinglish (Appendix~\ref{sec:appendix-recalibration}). The temperature is not merely
+insufficient but the wrong axis: in 8 of the 12 pairs label-free batch calibration has lower NLL than the oracle temperature
+fitted on all target labels, for example 0.848 against 1.008 for the Hinglish models on SentMix-3L and 0.573 against 0.647 for the
 OLID models on OffMix-3L. Training-time remedies that act like a temperature behave the same way: focal loss and label
 smoothing lower the uncalibrated ECE and NLL on most shifted conditions, but after source TS neither is significantly
 better than cross-entropy on any condition, label smoothing is significantly worse on four of the five shifted
@@ -87,8 +88,8 @@ from 0.654 with source TS, NLL rises from 0.31 to 0.56, and it lowers NLL in non
 $\pi_+ = 0.3$, 0.7 and 0.9 it still beats source TS on both metrics. A class prior estimated from 50 labels repairs the
 rare-positive case on average (0.661 and 0.27), like the true prior, and MAP BCTS does as well (0.665 and 0.25), but
 they stay worse than source TS in 30\% and 46\% of units on macro-F1 and in 27\% and 24\% on NLL. At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for MAP
-BCTS. On the three-class sentiment sources uniform batch calibration keeps mean macro-F1 above source TS but raises NLL
-when the positive class dominates (Appendix~\ref{sec:appendix-prior-sentiment}).
+BCTS. The three-class sentiment arm is in Appendix~\ref{sec:appendix-prior-sentiment}: there batch calibration raises
+NLL when the positive class dominates.
 
 \input{../thesis/tables/prior_shift_ablation}
 
@@ -96,7 +97,8 @@ when the positive class dominates (Appendix~\ref{sec:appendix-prior-sentiment}).
 Fitted on the Bangla sources and applied to the others, a threshold on the predicted-marginal shift flags the units
 that need a bias correction with AUROC 0.845 and balanced accuracy 0.796, but almost all held-out units need one, so
 always correcting is more accurate (0.919 against 0.778). It does not identify units where target TS is no better than
-a constant (balanced accuracy 0.524 on the Hinglish source); that needs labels (Proposition~\ref{prop:impossibility}).
+a constant (balanced accuracy 0.524 on the Hinglish source); that needs labels, because unlabeled scores do not determine
+how the label depends on the score.
 
 \subsection{What the two interventions say about the collapse}
 \label{sec:results-causes}
@@ -153,7 +155,7 @@ them, because part of its non-toxic class comes from another corpus.
 \paragraph{Confidence does not reveal the shift; a domain classifier does.}
 A character n-gram domain classifier separates in-domain from target items with AUROC 0.982--1.000 on every original
 condition. The models' own uncertainty does not: the encoders reach 0.504--0.686 on average, and the LLMs' uncertainty is
-inverted on tri-lingual code-mixing (0.352 offensive, 0.318 sentiment), meaning that they are more confident on the
+inverted on tri-lingual code-mixing (0.297 offensive, 0.291 sentiment), meaning that they are more confident on the
 shifted inputs. Under collapse, abstaining on low confidence gives no protection: on OffMix-3L the encoders' selective
 risk at 80\% coverage is 0.476, against an overall error of 0.475.
 
@@ -175,7 +177,7 @@ no completion signal at all, ranks OffMix-3L as well as the other LLMs (Appendix
 The LLMs' rankings come with a shifted threshold. On OffMix-3L, MAP BCTS raises zero-shot LLM macro-F1 from 0.470 to
 0.752 with 25 labels and 0.807 with 50, and conformal risk control at an FNR of 0.1 then costs an FPR of 0.32--0.36 for
 three of the four LLMs (0.66 for Qwen3-8B), against 0.94 for the encoders. Spending the same 50 labels as in-context
-demonstrations improves the ranking (AUROC 0.966 against 0.913) but gives lower macro-F1 (0.693 against 0.794) and NLL
-2.005 against 0.429. Fine-tuning the encoder on the target labels cures the collapse only with about 200 labels (AUROC
+demonstrations improves the ranking (AUROC 0.966 against 0.913) but gives lower macro-F1 (0.693 against 0.794 on the three label resamples of this comparison) and
+NLL 2.005 against 0.429. Fine-tuning the encoder on the target labels cures the collapse only with about 200 labels (AUROC
 0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200 labels; Appendix~\ref{sec:appendix-few-label}). With up to 100 labels the
 better use of them is to route to a system whose ranking survives and to correct its bias.

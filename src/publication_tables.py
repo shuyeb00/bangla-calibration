@@ -9,11 +9,13 @@ Tables (thesis/tables/):
   prior_shift_ablation.tex           batch calibration vs a labelled prior estimate vs MAP BCTS under class-prior shift
   prior_shift_sentiment.tex          the same stress test on the three-class sentiment source tasks
   training_objectives.tex            label smoothing and focal loss vs cross-entropy, before and after temperature scaling
+  regime_threshold_sensitivity.tex   regime counts when the post-hoc thresholds are varied
 
     python -m src.publication_tables
 """
 
 import argparse
+from decimal import ROUND_HALF_UP, Decimal
 
 import pandas as pd
 
@@ -50,8 +52,34 @@ REGIME_NAMES = {"R0": "R0 no correction", "R1": "R1 temperature shift", "R2": "R
 
 
 def regime(source_task: str, condition: str) -> str:
-    """Regime assignment of finding 58; every other shifted cell is a threshold shift (R2)."""
+    """Regime assignment of the regime map; every other shifted cell is a threshold shift (R2)."""
     return REGIMES.get((source_task, condition), "R2")
+
+
+def regime_rule(x, runs: pd.DataFrame, tv_cut: float = 0.10, extra_runs: int = 0, retention: float = None) -> str:
+    """Operational rule behind `regime`, checked in the order collapse, weak ranking, threshold shift, no correction,
+    temperature shift. `x` is a row of the regime map and `runs` its per-run rows."""
+    no_gain = int((runs.explained_label_entropy <= 0).sum())
+    at_bound = runs.at_upper_bound.mean()
+    if at_bound == 1:
+        return "R4"
+    if no_gain > len(runs) / 2 + extra_runs and x.auroc > 0.6 and at_bound < 0.5:
+        return "R3"
+    if x.predicted_marginal_tv >= tv_cut and at_bound < 0.5 and (retention is None or x.auroc_retention >= retention):
+        return "R2"
+    if x.auroc_retention >= 0.95 and abs(x.oracle_log_ratio) <= 0.15 and x.predicted_marginal_tv <= tv_cut:
+        return "R0"
+    if x.oracle_log_ratio >= 0.25 and x.predicted_marginal_tv <= tv_cut:
+        return "R1"
+    return "unassigned"
+
+
+def regime_assignment(**variant) -> dict:
+    r = pd.read_csv(TABLES / "source_transfer_regime_map.csv")
+    p = pd.read_csv(TABLES / "source_transfer_per_run.csv")
+    r = r[r.condition != "test"]
+    return {(x.source_task, x.condition): regime_rule(x, p[(p.source_task == x.source_task) & (p.condition == x.condition)],
+                                                      **variant) for x in r.itertuples()}
 
 
 def tex(text: str) -> str:
@@ -63,6 +91,10 @@ def num(x, digits: int = 3, signed: bool = False) -> str:
         return "--"
     x = round(float(x), digits) + 0.0
     return f"{x:+.{digits}f}" if signed else f"{x:.{digits}f}"
+
+
+def num_half_up(x, digits: int) -> str:
+    return str(Decimal(f"{float(x):.9f}").quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
 
 
 def pvalue(p) -> str:
@@ -100,13 +132,13 @@ def regime_map_table() -> str:
             ratio = num(x.oracle_log_ratio, 2, signed=True) + (r"$^{\dagger}$" if x.at_upper_bound >= 0.5 else "")
             rows.append([tex(SOURCE_SHORT[src]) if k == 0 else "", tex(condition_name(src, x.condition)),
                          num(x.auroc), num(x.auroc_retention, 2), ratio, num(x.predicted_marginal_tv, 2),
-                         num(x.label_prior_tv, 2), num(x.explained_label_entropy, 2), num(x.source_ts_macro_f1),
+                         num(x.label_prior_tv, 2), num(x.explained_label_entropy, 3, True), num(x.source_ts_macro_f1),
                          num(x.batch_calibration_macro_f1_gain, 3, True), num(x.map_bcts_macro_f1_gain, 3, True),
                          METHOD_NAMES.get(x.best_macro_f1_method, "--"), METHOD_NAMES.get(x.best_nll_method, "--")])
-    header = ["Source", "Target", "AUROC", "Ret.", r"$\log T^{*}_t/T_s$", "TV", r"TV$_{\pi}$", "Expl.", "F1", r"$\Delta$F1 batch",
+    header = ["Source", "Target", "AUROC", "Ret.", r"$\log T^{*}_Q/T_P$", "TV", r"TV$_{\pi}$", "Expl.", "F1", r"$\Delta$F1 batch",
               r"$\Delta$F1 BCTS", "Best F1", "Best NLL"]
     caption = (r"Shift regimes across four source tasks (means over converged cross-entropy runs, each after its own "
-               r"source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_t/T_s$: oracle "
+               r"source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_Q/T_P$: oracle "
                r"temperature ratio from all target calibration labels ($^{\dagger}$ fit at the upper bound in most "
                r"runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; TV$_{\pi}$: total "
                r"variation between the target and source class priors, which needs target labels; Expl.: share of "
@@ -154,7 +186,7 @@ def triage_table(n_labels: int = 50) -> str:
                                ("_natural_codemixed", ("sentiment",), "SentiMix")]:
         t = pd.read_csv(TABLES / f"shift_triage_summary{scope}.csv")
         t = t[(t.n_labels == n_labels) & t.task.isin(tasks)]
-        parts.append((name, t.groupby("policy")[["macro_f1", "coverage", "coverage_below_target", "fnr", "fpr",
+        parts.append((name, t.groupby("policy")[["macro_f1", "coverage", "set_size", "coverage_below_target", "fnr", "fpr",
                                                  "abstention_rate"]].mean()))
     rows, groups = [], []
     for name, agg in parts:
@@ -163,15 +195,19 @@ def triage_table(n_labels: int = 50) -> str:
             if policy not in agg.index:
                 continue
             x = agg.loc[policy]
-            rows.append([tex(name) if k == 0 else "", POLICY_NAMES[policy], num(x.macro_f1), num(x.coverage),
+            rows.append([tex(name) if k == 0 else "", POLICY_NAMES[policy], num(x.macro_f1), num(x.coverage), num(x.set_size, 2),
                          num(x.coverage_below_target), num(x.fnr), num(x.fpr), num(x.abstention_rate)])
-    header = ["Conditions", "Policy", "Macro-F1", "Coverage", "Cov. $<$ 0.85", "FNR", "FPR", "Abstain"]
+    header = ["Conditions", "Policy", "Macro-F1", "Coverage", "Set size", "Cov. $<$ 0.85", "FNR", "FPR", "Abstain"]
     caption = (rf"Deployment policies with $n = {n_labels}$ labelled target items (means over conditions, encoder "
-               r"runs $\times$ LLM systems and 20 resamples; target coverage 0.9, offensive FNR target 0.1). Cov. "
-               r"$<$ 0.85: share of deployments whose test coverage falls below 0.85. FNR and FPR are means over the "
-               r"offensive conditions only (-- for sentiment). Natural offensive: Code-mixed Chaos (both scripts) and "
-               r"MixTox-SA; SentiMix: Hinglish and Spanglish; both are held out (nothing fitted on them).")
-    return tabular("llrrrrrr", header, rows, caption, "tab:shift-triage-policies", r"\small", groups)
+               r"runs $\times$ LLM systems and 20 resamples; target coverage 0.9, offensive FNR target 0.1). LLM systems "
+               r"are the four general LLMs, zero-shot and few-shot with demonstration seed 0. All outcomes are computed "
+               r"on the LLM items of each target test split; abstained deployments count in Abstain and are left out of "
+               r"the other columns. Triage (Bonferroni) calibrates at $\alpha/2$, the other policies at $\alpha$. Set "
+               r"size: mean number of labels in a conformal set (two classes for offensive language, three for "
+               r"sentiment). Cov. $<$ 0.85: share of deployments whose test coverage falls below 0.85. FNR and FPR are "
+               r"means over the offensive conditions only (-- for sentiment). Natural offensive: Code-mixed Chaos (both "
+               r"scripts) and MixTox-SA; SentiMix: Hinglish and Spanglish; both are held out (nothing fitted on them).")
+    return tabular("llrrrrrrr", header, rows, caption, "tab:shift-triage-policies", r"\small", groups, colsep="4pt", fit_width=True)
 
 
 def triage_prevalence_table() -> str:
@@ -183,7 +219,7 @@ def triage_prevalence_table() -> str:
     for i, (pi, d) in enumerate(agg.groupby("prevalence", sort=False)):
         groups.append(len(rows))
         for k, (_, x) in enumerate(d.iterrows()):
-            rows.append([num(pi, 2) if k == 0 else "", str(int(x.n_labels)), num(x.labelled_positives, 1), num(x.vacuous, 2),
+            rows.append([num(pi, 2) if k == 0 else "", str(int(x.n_labels)), num_half_up(x.labelled_positives, 1), num(x.vacuous, 2),
                          num(x.fnr), num(x.fpr), num(x.precision), num(x.macro_f1), num(x.abstention_rate)])
     header = [r"$\pi_+$", "Labels", "Positives", "Flags all", "FNR", "FPR", "Precision", "Macro-F1", "Abstain"]
     caption = (r"Triage (Bonferroni) at a fixed positive prevalence on the natural offensive targets, resampled to "
@@ -209,10 +245,8 @@ def correction_ablation_table() -> str:
                          labels, num(f1.mean()), num(nll.mean()), win])
     header = ["Regime", "Cells", "Correction", "Adjusts", "Labels", "Macro-F1", "NLL", "NLL $<$ source TS"]
     caption = (r"Which part of the correction matters in each regime (all converged cross-entropy runs of the four "
-               r"source tasks; means over runs and cells of the regime). Shrinkage TS only rescales the temperature "
-               r"and cannot change the decision; batch calibration only shifts the class bias and uses no labels; "
-               r"MAP BCTS does both with 50 target labels. Last column: share of run $\times$ cell units whose NLL is "
-               r"below source TS. Cells: number of (source task, target) pairs in the regime, as assigned in the regime map.")
+               r"source tasks; means over runs and cells of the regime). Last column: share of run $\times$ cell units "
+               r"whose NLL is below source TS. Cells: (source task, target) pairs in the regime.")
     return tabular("lrlllrrr", header, rows, caption, "tab:correction-ablation-by-regime", r"\small", groups, fit_width=True)
 
 
@@ -230,9 +264,7 @@ def prior_shift_ablation_table() -> str:
         rows.append([name] + cells)
     header = ["Method"] + [f"$\\pi_+ = {q[3:]}$" for q in priors]
     caption = (r"Batch calibration under class-prior shift (offensive source tasks, BD-SHS and OLID; every target "
-               r"resampled to a positive share $\pi_+$; means over runs, targets and 5 resamples; macro-F1 / NLL). "
-               r"Uniform batch calibration assumes $\pi_+ = 0.5$; a prior estimated from 50 labels removes that "
-               r"assumption and is close to the true-prior reference.")
+               r"resampled to a positive share $\pi_+$; means over runs, targets and 5 resamples; macro-F1 / NLL).")
     return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small", fit_width=True)
 
 
@@ -256,6 +288,30 @@ def prior_shift_sentiment_table() -> str:
     return tabular("lccccc", header, rows, caption, "tab:prior-shift-sentiment", r"\small", fit_width=True)
 
 
+REGIME_VARIANTS = [("Thresholds as stated", {}), ("Marginal-shift cut 0.08", {"tv_cut": 0.08}),
+                   ("Marginal-shift cut 0.12", {"tv_cut": 0.12}), ("``Most runs'' one run lower", {"extra_runs": -1}),
+                   ("``Most runs'' one run higher", {"extra_runs": 1}),
+                   (r"First rule: retention $\ge 0.70$ also required", {"retention": 0.70})]
+
+
+def regime_sensitivity_table() -> str:
+    base = regime_assignment()
+    rows = []
+    for name, variant in REGIME_VARIANTS:
+        assigned = regime_assignment(**variant)
+        counts = pd.Series(assigned).value_counts()
+        changes = [f"{tex(SOURCE_SHORT[s])} on {tex(condition_name(s, c))}: {base[(s, c)]} to {assigned[(s, c)]}"
+                   for (s, c) in sorted(assigned, key=lambda k: (SOURCE_SHORT[k[0]], k[1]))
+                   if assigned[(s, c)] != base[(s, c)]]
+        rows.append([name] + [str(int(counts.get(g, 0))) for g in ("R0", "R1", "R2", "R3", "R4", "unassigned")]
+                    + ["; ".join(changes) or "--"])
+    header = ["Rule", "R0", "R1", "R2", "R3", "R4", "None", "Pairs that change"]
+    caption = (r"Regime assignment of the 21 shifted pairs under other thresholds, built from the means and per-run rows of "
+               r"the regime map. ``Most runs'' one run lower or higher moves the count of runs no better than a constant "
+               r"that makes a pair weak-ranking. None: the pair meets no regime's conditions.")
+    return tabular("lrrrrrrp{5.4cm}", header, rows, caption, "tab:regime-threshold-sensitivity", r"\small", colsep="4pt")
+
+
 def training_objectives_table() -> str:
     c = pd.read_csv(TABLES / "contrast_statistics.csv")
     c = c[c.family == "objectives"]
@@ -274,8 +330,10 @@ def training_objectives_table() -> str:
                 row.append(num(x.effect, 3, True) + (r"$^{*}$" if x.p_holm < 0.05 else ""))
             rows.append(row)
     header = ["Condition", "Objective", "ECE", "ECE after TS", "NLL", "NLL after TS", "AUROC"]
+    pairs = c.groupby(["task", "contrast"]).n.first()
     caption = (r"Training-time calibration: difference from cross-entropy training (same model and seed; three base "
-               r"encoders, full fine-tuning, 5 seeds). Negative ECE and NLL differences are improvements. $^{*}$: "
+               rf"encoders, full fine-tuning, 5 seeds, so {pairs.max()} runs, but {pairs.min()} for sentiment label "
+               r"smoothing because one run did not converge). Negative ECE and NLL differences are improvements. $^{*}$: "
                r"significant after Holm correction over the 100 contrasts of the family (exact sign-flip test). The "
                r"objectives improve uncalibrated ECE and NLL under shift, but not after source temperature scaling, and "
                r"leave the ranking unchanged.")
@@ -286,7 +344,7 @@ TABLE_BUILDERS = {"triage_prevalence_stress": triage_prevalence_table, "regime_m
                   "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
                   "correction_ablation_by_regime": correction_ablation_table,
                   "prior_shift_ablation": prior_shift_ablation_table, "prior_shift_sentiment": prior_shift_sentiment_table,
-                  "training_objectives": training_objectives_table}
+                  "regime_threshold_sensitivity": regime_sensitivity_table, "training_objectives": training_objectives_table}
 
 
 def main():

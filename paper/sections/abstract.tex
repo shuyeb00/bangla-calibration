@@ -1,6 +1,7 @@
 Text classifiers are routinely deployed on language varieties they were not trained on: regional dialects, romanised
 spellings, posts that switch languages mid-sentence. When their confidence stops matching their accuracy, the standard
-repair is temperature scaling. We show that under such shifts temperature is usually the wrong knob. We fine-tune
+repair is temperature scaling. We show, on Bangla-centred evidence, that under such shifts temperature is usually the
+wrong knob. We fine-tune
 seven encoders on Bangla offensive-language and sentiment data, and three of them on English and Hindi--English data
 to separate the phenomenon from the source language, evaluate them on 21 source--target pairs spanning dialects,
 scripts, natural and tri-lingual code-mixing and other languages, and compare them with four instruction-tuned LLMs on

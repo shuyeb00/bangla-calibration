@@ -14,7 +14,7 @@ Bias-corrected temperature scaling (BCTS; \citealp{alexandari2020maximum}) predi
 $n$ target labels we fit both by maximum a posteriori estimation, with Gaussian priors centred on the source estimates
 (\emph{shrinkage TS} and \emph{MAP BCTS}); the prior variances are the mean squared oracle deviations measured on the
 \emph{other} task, so nothing is fitted on the target being evaluated. Batch calibration \citep{zhou2024batch} needs no
-labels: it divides the source-TS probabilities by their mean over a batch of unlabeled target inputs and renormalises.
+labels: it divides the source-TS probabilities by their arithmetic mean over a batch of unlabeled target inputs and renormalises.
 This pulls the predicted class marginals towards uniform, so it assumes a balanced target and needs a batch of target
 inputs rather than a single item. Its prior-aware variant
 multiplies the result by a class prior estimated from the $n$ labels, a Saerens-type prior adjustment

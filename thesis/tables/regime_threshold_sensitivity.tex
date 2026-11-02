@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Regime assignment of the 21 shifted pairs under other thresholds, built from the means and per-run rows of the regime map. ``Most runs'' one run lower or higher moves the count of runs no better than a constant that makes a pair weak-ranking. None: the pair meets no regime's conditions.}
+\label{tab:regime-threshold-sensitivity}
+\begin{tabular}{lrrrrrrp{5.4cm}}
+\toprule
+Rule & R0 & R1 & R2 & R3 & R4 & None & Pairs that change \\
+\midrule
+Thresholds as stated & 3 & 2 & 12 & 3 & 1 & 0 & -- \\
+Marginal-shift cut 0.08 & 2 & 1 & 14 & 3 & 1 & 0 & OLID (en) on BD-SHS: R1 to R2; SentNoB (bn) on Sylheti: R0 to R2 \\
+Marginal-shift cut 0.12 & 3 & 3 & 11 & 3 & 1 & 0 & OLID (en) on Chaos (Bangla script): R2 to R1 \\
+``Most runs'' one run lower & 3 & 2 & 12 & 3 & 1 & 0 & -- \\
+``Most runs'' one run higher & 3 & 2 & 13 & 2 & 1 & 0 & SentiMix (hi-en) on Sylheti: R3 to R2 \\
+First rule: retention $\ge 0.70$ also required & 3 & 2 & 11 & 3 & 1 & 1 & BD-SHS (bn) on OLID (English): R2 to unassigned \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -113,6 +113,9 @@ def build(out: Path) -> None:
                 else:
                     tar.extractall(check)
             with_option(check / "main.tex", option)
+            if not option:
+                main = check / "main.tex"
+                main.write_text("\\pdfinfoomitdate=1\n\\pdftrailerid{}\n" + main.read_text(encoding="utf-8"), encoding="utf-8")
             latex(check)
             shutil.copy2(check / "main.pdf", out / pdf)
     print(f"Wrote {archive} ({archive.stat().st_size / 1e6:.2f} MB), {out / 'manuscript_preprint.pdf'} and "

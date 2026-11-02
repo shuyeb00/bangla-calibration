@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Regenerates every table, figure and the manuscript of the max_length-512 study from saved outputs.
-# Stage "outputs" needs the run and LLM outputs in results/grid_max_length_512/ (python -m src.fetch_run_outputs and
-# python -m src.llm_evaluation --download-only); stage "tables" needs only the committed tables.
+# Regenerates every table and figure of the max_length-512 study from saved outputs.
+# Stage "outputs" needs the run and LLM outputs in results/grid_max_length_512/ (python -m src.export_release_outputs
+# restore, see REPRODUCIBILITY.md); stage "tables" needs only the committed tables.
 # Usage: bash reproduce.sh [outputs|tables|all]   (PYTHON defaults to ./venv if it exists, else python on the PATH)
 set -euo pipefail
 cd "$(dirname "$0")"

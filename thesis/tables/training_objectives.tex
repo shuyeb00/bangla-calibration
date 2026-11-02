@@ -1,7 +1,7 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Training-time calibration: difference from cross-entropy training (same model and seed; three base encoders, full fine-tuning, 5 seeds). Negative ECE and NLL differences are improvements. $^{*}$: significant after Holm correction over the 100 contrasts of the family (exact sign-flip test). The objectives improve uncalibrated ECE and NLL under shift, but not after source temperature scaling, and leave the ranking unchanged.}
+\caption{Training-time calibration: difference from cross-entropy training (same model and seed; three base encoders, full fine-tuning, 5 seeds, so 15 runs, but 14 for sentiment label smoothing because one run did not converge). Negative ECE and NLL differences are improvements. $^{*}$: significant after Holm correction over the 100 contrasts of the family (exact sign-flip test). The objectives improve uncalibrated ECE and NLL under shift, but not after source temperature scaling, and leave the ranking unchanged.}
 \label{tab:training-objectives}
 \begin{tabular}{llrrrrr}
 \toprule

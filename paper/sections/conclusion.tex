@@ -1,8 +1,9 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-Across dialects, scripts, code-mixing and languages, and for source tasks in three languages, the common failure of
-fine-tuned text classifiers under language-variety shift is a misplaced decision threshold, not a wrong temperature.
+Across the dialects, scripts, code-mixing and languages we studied, on two tasks centred on Bangla and with source tasks
+in three languages, the common failure of the fine-tuned classifiers was a misplaced decision threshold, not a wrong
+temperature.
 Temperature scaling cannot move the threshold however many labels it is fitted on; a bias correction can, provided its
 assumption about the class prior is checked with a few labels. A collapse of the ranking is rare, appears here to
 arise from a mismatch of label definitions, and no post-hoc map repairs it.
