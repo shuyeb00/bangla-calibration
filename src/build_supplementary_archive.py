@@ -150,7 +150,8 @@ def build(out: Path, outputs: Path, limit: int) -> None:
     for f in tracked_files():
         data = (BASE_DIR / f).read_bytes()
         if is_text(f):
-            data = anonymise(f, data.decode("utf-8")).encode("utf-8")
+            # Windows checkouts carry CRLF, which breaks reproduce.sh under bash on other systems.
+            data = anonymise(f, data.decode("utf-8").replace("\r\n", "\n")).encode("utf-8")
         members[f] = data
     base_size = len(zip_bytes(members, {}))
     shards, left_out, extra = [], [], {}
