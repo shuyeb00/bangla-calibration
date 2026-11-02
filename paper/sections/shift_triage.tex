@@ -64,15 +64,16 @@ bound of Proposition~\ref{prop:survival} could set a minimum AUROC, but with 12 
 
 \paragraph{Evaluation.}
 We run the procedure on every shifted condition with a target calibration split, for every converged encoder run paired
-with each general LLM and 20 resamples of $n \in \{25, 50, 100\}$ target labels. It is compared with always using the
-encoder, always using the LLM, a router that reuses the same labels for choice and calibration without correction, and
-an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies} in the appendix). With $n = 50$ on the
+with each general LLM and 20 resamples of $n \in \{25, 50, 100\}$ target labels. It is compared with the encoder
+calibrated on the source, the encoder with the same labels, the LLM with the same labels, a router that reuses the labels
+for choice and calibration without correction, and an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies} in the appendix). With $n = 50$ on the
 original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, reuse router 0.788, always-LLM 0.715,
-always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
+encoder with labels 0.682, always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
 always-encoder 0.472). On the held-out natural offensive targets, where the LLM is almost always the better system,
 always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange for coverage that
 falls below 0.85 in 0.004 of deployments instead of 0.081: on these targets the procedure buys a guarantee, not
-accuracy. The abstention branch is barely exercised, because at least one system keeps a ranking on every target.
+accuracy. Abstention here comes only from low power: no target in this study defeats both systems, so that branch is
+untested on a true collapse of both.
 
 The guarantees have a price that the numbers make explicit. Bonferroni-valid FNR control is conservative: on the
 original shifts it raises the FPR from 0.324 for the oracle to 0.543. With $n = 25$ and about twelve offensive items it
@@ -80,7 +81,11 @@ flags every item, as Proposition~\ref{prop:selection} predicts. The split varian
 with abstention, which reaches 0.34 of resamples on the natural offensive targets at $n = 25$.
 
 The label requirement is therefore a number of positives, not of items: 19 for two candidates at $\alpha = 0.1$. On a
-balanced target 50 random labels contain them with probability 0.97; at the 34\% toxic share of MixTox-SA, 0.33; at
-10\% prevalence 50 labels contain five positives on average and about 245 labels are needed for probability 0.9. The
-FPR scales just as badly: an FNR of 0.024 with an FPR of 0.671, as on the natural targets, would mean that only 14\% of
-flagged posts are offensive at 10\% prevalence if the class-conditional rates carried over.
+balanced target 50 random labels contain them with probability 0.97; at the 34\% toxic share of MixTox-SA only 0.33, and
+there the Bonferroni variant flags nearly everything (FPR 0.947); at 10\% prevalence 50 labels contain five positives on
+average and about 245 labels are needed for probability 0.9. A stress test that resamples the natural offensive targets
+to a fixed prevalence confirms this (Table~\ref{tab:triage-prevalence-stress} in the appendix). At 10\% prevalence the
+threshold flags every item in every deployment with 50 labels, in 0.35 of deployments with 200 and in none with 400; with
+400 labels the FNR is 0.034 at an FPR of 0.558, so 18.5\% of flagged posts are offensive. The point predictions need far
+fewer labels: macro-F1 is 0.723 with 50 labels and 0.728 with 400. On a skewed target, therefore, about 50 labels
+suffice to choose a system and correct its threshold, and several hundred are needed to certify it.

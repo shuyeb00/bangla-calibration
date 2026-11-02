@@ -172,6 +172,25 @@ def triage_table(n_labels: int = 50) -> str:
     return tabular("llrrrrrr", header, rows, caption, "tab:shift-triage-policies", r"\small", groups)
 
 
+def triage_prevalence_table() -> str:
+    t = pd.read_csv(TABLES / "triage_prevalence_stress_summary_natural_codemixed.csv")
+    t = t[t.policy == "triage_bonferroni"]
+    agg = t.groupby(["prevalence", "n_labels"])[["labelled_positives", "vacuous", "fnr", "fpr", "precision", "macro_f1",
+                                                 "abstention_rate"]].mean().reset_index()
+    rows, groups = [], []
+    for i, (pi, d) in enumerate(agg.groupby("prevalence", sort=False)):
+        groups.append(len(rows))
+        for k, (_, x) in enumerate(d.iterrows()):
+            rows.append([num(pi, 2) if k == 0 else "", str(int(x.n_labels)), num(x.labelled_positives, 1), num(x.vacuous, 2),
+                         num(x.fnr), num(x.fpr), num(x.precision), num(x.macro_f1), num(x.abstention_rate)])
+    header = [r"$\pi_+$", "Labels", "Positives", "Flags all", "FNR", "FPR", "Precision", "Macro-F1", "Abstain"]
+    caption = (r"Triage (Bonferroni) at a fixed positive prevalence on the natural offensive targets, resampled to "
+               r"$\pi_+$ (means over the three targets, encoder runs $\times$ zero-shot LLMs and 20 resamples). Labels are "
+               r"a random sample of the resampled population. Positives: mean number of labelled positives; 19 are needed "
+               r"for a threshold that does not flag every item. Flags all: share of deployments where it does.")
+    return tabular("rrrrrrrrr", header, rows, caption, "tab:triage-prevalence-stress", r"\small", groups)
+
+
 def correction_ablation_table() -> str:
     p = pd.read_csv(TABLES / "source_transfer_per_run.csv")
     p = p[p.condition != "test"].copy()
@@ -241,7 +260,7 @@ def training_objectives_table() -> str:
     return tabular("llrrrrr", header, rows, caption, "tab:training-objectives", r"\small", groups)
 
 
-TABLE_BUILDERS = {"regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
+TABLE_BUILDERS = {"triage_prevalence_stress": triage_prevalence_table, "regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
                   "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
                   "correction_ablation_by_regime": correction_ablation_table,
                   "prior_shift_ablation": prior_shift_ablation_table, "training_objectives": training_objectives_table}

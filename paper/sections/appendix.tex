@@ -160,7 +160,8 @@ architecture, OLID and Hinglish runs converged.
 Each prompt contains an English instruction, the text and a one-word answer format. For offensive language the
 instruction asks whether the text ``contains hate speech, insults, abuse, threats, or vulgar language''; for sentiment it
 asks for the sentiment that the text expresses. The class score is the log-probability of the label word at the answer
-position (summed over its tokens when it has several), and the probability of producing any label is recorded. Thinking
+position; every label word is one token for every model, so the scores carry no length bias. The probability of
+producing any label is recorded. Thinking
 is disabled through the chat template for Qwen3 and Qwen3.5. The four
 general LLMs place at least 0.97 of their probability on a label word on average on every split of the original
 conditions; the exception among the held-out targets is Llama-3.1-8B on Spanglish. TigerLLM-1B, a Bangla-specific
@@ -189,7 +190,9 @@ contrasts are over items; variation across seeds and architectures enters throug
 
 Shrinkage TS and MAP BCTS use Gaussian priors on $\log T$ and on each free bias, with $b_0 = 0$ for identifiability. The
 variances are empirical-Bayes estimates from the other task: for encoders, on $\log T$ and the bias, 0.433 and 1.24 for
-offensive language and 1.55 and 0.063 for sentiment.
+offensive language and 1.55 and 0.063 for sentiment. Refitting MAP BCTS with 50 labels with these variances scaled by
+0.25 or 4, or with unit variance, changes mean macro-F1 over the targets by at most 0.01 for encoders and for LLMs, and on
+single targets by $-0.041$ to $+0.048$.
 
 \input{../thesis/tables/contrast_families_holm}
 
@@ -202,6 +205,8 @@ offensive language and 1.55 and 0.063 for sentiment.
 \input{../thesis/tables/cross_definition_contrasts}
 
 \input{../thesis/tables/shift_triage_policies}
+
+\input{../thesis/tables/triage_prevalence_stress}
 
 \subsection{Spending labels}
 \label{sec:appendix-few-label}

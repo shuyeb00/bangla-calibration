@@ -6,8 +6,8 @@ Detect shift with a domain classifier, not with the model's confidence. After a 
 rather than only the temperature. Without labels, batch calibration is appropriate only if the target classes are
 believed to be roughly balanced; otherwise about 50 labels suffice to estimate the prior or to fit MAP BCTS. On a
 near-balanced target the same 50 labels test the ranking, choose between the fine-tuned encoder and an LLM, and certify
-coverage and the false-negative rate; on a skewed target the false-negative certificate needs 19 labelled positives,
-hence hundreds of random labels. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+coverage and the false-negative rate; on a skewed target they still choose the system and correct the threshold, but
+the false-negative certificate needs 19 labelled positives, hence hundreds of random labels. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
 
 \paragraph{Why thresholds move.}
 Our evidence locates the failure but does not explain why the threshold moves. One plausible account is that
@@ -33,6 +33,9 @@ work.
   \item \emph{Statistics.} Many results are descriptive means over runs. Formal tests with multiplicity control are
   reported for pre-defined families; five-versus-five comparisons cannot reach significance after correction in large
   families and are reported descriptively.
+  \item \emph{Priors.} The prior variances of MAP BCTS come from our other task, which a practitioner may not have; a
+  generic unit-variance prior or variances scaled by 4 change mean macro-F1 by at most 0.01
+  (Appendix~\ref{sec:appendix-statistics}).
   \item \emph{Guarantees} are marginal over target calibration and test items and assume exchangeability within the
   target. When the same items also decide whether to deploy, the coverage bound holds jointly with the deployment event.
   \item \emph{Contamination.} No item-level memorisation was detected, but exposure of the LLMs to the public test sets

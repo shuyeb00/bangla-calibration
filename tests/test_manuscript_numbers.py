@@ -581,10 +581,10 @@ _orig, _nat = ("", ("offensive", "sentiment")), ("_natural_codemixed", ("offensi
 claim("shift_triage", "(Proposition~ , Holm over candidates at $\\delta = 0.05$)", 0.05)
 claim("shift_triage", "20 resamples of $n \\in \\{25, 50, 100\\}$ target labels", sr.N_RESAMPLES, 25, 50, 100)
 claim("shift_triage", "With $n = 50$ on the original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, "
-      "reuse router 0.788, always-LLM 0.715, always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 "
-      "of deployments (reuse router 0.124, always-encoder 0.472)", 50,
+      "reuse router 0.788, always-LLM 0.715, encoder with labels 0.682, always-encoder 0.658) and lets test coverage fall "
+      "below 0.85 in only 0.006 of deployments (reuse router 0.124, always-encoder 0.472)", 50,
       *[triage(*_orig, 50, p, "macro_f1") for p in ("triage_bonferroni", "oracle", "reuse_router", "always_llm",
-                                                    "always_encoder")],
+                                                    "encoder_labels", "always_encoder")],
       0.85, *[triage(*_orig, 50, p, "coverage_below_target") for p in ("triage_bonferroni", "reuse_router",
                                                                       "always_encoder")])
 claim("shift_triage", "always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange "
@@ -603,15 +603,28 @@ claim("shift_triage", "for $K = 2$ the Bonferroni threshold", 2)
 claim("shift_triage", "with 12 items per class its half-width is 0.353", 12, math.sqrt(math.log(1 / 0.05) / (2 * 12)))
 _mixtox_share = float(table("cross_definition_summary").query("condition == 'mixtox'")
                       .gold_positive_share_mean.mean())
+_stress = table("triage_prevalence_stress_summary_natural_codemixed").query("policy == 'triage_bonferroni'")
+
+
+def stressed(prevalence: float, n: int, column: str) -> float:
+    return float(_stress[(_stress.prevalence == prevalence) & (_stress.n_labels == n)][column].mean())
+
+
+_mixtox_b = table("shift_triage_summary_natural_codemixed").query(
+    "n_labels == 50 and policy == 'triage_bonferroni' and condition == 'shift_d5_mixtox_test'")
 claim("shift_triage", "19 for two candidates at $\\alpha = 0.1$. On a balanced target 50 random labels contain them with "
-      "probability 0.97; at the 34\\% toxic share of MixTox-SA, 0.33; at 10\\% prevalence 50 labels contain five positives on "
-      "average and about 245 labels are needed for probability 0.9", positives_needed(2), sr.ALPHA, 50,
-      float(binom.sf(18, 50, 0.5)), 100 * _mixtox_share, float(binom.sf(18, 50, _mixtox_share)), 10, 50,
-      labels_needed(0.1, 2), 0.9)
-_fnr_n, _fpr_n = triage(*_nat, 50, "triage_bonferroni", "fnr"), triage(*_nat, 50, "triage_bonferroni", "fpr")
-claim("shift_triage", "an FNR of 0.024 with an FPR of 0.671, as on the natural targets, would mean that only 14\\% of flagged "
-      "posts are offensive at 10\\% prevalence", _fnr_n, _fpr_n,
-      100 * 0.1 * (1 - _fnr_n) / (0.1 * (1 - _fnr_n) + 0.9 * _fpr_n), 10)
+      "probability 0.97; at the 34\\% toxic share of MixTox-SA only 0.33", positives_needed(2), sr.ALPHA, 50,
+      float(binom.sf(18, 50, 0.5)), 100 * _mixtox_share, float(binom.sf(18, 50, _mixtox_share)))
+claim("shift_triage", "(FPR 0.947); at 10\\% prevalence 50 labels contain five positives on average and about 245 labels are "
+      "needed for probability 0.9", _mixtox_b.fpr.mean(), 10, 50, labels_needed(0.1, 2), 0.9)
+claim("shift_triage", "At 10\\% prevalence the threshold flags every item in every deployment with 50 labels, in 0.35 of "
+      "deployments with 200 and in none with 400; with 400 labels the FNR is 0.034 at an FPR of 0.558, so 18.5\\% of flagged",
+      10, 50 if stressed(0.1, 50, "vacuous") == 1 else -1, stressed(0.1, 200, "vacuous"), 200,
+      400 if stressed(0.1, 400, "vacuous") == 0 else -1, 400, stressed(0.1, 400, "fnr"), stressed(0.1, 400, "fpr"),
+      100 * stressed(0.1, 400, "precision"))
+claim("shift_triage", "macro-F1 is 0.723 with 50 labels and 0.728 with 400", stressed(0.1, 50, "macro_f1"), 50,
+      stressed(0.1, 400, "macro_f1"), 400)
+claim("shift_triage", "about 50 labels suffice to choose a system", 50)
 
 # Related work, discussion.
 claim("related_work", "and that 50 labels make it safe", 50)
@@ -619,6 +632,11 @@ claim("discussion", "otherwise about 50 labels suffice", 50)
 claim("discussion", "the same 50 labels test the ranking", 50)
 claim("discussion", "certificate needs 19 labelled positives", positives_needed(2))
 claim("discussion", "The 12 threshold-shift pairs rest on seven corpora", len(cells("R2")))
+_ps = pd.concat([table("map_bcts_prior_sensitivity"), table("map_bcts_prior_sensitivity_natural_codemixed")])
+_ps_w = _ps.pivot_table(index=["task", "condition", "kind"], columns="prior", values="macro_f1")
+_ps_d = _ps_w[["scale_0.25", "scale_4", "unit_variance"]].sub(_ps_w["scale_1"], axis=0)
+_ps_mean = _ps_d.groupby("kind").mean().abs().to_numpy().max()
+claim("discussion", "scaled by 4 change mean macro-F1 by at most 0.01", 4, Bound("atmost", _ps_mean))
 claim("discussion", "label 16.4\\% of the Banglish Chaos comments as toxic and 26.1\\% of the same comments in Bangla "
       "script, against 50\\% in the gold labels", 100 * predicted_share("shift_d4_banglish_test"),
       100 * predicted_share("shift_d4_banglish_bangla_script_test"), 50)
@@ -759,6 +777,9 @@ claim("appendix", "exclude zero for all 16 significant contrasts on the original
       "natural targets", _llm_o[0] if _llm_o[0] == _llm_o[1] else -1, _llm_n[1], _llm_n[0])
 claim("appendix", "on MixTox-SA with 25 labels", 25)
 claim("appendix", "could not go below $p = 1/8$", None, None)
+claim("appendix", "Refitting MAP BCTS with 50 labels with these variances scaled by 0.25 or 4, or with unit variance, changes "
+      "mean macro-F1 over the targets by at most 0.01", 50, 0.25, 4, Bound("atmost", _ps_mean))
+claim("appendix", "on single targets by $-0.041$ to $+0.048$", _ps_d.to_numpy().min(), _ps_d.to_numpy().max())
 _pv = table("llm_recalibration_prior").query("kind == 'encoder'").set_index("task")
 claim("appendix", "with $b_0 = 0$ for identifiability", None)
 claim("appendix", "0.433 and 1.24 for offensive language and 1.55 and 0.063 for sentiment",
