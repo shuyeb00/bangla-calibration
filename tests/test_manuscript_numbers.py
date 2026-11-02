@@ -336,7 +336,7 @@ def claim(file: str, passage: str, *values):
 
 
 # Abstract and introduction.
-claim("abstract", "LLMs on 21 source--target pairs", n_shifted_pairs())
+claim("abstract", "evaluate them on 21 source--target pairs", n_shifted_pairs())
 claim("abstract", "In 12 of the 21 pairs", len(cells("R2")), n_shifted_pairs())
 claim("abstract", "raises macro-F1 from 0.527 to 0.620 on average", ablation("R2", "source_ts", "macro_f1"),
       ablation("R2", "batch_calibration", "macro_f1"))

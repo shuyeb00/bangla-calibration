@@ -1,14 +1,15 @@
 Text classifiers are routinely deployed on language varieties they were not trained on: regional dialects, romanised
 spellings, posts that switch languages mid-sentence. When their confidence stops matching their accuracy, the standard
-repair is temperature scaling. We show that under such shifts temperature is usually the wrong knob. We fine-tune seven
-encoders on Bangla offensive-language and sentiment data, and three of them on English and Hindi--English data to
-separate the phenomenon from the source language, and evaluate them with four instruction-tuned LLMs on 21
-source--target pairs spanning dialects, scripts, natural and tri-lingual code-mixing and other languages. In 12 of the
-21 pairs, from all four source tasks, the models keep a useful ranking but sit at the wrong decision threshold.
-Temperature scaling cannot change a single decision, even when fitted on target labels; a label-free bias correction
-raises macro-F1 from 0.527 to 0.620 on average. That correction assumes balanced classes and backfires on skewed
-targets, and a class prior estimated from 50 labelled examples makes it safe. The ranking collapses in only one pair.
-Two interventions---changing only the script of identical comments, and retraining on the target's definition of
-offensiveness---trace that collapse to a mismatch of label definitions rather than to unfamiliar language. We turn these
-findings into a triage procedure that detects shift without labels and, with about 50 target labels, chooses between
-recalibrating, switching to an LLM and abstaining, with finite-sample guarantees on coverage and missed detections.
+repair is temperature scaling. We show that under such shifts temperature is usually the wrong knob. We fine-tune
+seven encoders on Bangla offensive-language and sentiment data, and three of them on English and Hindi--English data
+to separate the phenomenon from the source language, evaluate them on 21 source--target pairs spanning dialects,
+scripts, natural and tri-lingual code-mixing and other languages, and compare them with four instruction-tuned LLMs on
+the Bangla-source targets. In 12 of the 21 pairs, from all four source tasks, the models keep a useful ranking but sit
+at the wrong decision threshold. Temperature scaling cannot change a single decision, even when fitted on target
+labels; a label-free bias correction raises macro-F1 from 0.527 to 0.620 on average. That correction assumes balanced
+classes and backfires on skewed targets, and a class prior estimated from 50 labelled examples makes it safe. The
+ranking collapses in only one pair. Two interventions---changing only the script of identical comments, and retraining
+on the target's definition of offensiveness---trace that collapse to a mismatch of label definitions rather than to
+unfamiliar language. We turn these findings into a triage procedure that detects shift without labels and, with about
+50 target labels, chooses between recalibrating, switching to an LLM and abstaining, with finite-sample guarantees on
+coverage and missed detections.
