@@ -92,11 +92,18 @@ def stress(prior: str, method: str, metric: str) -> float:
     return float(p[metric].mean())
 
 
-def stress_share_nll_below_source(prior: str, method: str) -> float:
+def stress_share_worse(prior: str, method: str, metric: str, sources=("offensive", "offensive_olid")) -> float:
     p = table("prior_shift_stress_per_run")
-    p = p[p.source_task.isin(["offensive", "offensive_olid"]) & (p.prior == prior)]
-    w = p.pivot_table(index=["source_task", "run_id", "condition"], columns="method", values="nll")
-    return float((w[method] < w["source_ts"]).mean())
+    p = p[p.source_task.isin(sources) & (p.prior == prior)]
+    w = p.pivot_table(index=["source_task", "run_id", "condition"], columns="method", values=metric)
+    worse = w[method] > w["source_ts"] if metric == "nll" else w[method] < w["source_ts"]
+    return float(worse.mean())
+
+
+def stress_sentiment(prior: str, method: str, metric: str, sources=("sentiment", "sentiment_hinglish")) -> float:
+    p = table("prior_shift_stress_per_run")
+    p = p[p.source_task.isin(sources) & (p.prior == prior) & (p.method == method)]
+    return float(p[metric].mean())
 
 
 def validation(outcome: str, fit: str, test: str, column: str) -> float:
@@ -268,7 +275,7 @@ def label_mass_minimum() -> float:
 R0_PAIRS = [("offensive", "shift_d1_barishal_test"), ("offensive", "shift_d1_noakhali_test"),
             ("sentiment", "shift_d1_test")]
 TV_PAIRS = [("offensive", "shift_d4_banglish_test"), ("offensive", "shift_d4_banglish_bangla_script_test"),
-            ("sentiment", "shift_d2_test")]
+            ("sentiment", "shift_d2_test"), ("offensive_olid", "shift_d5_mixtox_test")]
 
 
 def r0_max_gain() -> float:
@@ -362,7 +369,7 @@ claim("introduction", "In 12 of 21 source--target pairs", len(cells("R2")), n_sh
 claim("introduction", "fitting the temperature on 50 target labels lowers the log-loss but leaves macro-F1 at 0.527; a "
       "label-free bias correction raises it to 0.620", st.N_LABELS, ablation("R2", "shrinkage_ts", "macro_f1"),
       ablation("R2", "batch_calibration", "macro_f1"))
-claim("introduction", "a class prior estimated from 50 labels removes the problem", st.N_LABELS)
+claim("introduction", "a class prior estimated from 50 labels repairs it on average", st.N_LABELS)
 claim("introduction", "moves encoder AUROC by up to 0.225",
       max(script(f) for f in table("script_intervention_summary").query("kind == 'encoder' and item_set == 'full'").family))
 claim("introduction", "$+0.378$, $p_{\\mathrm{Holm}} < 0.001$", cross_def("did_offmix3l_minus_chaos_banglish", "estimate"),
@@ -431,11 +438,20 @@ claim("results", "Twelve of the 21 pairs", n_shifted_pairs())
 claim("results", "(retention 0.70--0.98; target TS beats the constant predictor in 88--100\\% of runs) while their "
       "predicted marginal moves by 0.10--0.46", _r2.auroc_retention.min(), _r2.auroc_retention.max(),
       _r2_above.min() * 100, _r2_above.max() * 100, _r2.predicted_marginal_tv.min(), _r2.predicted_marginal_tv.max())
-claim("results", "a total variation of 0.007--0.021, while the predicted ones move by 0.227--0.404",
+claim("results", "total variation of 0.007--0.021, while the predicted ones move by 0.209--0.404",
       min(rmap(s, c, "label_prior_tv") for s, c in TV_PAIRS), max(rmap(s, c, "label_prior_tv") for s, c in TV_PAIRS),
       min(rmap(s, c, "predicted_marginal_tv") for s, c in TV_PAIRS),
       max(rmap(s, c, "predicted_marginal_tv") for s, c in TV_PAIRS))
-claim("results", "In every one of the 12 pairs a bias correction raises macro-F1 in 98--100\\% of runs",
+_r2_map = table("source_transfer_regime_map").query("condition != 'test'").copy()
+_r2_map = _r2_map[[regime(a, b) == "R2" for a, b in zip(_r2_map.source_task, _r2_map.condition)]]
+_r2_other = _r2_map[_r2_map.label_prior_tv > 0.03]
+assert len(_r2_map) == 12 and len(_r2_other) == 8 and _r2_map.label_prior_tv.lt(0.03).sum() == len(TV_PAIRS)
+_r2_less = _r2_other[_r2_other.predicted_marginal_tv < _r2_other.label_prior_tv]
+assert list(zip(_r2_less.source_task, _r2_less.condition)) == [("offensive_olid", "shift_d4_banglish_bangla_script_test")]
+claim("results", "moves too (0.128--0.200;", _r2_other.label_prior_tv.min(), _r2_other.label_prior_tv.max())
+claim("results", "(OLID models on Bangla-script Chaos, 0.101 against 0.170)",
+      float(_r2_less.predicted_marginal_tv.iloc[0]), float(_r2_less.label_prior_tv.iloc[0]))
+claim("results", "every one of the 12 pairs a bias correction raises macro-F1 in 98--100\\% of runs",
       len(cells("R2")), share_by_cell({"R2"}, batch_up).min() * 100, share_by_cell({"R2"}, batch_up).max() * 100)
 claim("results", "keeps AUROC 0.609 (SentNoB models) and 0.648 (Hinglish models)", rmap("sentiment",
       "shift_d7_spanglish_test", "auroc"), rmap("sentiment_hinglish", "shift_spanglish_test", "auroc"))
@@ -475,11 +491,21 @@ claim("results", "At $\\pi_+ = 0.5$ batch calibration comes close to MAP BCTS (m
 claim("results", "macro-F1 drops to 0.631 from 0.654 with source TS, NLL rises from 0.31 to 0.56",
       stress("pos0.1", "batch_calibration", "macro_f1"), stress("pos0.1", "source_ts", "macro_f1"),
       stress("pos0.1", "source_ts", "nll"), stress("pos0.1", "batch_calibration", "nll"))
-claim("results", "estimated from 50 labels repairs it (0.661 and 0.27)", st.N_LABELS,
+assert all(stress(q, "batch_calibration", "macro_f1") > stress(q, "source_ts", "macro_f1")
+           and stress(q, "batch_calibration", "nll") < stress(q, "source_ts", "nll")
+           for q in ("pos0.3", "pos0.7", "pos0.9"))
+claim("results", "at $\\pi_+ = 0.3$, 0.7 and 0.9 it still beats source TS", 0.3, 0.7, 0.9)
+claim("results", "estimated from 50 labels repairs the rare-positive case on average (0.661 and 0.27)", st.N_LABELS,
       stress("pos0.1", "prior_batch_labels", "macro_f1"), stress("pos0.1", "prior_batch_labels", "nll"))
-claim("results", "MAP BCTS does as well (0.665 and 0.25). At $\\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against "
-      "0.482 for the uniform one and 0.572 for MAP BCTS", stress("pos0.1", "map_bcts", "macro_f1"),
-      stress("pos0.1", "map_bcts", "nll"), 0.9, stress("pos0.9", "prior_batch_labels", "macro_f1"),
+claim("results", "stay worse than source TS in 30\\% and 46\\% of units on macro-F1 and in 27\\% and 24\\% on NLL",
+      100 * stress_share_worse("pos0.1", "prior_batch_labels", "macro_f1"),
+      100 * stress_share_worse("pos0.1", "map_bcts", "macro_f1"),
+      100 * stress_share_worse("pos0.1", "prior_batch_labels", "nll"),
+      100 * stress_share_worse("pos0.1", "map_bcts", "nll"))
+claim("results", "MAP BCTS does as well (0.665 and 0.25)", stress("pos0.1", "map_bcts", "macro_f1"),
+      stress("pos0.1", "map_bcts", "nll"))
+claim("results", "At $\\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for "
+      "MAP BCTS", 0.9, stress("pos0.9", "prior_batch_labels", "macro_f1"),
       stress("pos0.9", "batch_calibration", "macro_f1"), stress("pos0.9", "map_bcts", "macro_f1"))
 claim("results", "with AUROC 0.845 and balanced accuracy 0.796, but almost all",
       validation("needs_bias_correction", "bangla", "olid+hinglish", "auroc"),
@@ -627,8 +653,8 @@ claim("shift_triage", "macro-F1 is 0.723 with 50 labels and 0.728 with 400", str
 claim("shift_triage", "about 50 labels suffice to choose a system", 50)
 
 # Related work, discussion.
-claim("related_work", "and that 50 labels make it safe", 50)
-claim("discussion", "otherwise about 50 labels suffice", 50)
+claim("related_work", "a prior from 50 labels repairs it on average", 50)
+claim("discussion", "otherwise use about 50 labels", 50)
 claim("discussion", "the same 50 labels test the ranking", 50)
 claim("discussion", "certificate needs 19 labelled positives", positives_needed(2))
 claim("discussion", "The 12 threshold-shift pairs rest on seven corpora", len(cells("R2")))
@@ -787,6 +813,25 @@ claim("appendix", "0.433 and 1.24 for offensive language and 1.55 and 0.063 for 
       _pv.prior_variance_bcts_log_t["sentiment"], _pv.prior_variance_bcts_bias["sentiment"])
 
 # Appendix: additional results.
+_sentiment_skews = ["class0_0.6", "class0_0.8", "class1_0.6", "class1_0.8", "class2_0.6", "class2_0.8"]
+assert all(stress_sentiment(q, "batch_calibration", "macro_f1") > stress_sentiment(q, "source_ts", "macro_f1")
+           for q in _sentiment_skews + ["uniform"])
+assert all(stress_sentiment(q, "prior_batch_labels", "nll") < stress_sentiment(q, "batch_calibration", "nll")
+           for q in _sentiment_skews)
+assert all(stress_sentiment(q, "batch_calibration", "nll") < stress_sentiment(q, "source_ts", "nll")
+           for q in _sentiment_skews if not q.startswith("class1"))
+claim("appendix", "to one class at a share of 0.6 or 0.8", 0.6, 0.8)
+claim("appendix", "for one source at a share of 0.8 (SentNoB, positive class, 0.439 against 0.443; Hinglish, neutral class, "
+      "0.425 against 0.457)", 0.8, stress_sentiment("class1_0.8", "batch_calibration", "macro_f1", ("sentiment",)),
+      stress_sentiment("class1_0.8", "source_ts", "macro_f1", ("sentiment",)),
+      stress_sentiment("class0_0.8", "batch_calibration", "macro_f1", ("sentiment_hinglish",)),
+      stress_sentiment("class0_0.8", "source_ts", "macro_f1", ("sentiment_hinglish",)))
+claim("appendix", "(0.956 against 0.942 at 0.6 and 1.026 against 0.818 at 0.8)",
+      stress_sentiment("class1_0.6", "batch_calibration", "nll"), stress_sentiment("class1_0.6", "source_ts", "nll"), 0.6,
+      stress_sentiment("class1_0.8", "batch_calibration", "nll"), stress_sentiment("class1_0.8", "source_ts", "nll"), 0.8)
+claim("appendix", "A prior from 50 labels has lower NLL", 50)
+claim("appendix", "with the positive class at 0.8 it is below source TS in 52\\% of the run--target units", 0.8,
+      100 * stress_share_worse("class1_0.8", "prior_batch_labels", "macro_f1", ("sentiment", "sentiment_hinglish")))
 _ls_all = _obj_ts[(_obj_ts.contrast == "label_smoothing - cross_entropy") & (_obj_ts.task == "offensive")
                   & (_obj_ts.condition != "test")]
 claim("appendix", "rank OffMix-3L at 0.477 (BanglaBERT-large) and 0.504 (XLM-R-large); of 40 scale contrasts",

@@ -79,7 +79,7 @@ def regime_map():
     r = pd.read_csv(TABLES / "source_transfer_regime_map.csv")
     r = r[r.condition != "test"]
     order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
-    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.7), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.2), sharex=True, sharey=True)
     for ax, src in zip(axes.flat, order):
         d = r[r.source_task == src]
         collapsed = d.at_upper_bound >= 0.5
@@ -123,7 +123,7 @@ def encoder_llm_auroc():
                       "shift_d2_test"],
         "sentiment": ["test", "shift_d1_test", "shift_d6_hinglish_test", "shift_d2_test", "shift_d7_spanglish_test"],
     }
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.4),
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0),
                              gridspec_kw={"width_ratios": [len(conditions["offensive"]), len(conditions["sentiment"])]})
     for ax, (task, conds) in zip(axes, conditions.items()):
         x = np.arange(len(conds))

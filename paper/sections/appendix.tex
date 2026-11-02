@@ -208,6 +208,18 @@ single targets by $-0.041$ to $+0.048$.
 
 \input{../thesis/tables/triage_prevalence_stress}
 
+\subsection{Class-prior shift on the sentiment sources}
+\label{sec:appendix-prior-sentiment}
+Table~\ref{tab:prior-shift-sentiment} repeats the stress test of Section~\ref{sec:results-threshold} on the two
+three-class sources, with every target resampled to uniform classes or to one class at a share of 0.6 or 0.8. Pooled
+over the two sources, uniform batch calibration never falls below source TS in mean macro-F1, although it does for one
+source at a share of 0.8 (SentNoB, positive class, 0.439 against 0.443; Hinglish, neutral class, 0.425 against 0.457). It
+raises NLL when the positive class dominates (0.956 against 0.942 at 0.6 and 1.026 against 0.818 at 0.8). A prior from 50
+labels has lower NLL than uniform batch calibration on every skewed prior, but its macro-F1 is less reliable: with the
+positive class at 0.8 it is below source TS in 52\% of the run--target units.
+
+\input{../thesis/tables/prior_shift_sentiment}
+
 \subsection{Spending labels}
 \label{sec:appendix-few-label}
 Figure~\ref{fig:few-label} compares the ways of spending target labels.

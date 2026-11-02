@@ -25,11 +25,12 @@ threshold shift), or its ranking can collapse.
   \item \textbf{Shift falls into a few regimes, and the common one is a threshold shift}
   (Section~\ref{sec:results-regimes}). Two of three Bangla dialects and Sylheti need no correction, and pure
   temperature shifts are rare. In 12 of 21 source--target pairs, from all four source tasks, the ranking survives
-  while the predicted class proportions move far more than the true ones. The ranking collapses in one pair.
+  while the predicted class proportions move; in four of them the true proportions barely move, in the other eight a
+  real change of the class prior is part of the shift. The ranking collapses in one pair.
   \item \textbf{Temperature is the wrong knob} (Section~\ref{sec:results-threshold}). Under a threshold shift, fitting
   the temperature on 50 target labels lowers the log-loss but leaves macro-F1 at 0.527; a label-free bias correction
-  raises it to 0.620. The label-free correction assumes balanced classes and is harmful on skewed targets, which is the
-  normal case in content moderation; a class prior estimated from 50 labels removes the problem.
+  raises it to 0.620. The label-free correction assumes balanced classes and is harmful when positives are rare, the normal
+  case in content moderation; a class prior estimated from 50 labels repairs it on average, not in every run.
   \item \textbf{The one collapse points to a mismatch of label definitions} (Section~\ref{sec:results-causes}). Changing
   only the script of identical comments moves encoder AUROC by up to 0.225, but retraining the same architectures on a
   source that shares the target's labels restores the collapsed ranking (pre-specified difference-in-differences

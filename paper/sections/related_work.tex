@@ -18,11 +18,11 @@ Prior adjustment by EM \citep{saerens2002adjusting}, black-box and related shift
 bias-corrected calibration \citep{alexandari2020maximum} address a change of the class prior with fixed class-conditional
 distributions, and posterior recalibration interpolates towards a target prior \citep{tian2020posterior}. For prompted
 LLMs, contextual calibration \citep{zhao2021calibrate} and batch calibration \citep{zhou2024batch} estimate a bias
-without labels. Our targets violate the label-shift assumption: the predicted proportions move while the true ones
-barely do, and EM prior estimation lowers macro-F1 on every code-mixed and cross-language target
+without labels. Our targets violate the label-shift assumption: in four threshold-shift pairs the predicted proportions move while
+the true ones barely do, and EM prior estimation lowers macro-F1 on every code-mixed and cross-language target
 (Appendix~\ref{sec:appendix-recalibration}). We find that a
-bias correction is nevertheless the right repair, that its label-free form is safe only near a balanced target, and that
-50 labels make it safe in general.
+bias correction is nevertheless the right repair, that its label-free form backfires when positives are rare, and that
+a prior from 50 labels repairs it on average.
 
 \paragraph{Conformal prediction and risk control.}
 Split conformal prediction and conformal risk control give finite-sample guarantees under exchangeability

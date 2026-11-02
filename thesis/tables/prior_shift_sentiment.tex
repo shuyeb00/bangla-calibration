@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Batch calibration under class-prior shift on the sentiment source tasks (SentNoB and SentiMix Hinglish; every target resampled to the stated class prior, with the other two classes sharing the rest; means over runs, targets and 5 resamples; macro-F1 / NLL). Batch + 50 labels uses a prior estimated from 50 labels, batch + true prior is the reference.}
+\label{tab:prior-shift-sentiment}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Target prior & Source TS & Batch (uniform) & Batch + 50 labels & Batch + true prior & MAP BCTS \\
+\midrule
+Uniform & 0.446 / 1.10 & 0.516 / 0.97 & 0.504 / 0.98 & 0.516 / 0.97 & 0.478 / 0.98 \\
+Neutral 0.6 & 0.419 / 1.11 & 0.475 / 1.01 & 0.463 / 0.87 & 0.465 / 0.86 & 0.472 / 0.94 \\
+Neutral 0.8 & 0.359 / 1.12 & 0.385 / 1.07 & 0.394 / 0.59 & 0.388 / 0.58 & 0.435 / 0.80 \\
+Positive 0.6 & 0.451 / 0.94 & 0.504 / 0.96 & 0.480 / 0.83 & 0.477 / 0.82 & 0.467 / 0.86 \\
+Positive 0.8 & 0.424 / 0.82 & 0.435 / 1.03 & 0.428 / 0.58 & 0.421 / 0.56 & 0.438 / 0.65 \\
+Negative 0.6 & 0.404 / 1.23 & 0.456 / 1.06 & 0.486 / 0.86 & 0.490 / 0.84 & 0.456 / 0.89 \\
+Negative 0.8 & 0.334 / 1.33 & 0.357 / 1.20 & 0.442 / 0.62 & 0.436 / 0.59 & 0.404 / 0.71 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

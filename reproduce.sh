@@ -2,10 +2,15 @@
 # Regenerates every table, figure and the manuscript of the max_length-512 study from saved outputs.
 # Stage "outputs" needs the run and LLM outputs in results/grid_max_length_512/ (python -m src.fetch_run_outputs and
 # python -m src.llm_evaluation --download-only); stage "tables" needs only the committed tables.
-# Usage: bash reproduce.sh [outputs|tables|all]   (PYTHON defaults to ./venv/Scripts/python or ./venv/bin/python)
+# Usage: bash reproduce.sh [outputs|tables|all]   (PYTHON defaults to ./venv if it exists, else python on the PATH)
 set -euo pipefail
 cd "$(dirname "$0")"
-PYTHON="${PYTHON:-$( [ -x ./venv/Scripts/python ] && echo ./venv/Scripts/python || echo ./venv/bin/python )}"
+if [ -z "${PYTHON:-}" ]; then
+  for candidate in ./venv/Scripts/python ./venv/bin/python "$(command -v python || true)" "$(command -v python3 || true)"; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then PYTHON="$candidate"; break; fi
+  done
+fi
+: "${PYTHON:?no Python interpreter found; set PYTHON or create ./venv}"
 export EVALUATION_GRID=max_length_512
 STAGE="${1:-all}"
 run() { echo "== python -m src.$*"; "$PYTHON" -m "src.$1" "${@:2}"; }

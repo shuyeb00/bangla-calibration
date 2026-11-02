@@ -35,9 +35,12 @@ Twelve of the 21 pairs, from all four source tasks, keep a usable ranking (reten
 constant predictor in 88--100\% of runs) while their predicted marginal moves by 0.10--0.46. They are natural Banglish,
 Bangla-script code-mixing, MixTox-SA and English OLID for the BD-SHS models; OffMix-3L, both versions of Code-mixed Chaos
 and MixTox-SA for the OLID models; SentMix-3L and Hinglish for the SentNoB models; and SentMix-3L and SentNoB for the
-Hinglish models. The movement is not a change of the class prior: on Banglish, Bangla-script Chaos and SentMix-3L the
-true class proportions differ from the source by a total variation of 0.007--0.021, while the predicted ones move by
-0.227--0.404. In every one of the 12 pairs a bias correction raises macro-F1 in 98--100\% of runs
+Hinglish models. In four of them the movement is not a change of the class prior: on both versions of Chaos (BD-SHS
+models), SentMix-3L (SentNoB models) and MixTox-SA (OLID models) the true class proportions differ from the source by a
+total variation of 0.007--0.021, while the predicted ones move by 0.209--0.404. In the other eight the true prior moves
+too (0.128--0.200; Table~\ref{tab:regime-map-source-transfer}), so a real prior change is part of their threshold shift;
+the predicted marginal moves more in all but one (OLID models on Bangla-script Chaos, 0.101 against 0.170). In
+every one of the 12 pairs a bias correction raises macro-F1 in 98--100\% of runs
 (Section~\ref{sec:results-threshold}): the decision threshold is in the wrong place.
 
 \paragraph{Weak ranking and collapse.}
@@ -80,10 +83,12 @@ Batch calibration pulls the predicted class proportions towards uniform, so it a
 resampled every target of the two offensive source tasks to a fixed positive share $\pi_+$
 (Table~\ref{tab:prior-shift-ablation}). At $\pi_+ = 0.5$ batch calibration comes close to MAP BCTS (macro-F1 0.699
 against 0.709). At $\pi_+ = 0.1$, the typical situation in content moderation, it is harmful: macro-F1 drops to 0.631
-from 0.654 with source TS, NLL rises from 0.31 to 0.56, and it lowers NLL in none of the run--target units. A class prior
-estimated from 50 labels repairs it (0.661 and 0.27) and performs like the true prior; MAP BCTS does as well (0.665 and
-0.25). At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for MAP
-BCTS.
+from 0.654 with source TS, NLL rises from 0.31 to 0.56, and it lowers NLL in none of the run--target units; at
+$\pi_+ = 0.3$, 0.7 and 0.9 it still beats source TS on both metrics. A class prior estimated from 50 labels repairs the
+rare-positive case on average (0.661 and 0.27), like the true prior, and MAP BCTS does as well (0.665 and 0.25), but
+they stay worse than source TS in 30\% and 46\% of units on macro-F1 and in 27\% and 24\% on NLL. At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for MAP
+BCTS. On the three-class sentiment sources uniform batch calibration keeps mean macro-F1 above source TS but raises NLL
+when the positive class dominates (Appendix~\ref{sec:appendix-prior-sentiment}).
 
 \input{../thesis/tables/prior_shift_ablation}
 

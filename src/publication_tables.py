@@ -7,6 +7,7 @@ Tables (thesis/tables/):
   shift_triage_policies.tex          deployment policies at n target labels, original and held-out natural conditions
   correction_ablation_by_regime.tex  which component of the correction matters per regime (temperature, bias, labels)
   prior_shift_ablation.tex           batch calibration vs a labelled prior estimate vs MAP BCTS under class-prior shift
+  prior_shift_sentiment.tex          the same stress test on the three-class sentiment source tasks
   training_objectives.tex            label smoothing and focal loss vs cross-entropy, before and after temperature scaling
 
     python -m src.publication_tables
@@ -99,20 +100,21 @@ def regime_map_table() -> str:
             ratio = num(x.oracle_log_ratio, 2, signed=True) + (r"$^{\dagger}$" if x.at_upper_bound >= 0.5 else "")
             rows.append([tex(SOURCE_SHORT[src]) if k == 0 else "", tex(condition_name(src, x.condition)),
                          num(x.auroc), num(x.auroc_retention, 2), ratio, num(x.predicted_marginal_tv, 2),
-                         num(x.explained_label_entropy, 2), num(x.source_ts_macro_f1),
+                         num(x.label_prior_tv, 2), num(x.explained_label_entropy, 2), num(x.source_ts_macro_f1),
                          num(x.batch_calibration_macro_f1_gain, 3, True), num(x.map_bcts_macro_f1_gain, 3, True),
                          METHOD_NAMES.get(x.best_macro_f1_method, "--"), METHOD_NAMES.get(x.best_nll_method, "--")])
-    header = ["Source", "Target", "AUROC", "Ret.", r"$\log T^{*}_t/T_s$", "TV", "Expl.", "F1", r"$\Delta$F1 batch",
+    header = ["Source", "Target", "AUROC", "Ret.", r"$\log T^{*}_t/T_s$", "TV", r"TV$_{\pi}$", "Expl.", "F1", r"$\Delta$F1 batch",
               r"$\Delta$F1 BCTS", "Best F1", "Best NLL"]
     caption = (r"Shift regimes across four source tasks (means over converged cross-entropy runs, each after its own "
                r"source temperature scaling). Ret.: target AUROC divided by in-domain AUROC; $\log T^{*}_t/T_s$: oracle "
                r"temperature ratio from all target calibration labels ($^{\dagger}$ fit at the upper bound in most "
-               r"runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; Expl.: share of "
+               r"runs, i.e.\ unbounded); TV: total-variation shift of the predicted-label marginal; TV$_{\pi}$: total "
+               r"variation between the target and source class priors, which needs target labels; Expl.: share of "
                r"target label entropy explained by target-TS probabilities ($\le 0$: no better than a constant); F1: "
                r"macro-F1 after source TS; $\Delta$F1: change from label-free batch calibration on the unlabeled "
                r"target calibration split and from MAP bias-corrected TS with 50 target labels (20 resamples). Best: method "
                r"with the best mean macro-F1 / NLL; differences below 0.005 are practically ties.")
-    return tabular("llrrrrrrrrll", header, rows, caption, "tab:regime-map-source-transfer", r"\scriptsize", groups, "table*", "3pt", True)
+    return tabular("llrrrrrrrrrll", header, rows, caption, "tab:regime-map-source-transfer", r"\scriptsize", groups, "table*", "3pt", True)
 
 
 def cross_definition_table() -> str:
@@ -234,6 +236,26 @@ def prior_shift_ablation_table() -> str:
     return tabular("lccccc", header, rows, caption, "tab:prior-shift-ablation", r"\small", fit_width=True)
 
 
+def prior_shift_sentiment_table() -> str:
+    p = pd.read_csv(TABLES / "prior_shift_stress_per_run.csv")
+    p = p[p.source_task.isin(["sentiment", "sentiment_hinglish"])]
+    methods = ["source_ts", "batch_calibration", "prior_batch_labels", "prior_batch_oracle", "map_bcts"]
+    priors = [("uniform", "Uniform"), ("class0_0.6", "Neutral 0.6"), ("class0_0.8", "Neutral 0.8"),
+              ("class1_0.6", "Positive 0.6"), ("class1_0.8", "Positive 0.8"), ("class2_0.6", "Negative 0.6"),
+              ("class2_0.8", "Negative 0.8")]
+    rows = []
+    for q, name in priors:
+        d = p[p.prior == q]
+        rows.append([name] + [num(d[d.method == m].macro_f1.mean()) + " / " + num(d[d.method == m].nll.mean(), 2)
+                              for m in methods])
+    header = ["Target prior", "Source TS", "Batch (uniform)", "Batch + 50 labels", "Batch + true prior", "MAP BCTS"]
+    caption = (r"Batch calibration under class-prior shift on the sentiment source tasks (SentNoB and SentiMix Hinglish; "
+               r"every target resampled to the stated class prior, with the other two classes sharing the rest; means "
+               r"over runs, targets and 5 resamples; macro-F1 / NLL). Batch + 50 labels uses a prior estimated from 50 "
+               r"labels, batch + true prior is the reference.")
+    return tabular("lccccc", header, rows, caption, "tab:prior-shift-sentiment", r"\small", fit_width=True)
+
+
 def training_objectives_table() -> str:
     c = pd.read_csv(TABLES / "contrast_statistics.csv")
     c = c[c.family == "objectives"]
@@ -263,7 +285,8 @@ def training_objectives_table() -> str:
 TABLE_BUILDERS = {"triage_prevalence_stress": triage_prevalence_table, "regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
                   "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
                   "correction_ablation_by_regime": correction_ablation_table,
-                  "prior_shift_ablation": prior_shift_ablation_table, "training_objectives": training_objectives_table}
+                  "prior_shift_ablation": prior_shift_ablation_table, "prior_shift_sentiment": prior_shift_sentiment_table,
+                  "training_objectives": training_objectives_table}
 
 
 def main():
