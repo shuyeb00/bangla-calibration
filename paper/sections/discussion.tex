@@ -3,8 +3,8 @@
 
 \paragraph{What to do in practice.}
 Detect shift with a domain classifier, not with the model's confidence. After a detected shift, correct the class bias
-rather than only the temperature. Without labels, batch calibration is appropriate only if the target classes are
-believed to be roughly balanced; otherwise use about 50 labels to estimate the prior or to fit MAP BCTS. On a
+rather than only the temperature. Without labels, batch calibration should not be used if positives may be rare; then
+use about 50 labels to estimate the prior or to fit MAP BCTS. On a
 near-balanced target the same 50 labels test a strong ranking, choose between the fine-tuned encoder and an LLM, and certify
 coverage and the false-negative rate; on a skewed target they still choose the system and correct the threshold, but
 the false-negative certificate needs 19 labelled positives, hence hundreds of random labels. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.

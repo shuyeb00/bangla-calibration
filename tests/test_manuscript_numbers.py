@@ -504,6 +504,8 @@ assert all(stress(q, "batch_calibration", "macro_f1") > stress(q, "source_ts", "
            and stress(q, "batch_calibration", "nll") < stress(q, "source_ts", "nll")
            for q in ("pos0.3", "pos0.7", "pos0.9"))
 claim("results", "at $\\pi_+ = 0.3$, 0.7 and 0.9 it still beats source TS", 0.3, 0.7, 0.9)
+assert all(stress(q, "map_bcts", "macro_f1") > stress(q, "batch_calibration", "macro_f1") for q in ("pos0.1", "pos0.9"))
+claim("results", "MAP BCTS overtakes it at $\\pi_+ = 0.1$ and 0.9", 0.1, 0.9)
 claim("results", "estimated from 50 labels repairs the rare-positive case on average (0.661 and 0.27)", st.N_LABELS,
       stress("pos0.1", "prior_batch_labels", "macro_f1"), stress("pos0.1", "prior_batch_labels", "nll"))
 claim("results", "stay worse than source TS in 30\\% and 46\\% of units on macro-F1 and in 27\\% and 24\\% on NLL",
@@ -667,7 +669,7 @@ claim("shift_triage", "about 50 labels suffice to choose a system", 50)
 
 # Related work, discussion.
 claim("related_work", "a prior from 50 labels repairs it on average", 50)
-claim("discussion", "otherwise use about 50 labels", 50)
+claim("discussion", "use about 50 labels to estimate the prior", 50)
 claim("discussion", "the same 50 labels test a strong ranking", 50)
 claim("discussion", "certificate needs 19 labelled positives", positives_needed(2))
 claim("discussion", "The 12 threshold-shift pairs rest on seven corpora", len(cells("R2")))
@@ -756,7 +758,7 @@ claim("appendix", "(5117 toxic, 5117 non-toxic)", None, None)
 claim("appendix", "which gives the toxic share of 0.342", _mixtox_share)
 claim("appendix", "agreed on 1106 of 1734 items (raw agreement 63.7\\% as reported by its authors), only those were kept, and "
       "a second round left 1001 items", None, None, None, None)
-claim("appendix", "exact duplicates leaves 1000", sum(SIZE("offensive", "shift_d2_test")))
+claim("appendix", "empty texts and exact duplicates, leaves 1000", sum(SIZE("offensive", "shift_d2_test")))
 claim("appendix", "Of the BIDWESH test items, 8.6\\% are translations of BD-SHS training sentences; removing them changes "
       "macro-F1 by at most 0.0053 and AUROC by at most 0.0033", 100 * bidwesh_overlap_share(),
       Bound("atmost", subset_max("bidwesh_source_not_in_train", "macro_f1_difference_max_abs")),
@@ -876,6 +878,17 @@ claim("appendix", "for one source at a share of 0.8 (SentNoB, positive class, 0.
 claim("appendix", "(0.956 against 0.942 at 0.6 and 1.026 against 0.818 at 0.8)",
       stress_sentiment("class1_0.6", "batch_calibration", "nll"), stress_sentiment("class1_0.6", "source_ts", "nll"), 0.6,
       stress_sentiment("class1_0.8", "batch_calibration", "nll"), stress_sentiment("class1_0.8", "source_ts", "nll"), 0.8)
+_sn, _hg = ("sentiment",), ("sentiment_hinglish",)
+assert all(stress_sentiment(q, "batch_calibration", "nll", _sn) > stress_sentiment(q, "source_ts", "nll", _sn)
+           for q in ("class1_0.6", "class1_0.8"))
+assert all(stress_sentiment(q, "batch_calibration", "nll", _hg) < stress_sentiment(q, "source_ts", "nll", _hg)
+           for q in ("class1_0.6", "class1_0.8"))
+claim("appendix", "the SentNoB models, 50 of the 65 runs, whereas the Hinglish models show the rise when the neutral class "
+      "dominates (0.989 against 0.923 at 0.6 and 1.041 against 0.763 at 0.8)", n_runs("sentiment"),
+      n_runs("sentiment") + n_runs("sentiment_hinglish"), stress_sentiment("class0_0.6", "batch_calibration", "nll", _hg),
+      stress_sentiment("class0_0.6", "source_ts", "nll", _hg), 0.6,
+      stress_sentiment("class0_0.8", "batch_calibration", "nll", _hg), stress_sentiment("class0_0.8", "source_ts", "nll", _hg),
+      0.8)
 claim("appendix", "A prior from 50 labels has lower NLL", 50)
 claim("appendix", "with up to 100 labels, routing to a surviving ranking", 100)
 claim("appendix", "with the positive class at 0.8 it is below source TS in 52\\% of the run--target units", 0.8,

@@ -118,8 +118,8 @@ targets are not independent. Code-mixed Chaos is balanced (5{,}117 toxic, 5{,}11
 from a public emotion corpus, so its label is partly tied to the source corpus. MixTox-SA has three classes; we count
 neutral as non-toxic, which gives the toxic share of 0.342. OffMix-3L was written by ten undergraduate students;
 three annotators agreed on 1{,}106 of 1{,}734 items (raw agreement 63.7\% as reported by its authors), only those were
-kept, and a second round left 1{,}001 items, so it contains unusually clear-cut items; our removal of exact duplicates
-leaves 1{,}000.
+kept, and a second round left 1{,}001 items, so it contains unusually clear-cut items; our preprocessing, which drops
+empty texts and exact duplicates, leaves 1{,}000.
 
 \paragraph{The Sylheti test set.}
 We drew 760 items uniformly at random from the SentNoB test split; two of the authors, both native Sylheti speakers,
@@ -247,8 +247,10 @@ sentiment.
 Table~\ref{tab:prior-shift-sentiment} repeats the stress test of Section~\ref{sec:results-threshold} on the two
 three-class sources, with every target resampled to uniform classes or to one class at a share of 0.6 or 0.8. Pooled
 over the two sources, uniform batch calibration never falls below source TS in mean macro-F1, although it does for one
-source at a share of 0.8 (SentNoB, positive class, 0.439 against 0.443; Hinglish, neutral class, 0.425 against 0.457). It
-raises NLL when the positive class dominates (0.956 against 0.942 at 0.6 and 1.026 against 0.818 at 0.8). A prior from 50
+source at a share of 0.8 (SentNoB, positive class, 0.439 against 0.443; Hinglish, neutral class, 0.425 against 0.457). Pooled, it
+raises NLL when the positive class dominates (0.956 against 0.942 at 0.6 and 1.026 against 0.818 at 0.8); this comes from
+the SentNoB models, 50 of the 65 runs, whereas the Hinglish models show the rise when the neutral class dominates (0.989
+against 0.923 at 0.6 and 1.041 against 0.763 at 0.8). A prior from 50
 labels has lower NLL than uniform batch calibration on every skewed prior, but its macro-F1 is less reliable: with the
 positive class at 0.8 it is below source TS in 52\% of the run--target units.
 
@@ -330,7 +332,7 @@ worse under the guided prompt than under the general one, yet ranks OffMix-3L as
 Qwen3-4B on OffMix-3L (0.025) and SentMix-3L (0.027) equal its gain on our unpublished Sylheti set (0.027), so they
 reflect the prompt rather than membership. The largest effects above the Sylheti control are Qwen3-8B on SentMix-3L and
 Banglish Chaos (ROUGE-L differences 0.012 and 0.014) and, on the collapse target itself, Qwen3.5-9B on OffMix-3L (0.012,
-$p < 0.001$, against $-0.006$ on Sylheti, with touching intervals). They are small and contain no verbatim recall, so they
+$p < 0.001$, against $-0.006$ on Sylheti, with touching intervals). They are small and contain no near-verbatim recall, so they
 do not show memorisation of items, but they do not exclude exposure to these sets.
 
 \subsection{Prompt definitions}

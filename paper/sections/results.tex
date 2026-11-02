@@ -65,8 +65,8 @@ threshold-shift regime, shrinkage TS with 50 target labels lowers NLL from 0.892
 0.527, as it must. Label-free batch calibration, which shifts only the class bias, raises macro-F1 to 0.620; MAP BCTS
 with 50 labels, which adjusts both, reaches 0.594 and the lowest NLL (0.684). These means weight pairs by their number
 of runs; weighting every pair or every source equally gives 0.526 to 0.630 and 0.506 to 0.610. Batch calibration's lead in macro-F1 is
-partly a property of the metric, which rewards balanced predictions on these near-balanced targets; it reverses on
-skewed targets (Table~\ref{tab:prior-shift-ablation}). The bias must come from the target: vector and matrix scaling have
+partly a property of the metric, which rewards balanced predictions on these near-balanced targets; MAP BCTS overtakes it
+at $\pi_+ = 0.1$ and 0.9 (Table~\ref{tab:prior-shift-ablation}). The bias must come from the target: vector and matrix scaling have
 one, but fitted on the source split they change macro-F1 by $-0.010$ to $+0.014$ against source TS for the base encoders on Banglish, Bangla-script Chaos,
 MixTox-SA, SentMix-3L and Hinglish (Appendix~\ref{sec:appendix-recalibration}). The temperature is not merely
 insufficient but the wrong axis: in 8 of the 12 pairs label-free batch calibration has lower NLL than the oracle temperature
@@ -88,8 +88,8 @@ from 0.654 with source TS, NLL rises from 0.31 to 0.56, and it lowers NLL in non
 $\pi_+ = 0.3$, 0.7 and 0.9 it still beats source TS on both metrics. A class prior estimated from 50 labels repairs the
 rare-positive case on average (0.661 and 0.27), like the true prior, and MAP BCTS does as well (0.665 and 0.25), but
 they stay worse than source TS in 30\% and 46\% of units on macro-F1 and in 27\% and 24\% on NLL. At $\pi_+ = 0.9$ the prior-aware variant reaches 0.615, against 0.482 for the uniform one and 0.572 for MAP
-BCTS. The three-class sentiment arm is in Appendix~\ref{sec:appendix-prior-sentiment}: there batch calibration raises
-NLL when the positive class dominates.
+BCTS. The three-class sentiment arm is in Appendix~\ref{sec:appendix-prior-sentiment}: pooled, batch calibration raises
+NLL there when the positive class dominates.
 
 \input{../thesis/tables/prior_shift_ablation}
 

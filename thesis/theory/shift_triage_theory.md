@@ -84,7 +84,7 @@ $(1 - w_n)^2 \delta^2 < (1 - w_n^2)\tau^2 / n$ is $\delta^2 < \frac{\tau^2}{n}\f
 $\frac{1 + w_n}{1 - w_n} = 1 + \frac{2 w_n}{1 - w_n} = 1 + \frac{2 n \sigma^2}{\tau^2}$. $\square$
 
 **Remarks.**
-1. The condition $\delta^2 < 2\sigma^2 + \tau^2/n$ explains the empirical pattern: shrinkage wins on
+1. The condition $\delta^2 < 2\sigma^2 + \tau^2/n$ is consistent with the empirical pattern: shrinkage wins on
    every dialect and on Chittagong, where the deviation is small relative to the prior scale, and loses to the
    MLE on OffMix-3L, where the deviation is unbounded (Proposition 1). As $n \to \infty$ the condition becomes
    $\delta^2 < 2\sigma^2$: for a shift larger than the prior scale the MAP estimate has the larger MSE at every
