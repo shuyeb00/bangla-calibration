@@ -177,6 +177,8 @@ def main():
             rows += future.result()
             print(f"[{i + 1}/{len(runs)}] {futures[future]} ({time.time() - start:.0f} s)", flush=True)
     print(f"{args.workers} worker processes")
+    if not rows:
+        raise SystemExit("No run has hidden states; run python -m src.fetch_run_outputs --hidden-target-splits first")
 
     per = pd.DataFrame(rows)
     keys = ["run_id", "task", "model", "ft_method", "seed", "condition", "n_items", "method", "n_labels"]

@@ -4,12 +4,14 @@ The study can be reproduced at three levels. Each level starts from the artefact
 
 | Level | From | To | Hardware | Time | Command |
 |---|---|---|---|---|---|
-| 1 | committed tables (`results/tables/`) | every figure, LaTeX table and contrast statistic of the paper, plus the unit tests | CPU | about 2 min | `bash reproduce.sh tables` |
+| 1 | committed tables (`results/tables/`) | every figure, LaTeX table and contrast statistic of the paper, plus the unit tests | CPU | about 8 min | `bash reproduce.sh tables` (`bash reproduce.sh verify` also checks byte identity) |
 | 2 | saved model outputs (logits of every run and LLM system) | every table in `results/tables/grid_max_length_512/` | CPU | several hours on a laptop | `bash reproduce.sh outputs` |
 | 3 | public datasets | trained models and their outputs | GPU (Kaggle T4 x2) | encoder grids about 45 GPU-hours (training and output passes, `grid_max_length_512_training_summary.csv`, plus the two cross-source grids); LLM inference about 55 session-hours | see "Training" below |
 
-Level 1 was checked on 2026-11-01: running it on a clean clone regenerates the committed figures and tables
-byte-for-byte.
+`bash reproduce.sh verify` runs level 1 and then fails unless every regenerated table and figure is byte-identical to
+its committed version (it needs a git checkout); this was checked on a clean clone on 2026-11-08 (8 min 10 s on a Linux machine). Per-run output
+folders (`results/grid_max_length_512/runs/`, `llm_runs/`) are not in the repository: they are produced by level 3 or
+restored from the output bundle, and the committed tables are the artefact of record.
 
 ## Saved model outputs (level 2)
 The anonymised supplement for review carries these outputs under `outputs/`; they are otherwise in private storage until the deposit described below. `python -m src.export_release_outputs export` bundles
@@ -17,8 +19,11 @@ the logits and item indices of every converged encoder run and every LLM system,
 the contamination statistics into deterministic xz-compressed tar shards with a `MANIFEST.json` and `SHA256SUMS`. The
 bundle contains no dataset text and no labels: label arrays are removed and their SHA-256 is recorded, demonstration
 texts and rendered prompts are replaced by row numbers, and completion records keep only their scores. Training-split
-logits and hidden states are left out because no analysis reads them. The bundle will be deposited on Zenodo when the
-paper is accepted. To use it:
+logits are left out because no analysis reads them. Hidden states are left out for size; the two analyses that read
+them (`last_layer_retraining` and `distance_aware_calibration`) can therefore not be regenerated from the bundle, and
+`reproduce.sh outputs` skips them with a message instead of overwriting their committed tables. The bundle is
+deposited on Zenodo at submission as a versioned record (one concept DOI, a new version after each revision). To use
+it:
 
 1. prepare the datasets with the scripts in `data/DATA_SOURCES.md`;
 2. `python -m src.export_release_outputs restore --bundle <bundle directory>` verifies every shard, unpacks the files
@@ -64,6 +69,11 @@ runs are skipped, so shards can be restarted. Seeds are 42, 123, 2026, 7 and 99 
 | `architectures` | 20 | eae9c11 | MuRIL, mDeBERTa-v3-base |
 | `cross_definition` | 15 | ca01f15 | XLM-R-base, MuRIL, mDeBERTa-v3 trained on English OLID |
 | `cross_language` | 15 | c7814b3 | XLM-R-base, MuRIL, mDeBERTa-v3 trained on SentiMix Hinglish |
+| `definition_language_factorial` | 60 | 8eae6b0 | XLM-R-base, MuRIL, mDeBERTa-v3 trained on machine-translated OLID and BD-SHS (four translated sources) |
+
+The translated sources of the factorial are produced by `python -m src.translate_source_corpora` (NLLB-200 3.3B, beam
+4); the translations stay in private storage and are not redistributed. The factorial runs used transformers 5.20.2;
+every other grid used 5.16.1.
 
 LLM scores: `python -m src.llm_inference` (zero-shot and few-shot prompts, label log-probabilities); target
 demonstrations, prompt variants and contamination checks use the options documented in the module docstrings. Saved
