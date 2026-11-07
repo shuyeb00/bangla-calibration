@@ -120,3 +120,21 @@ def test_shrinkage_beats_mle_exactly_when_proposition_2_says_so(tau2, sigma2, n,
     mle = rng.normal(delta, np.sqrt(tau2 / n), 200000)
     better = np.mean((w * mle - delta) ** 2) < np.mean((mle - delta) ** 2)
     assert better == (delta ** 2 < 2 * sigma2 + tau2 / n)
+
+
+def test_distance_aware_calibration_keeps_decisions_under_underflow():
+    from scipy.special import softmax
+
+    from src.distance_aware_calibration import dac, dac_metrics
+    from src.shift_recalibration import metrics
+
+    rng = np.random.default_rng(0)
+    for k in (2, 3):
+        y = rng.integers(0, k, 2000)
+        logits = rng.normal(0, 1, (2000, k))
+        logits[np.arange(2000), y] += 1.5
+        p = softmax(logits, axis=1)
+        d = rng.uniform(0.2, 1.4, 2000)
+        exact, reference = dac_metrics(p, d, 0.5, y), metrics(dac(p, d, 0.5), y)
+        assert all(abs(exact[m] - reference[m]) < 1e-12 for m in reference)
+        assert dac_metrics(p, d, 1000.0, y)["macro_f1"] == metrics(p, y)["macro_f1"]

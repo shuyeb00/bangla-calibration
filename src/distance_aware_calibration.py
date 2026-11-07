@@ -23,6 +23,11 @@ Implementation for this study (base grid, converged cross-entropy runs, both fin
 Compared on the same runs and full target test splits: source TS and label-free batch calibration (unlabelled target
 calibration batch, src/batch_calibration.py). Regimes are those of the regime map (publication_tables.regime_assignment).
 
+Numerics: for large phi d the weight underflows and p_dac rounds to exactly 1/K for every class, which would turn
+argmax into a tie broken towards class 0 and tie the rankings. In exact arithmetic p_dac - 1/K = w (p - 1/K), so the
+decisions are those of p, and every ranking (confidence for AURC and PRAUC, class scores for AUROC) uses the exact
+order key log w + log|p - 1/K| with the sign of p - 1/K (dac_order_key). NLL, ECE and Brier use p_dac.
+
 Requires the hidden states of python -m src.fetch_run_outputs --hidden-target-splits.
 
 Tables (results/tables/grid_max_length_512/):
@@ -44,12 +49,14 @@ import pandas as pd
 from scipy.special import softmax
 from sklearn.metrics import average_precision_score
 
+from sklearn.metrics import f1_score, roc_auc_score
+
 from src.batch_calibration import batch_calibrate
-from src.calibration import compute_ece
+from src.calibration import compute_aurc, compute_brier_score, compute_ece, compute_nll
 from src.config import TASKS, scoped_table_name, use_natural_codemixed_scope
 from src.llm_evaluation import GRID_DIR, TABLES, encoder_runs, split_labels
 from src.shift_aware_routing import target_conditions
-from src.shift_recalibration import fit_log_temperature, metrics
+from src.shift_recalibration import EPS, fit_log_temperature, metrics
 
 K_NEIGHBOURS = 50
 PHI_GRID = np.logspace(-2, 3, 61)
@@ -76,6 +83,43 @@ def knn_distance(queries: np.ndarray, bank: np.ndarray, k: int = K_NEIGHBOURS, c
 def dac(probs: np.ndarray, distance: np.ndarray, phi: float) -> np.ndarray:
     w = np.exp(-phi * distance)[:, None]
     return probs * w + (1.0 - w) / probs.shape[1]
+
+
+def dac_order_key(values: np.ndarray, distance: np.ndarray, phi: float, k: int) -> np.ndarray:
+    """Exact order of 1/K + w (values - 1/K) with w = exp(-phi d), without forming w: a large offset separates values
+    above and below 1/K (log w >= -phi * 2 > -OFFSET on unit vectors for the phi grid)."""
+    centred = values - 1.0 / k
+    log_w = -phi * distance
+    if values.ndim == 2:
+        log_w = log_w[:, None]
+    with np.errstate(divide="ignore"):
+        magnitude = log_w + np.log(np.abs(centred))
+    offset = 1e5
+    return np.where(centred > 0, offset + magnitude, np.where(centred < 0, -offset - magnitude, 0.0))
+
+
+def dac_metrics(probs: np.ndarray, distance: np.ndarray, phi: float, labels: np.ndarray) -> dict:
+    """metrics() of the DAC probabilities with decisions and rankings taken in exact arithmetic."""
+    k = probs.shape[1]
+    mixed = np.clip(dac(probs, distance, phi), EPS, 1.0)
+    mixed = mixed / mixed.sum(axis=1, keepdims=True)
+    preds = probs.argmax(axis=1)
+    correct = (preds == labels).astype(float)
+    order = np.argsort(-dac_order_key(probs.max(axis=1), distance, phi, k), kind="stable")
+    n = len(labels)
+    risks = np.cumsum(1.0 - correct[order]) / np.arange(1, n + 1)
+    keys = dac_order_key(probs, distance, phi, k)
+    if len(np.unique(labels)) < k:
+        auroc = float("nan")
+    elif k == 2:
+        auroc = float(roc_auc_score(labels, keys[:, 1]))
+    else:
+        auroc = float(np.mean([roc_auc_score(labels == c, keys[:, c]) for c in range(k)]))
+    return {"accuracy": float(correct.mean()),
+            "macro_f1": float(f1_score(labels, preds, average="macro", zero_division=0)),
+            "nll": compute_nll(mixed, labels), "ece_15": compute_ece(mixed, labels, n_bins=15),
+            "brier": compute_brier_score(mixed, labels, n_classes=k),
+            "aurc": compute_aurc(np.arange(1, n + 1) / n, risks), "auroc": auroc}
 
 
 def reference_split(labels: np.ndarray) -> tuple:
@@ -111,9 +155,10 @@ def select_phi(p_ind: np.ndarray, y_ind: np.ndarray, d_ind: np.ndarray, p_ood: n
     membership = np.r_[np.ones(len(p_ind)), np.zeros(len(p_ood))]
     ece, one_minus = np.empty(len(grid)), np.empty(len(grid))
     for i, phi in enumerate(grid):
-        a, b = dac(p_ind, d_ind, phi), dac(p_ood, d_ood, phi)
-        one_minus[i] = 1.0 - average_precision_score(membership, np.r_[a.max(1), b.max(1)])
-        ece[i] = compute_ece(a, y_ind, n_bins=ECE_BINS)
+        k = p_ind.shape[1]
+        confidence = np.r_[dac_order_key(p_ind.max(1), d_ind, phi, k), dac_order_key(p_ood.max(1), d_ood, phi, k)]
+        one_minus[i] = 1.0 - average_precision_score(membership, confidence)
+        ece[i] = compute_ece(dac(p_ind, d_ind, phi), y_ind, n_bins=ECE_BINS)
     j = kneedle(ece, one_minus)
     return float(grid[j]), float(ece[j]), float(1.0 - one_minus[j])
 
@@ -153,9 +198,9 @@ def process_run(run: dict, gold: dict, natural_codemixed: bool) -> list:
                 "membership_prauc_at_phi": prauc, "distance_ind_median": float(np.median(d_ind)),
                 "distance_target_median": float(np.median(d_t)),
                 "mixing_weight_target_mean": float(np.exp(-phi * d_t).mean())}
-        for method, probs in (("source_ts", p_t), ("dac", dac(p_t, d_t, phi)),
-                              ("batch_calibration", batch_calibrate(p_t, p_c))):
-            rows.append({**base, "method": method, **metrics(probs, y_t)})
+        rows.append({**base, "method": "source_ts", **metrics(p_t, y_t)})
+        rows.append({**base, "method": "dac", **dac_metrics(p_t, d_t, phi, y_t)})
+        rows.append({**base, "method": "batch_calibration", **metrics(batch_calibrate(p_t, p_c), y_t)})
     return rows
 
 
