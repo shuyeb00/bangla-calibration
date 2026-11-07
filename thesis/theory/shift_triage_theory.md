@@ -182,6 +182,74 @@ $\square$
 3. All guarantees are marginal over the target calibration and test items and assume exchangeability within the
    target domain; they say nothing about other target domains.
 
+## P5. A common location shift of a calibrated score needs a bias, not a temperature
+
+Binary case first. Let $Z = s_1(X) - s_0(X)$ be the log-odds of the classifier after source temperature scaling, with
+$\sigma(z) = 1/(1 + e^{-z})$, and write $\operatorname{logit} \pi = \log(\pi / (1 - \pi))$ for a prior $\pi = P(Y = 1)$.
+
+- (A1) *Source calibration:* $P_P(Y = 1 \mid Z = z) = \sigma(z)$ for $P$-almost every $z$.
+- (A2) *Common location shift:* there is one $\delta \in \mathbb R$ such that, for $y \in \{0, 1\}$, the law of $Z$
+  given $Y = y$ under $Q$ is the law of $Z + \delta$ given $Y = y$ under $P$. The class prior may move from $\pi_P$
+  to $\pi_Q$.
+
+Let $\lambda = \operatorname{logit} \pi_Q - \operatorname{logit} \pi_P$ and $\beta = \lambda - \delta$.
+
+**Proposition 5.** Under (A1) and (A2):
+(a) $P_Q(Y = 1 \mid Z = z) = \sigma(z + \beta)$. The target-optimal post-hoc map of $Z$ is the bias map
+$z \mapsto \sigma(z + \beta)$ at temperature 1.
+(b) The ranking is unchanged: $\mathrm{AUROC}_Q(Z) = \mathrm{AUROC}_P(Z)$.
+(c) Every temperature map $g_T(z) = \sigma(z / T)$, $T \in (0, \infty)$, predicts $\mathbb 1[z > 0]$, the decisions of
+the source classifier, while the Bayes rule predicts $\mathbb 1[z > -\beta]$. If $\beta \neq 0$, $Z$ has no atoms
+and $\mathbb E_Q |Z| < \infty$, then $\inf_{T > 0} R_Q(g_T) - R_Q(\sigma(\cdot + \beta)) > 0$, where $R_Q$ is the
+target log-loss; the infimum includes the limit $T \to \infty$ (the constant $1/2$).
+(d) *Several classes.* If $\operatorname{softmax}(s)$ is calibrated on $P$ and, for every class $y$, the law of the
+logit vector $s$ given $Y = y$ under $Q$ is that of $s + d$ given $Y = y$ under $P$ for one $d \in \mathbb R^K$, then
+$P_Q(Y = k \mid s) = \operatorname{softmax}_k(s + b)$ with $b_k = \log(\pi_{Q,k} / \pi_{P,k}) - d_k$: a bias vector
+at temperature 1. Temperature scaling never changes the predicted class.
+
+*Proof.* (a) Write $f^P_y, f^Q_y$ for the class-conditional densities of $Z$ (with respect to a common dominating
+measure; the argument is the same with Radon–Nikodym derivatives). By Bayes' rule and (A1),
+$\log f^P_1(u) / f^P_0(u) = \operatorname{logit} P_P(Y = 1 \mid u) - \operatorname{logit} \pi_P = u -
+\operatorname{logit} \pi_P$. By (A2), $f^Q_y(z) = f^P_y(z - \delta)$. Hence
+$\operatorname{logit} P_Q(Y = 1 \mid z) = \log f^Q_1(z) / f^Q_0(z) + \operatorname{logit} \pi_Q =
+(z - \delta) - \operatorname{logit} \pi_P + \operatorname{logit} \pi_Q = z + \beta$.
+(b) $\mathrm{AUROC}_Q = \Pr(Z_1 > Z_0)$ for independent $Z_y \sim f^Q_y$; translating both by $\delta$ leaves the
+event unchanged, and AUROC does not depend on the class prior.
+(c) $\sigma$ is increasing, so $g_T$ predicts class 1 exactly when $z > 0$, for every $T$. For any post-hoc map $g$,
+$R_Q(g) - R_Q(\sigma(\cdot + \beta)) = \mathbb E_Q\, \mathrm{KL}(\mathrm{Bern}(\sigma(Z + \beta)) \,\|\,
+\mathrm{Bern}(g(Z)))$, because $\sigma(Z + \beta)$ is the true posterior by (a). The integrand vanishes only where
+$z + \beta = z / T$, i.e. at no $z$ if $T = 1$ and at the single point $z^* = -\beta / (1 - 1/T)$ otherwise; without
+atoms this is a null set, so the excess $\Delta(T)$ is positive for every $T$. For $p \in (0, 1)$ and
+$q = \sigma(z / T)$, $\mathrm{KL}(\mathrm{Bern}(p) \,\|\, \mathrm{Bern}(q)) \le \max(-\log q, -\log(1 - q)) =
+\log(1 + e^{|z| / T}) \le \log 2 + |z| / T$, so by dominated convergence $\Delta$ is continuous on $(0, \infty)$ and
+$\Delta(T) \to \mathbb E_Q\,\mathrm{KL}(\mathrm{Bern}(\sigma(Z + \beta)) \,\|\, \mathrm{Bern}(1/2)) > 0$ as
+$T \to \infty$. As $T \to 0$, $\sigma(z / T)$ tends to 0 or 1 for every $z \neq 0$ while $\sigma(z + \beta) \in (0, 1)$,
+so the integrand tends to $\infty$ on $\{Z \neq 0\}$ and $\Delta(T) \to \infty$ by Fatou's lemma. A continuous positive
+function on $(0, \infty)$ with a positive limit at $\infty$ and an infinite limit at 0 has a positive infimum.
+(d) As in (a), calibration gives $\log f^P_k(u) = u_k - \log \pi_{P,k} + h(u)$ with $h$ common to all classes, and
+(A2) gives $f^Q_k(s) = f^P_k(s - d)$; the class-independent term cancels in the softmax. A temperature divides every
+logit by the same $T > 0$ and keeps their order. $\square$
+
+**Remarks.**
+1. *Why this matters for the regime map.* (b) and (c) are the signature of the threshold-shift regime R2: the ranking
+   is retained, the predicted label marginal moves, and no temperature changes a decision. A temperature fitted on
+   target labels under (A2) is not 1 although the Bayes correction has temperature 1: it rises to hedge the misplaced
+   threshold (`src/location_shift_simulation.py`: oracle log T about 1.1 at $|\beta| = 2$ in the Gaussian model).
+   A finite oracle temperature ratio therefore does not show a temperature shift; it can be a bias shift read
+   through the wrong knob.
+2. *Prior change versus score shift.* $\beta = \lambda - \delta$ separates a change of the class prior ($\lambda$,
+   classical label shift; Saerens et al., 2002) from a shift of the score itself ($\delta$). EM label-shift correction
+   assumes $\delta = 0$ and attributes every change of the predicted marginal to the prior; under $\delta \neq 0$ it
+   estimates the wrong prior, consistent with its failure on targets whose ranking survives.
+   `src/operating_point_analysis.py` reports this decomposition empirically (oracle bias, its prior part
+   $\lambda$ and the residual).
+3. *When (A2) fails.* If the classes move by different amounts, the target log-odds are no longer $z + \beta$.
+   In the equal-variance Gaussian model they stay linear in $z$ with another slope, so a temperature and a bias
+   (BCTS) are both needed and the AUROC changes; the simulation checks this boundary. (A2) can be probed on a
+   labelled target sample by the slope that BCTS estimates ($\log \hat T \approx 0$ under (A2)).
+4. The result is an elementary consequence of Bayes' rule. Its use here is to name the assumption under which a
+   bias term is the right repair and temperature scaling provably is not.
+
 ## Shift-triage procedure
 
 Input: candidate systems (source-calibrated encoder runs and LLM systems), an unlabeled target stream, a label
@@ -217,6 +285,17 @@ decisions against the full-target AUROC, macro-F1 of the deployed system and the
 always-encoder, always-LLM, the reuse-the-same-labels router and the oracle. Step 1 is not part of
 the evaluation: every evaluated condition is shifted and detected, so the evaluation starts at step 2.
 
+## Verification record (2026-11-07, Proposition 5)
+
+- Proof re-read once; the first draft bounded the integrand by a term that was not needed and gave the wrong set
+  for the $T \to 0$ limit (every $z \neq 0$ contributes, not only the items between the two thresholds); corrected.
+- Monte Carlo (`src/location_shift_simulation.py`, `location_shift_simulation.csv`; 236 checks, all hold): under a
+  common shift the bias-only fit reaches the Bayes log-loss within 0.005 nats and BCTS keeps $|\log \hat T| \le 0.05$
+  for a Gaussian and a skewed non-Gaussian score model; temperature scaling never changes a decision and its excess
+  log-loss is positive whenever $\beta \neq 0$; AUROC is unchanged within 0.01; under a differential shift the bias
+  alone is not enough and BCTS reaches the Bayes log-loss.
+- Not read by someone other than the authors.
+
 ## Verification record (2026-11-01)
 
 Second reading of P1–P4 against the implementation (`src/shift_triage.py`, `src/shift_recalibration.py`):
@@ -246,3 +325,5 @@ Second reading of P1–P4 against the implementation (`src/shift_triage.py`, `sr
 - Liang, R., Zhu, W., & Barber, R. F. (2024). Conformal prediction after data-dependent model selection.
   arXiv:2408.07066.
 - Phipson, B., & Smyth, G. K. (2010). Permutation p-values should never be zero. SAGMB 9(1).
+- Saerens, M., Latinne, P., & Decaestecker, C. (2002). Adjusting the outputs of a classifier to new a priori
+  probabilities: A simple procedure. Neural Computation 14(1), 21–41.
