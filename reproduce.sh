@@ -63,6 +63,8 @@ if [ "$STAGE" = tables ] || [ "$STAGE" = all ]; then
   run source_transfer_validation
   run proposition_simulation_checks
   run location_shift_simulation
+  run label_requirement_power
+  run calibration_metric_robustness
   run publication_figures
   run publication_tables
   "$PYTHON" -m pytest -q tests
