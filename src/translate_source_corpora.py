@@ -117,6 +117,11 @@ class HubStore:
 
         self.repo = repo
         self.api = HfApi(token=os.environ.get("HF_TOKEN"))
+        try:
+            self.api.repo_info(repo, repo_type="dataset")
+        except Exception as exc:
+            raise SystemExit(f"Cannot access the dataset repository {repo} ({type(exc).__name__}); set HF_TOKEN or "
+                             f"log in with a token that can read it") from exc
 
     def _retry(self, action, what: str, attempts: int = 6):
         for attempt in range(attempts):
