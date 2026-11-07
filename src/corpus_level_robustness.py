@@ -7,12 +7,14 @@ target corpus as the unit of replication.
 Pair sets:
   threshold_shift   the pairs assigned to R2 by publication_tables.regime_assignment()
   marginal_shift    every pair whose predicted-label marginal moves by more than 0.10 (no regime rule involved)
+  *_natural_corpora the same two sets without the student-written corpora OffMix-3L and SentMix-3L
 Outcomes per run (from source_transfer_per_run.csv): change of macro-F1 and of NLL against source TS for label-free
 batch calibration and for MAP BCTS with 50 target labels.
 
 For each pair set and weighting (runs, pairs or corpora equally weighted), and with each corpus left out in turn:
 mean gains, the share of runs with a macro-F1 gain in the worst pair, the number of corpora whose mean gain is
-positive and the exact one-sided sign test over corpora. A hierarchical bootstrap (corpora, then pairs within a
+positive and the exact sign test over corpora, one-sided and two-sided (the direction was not fixed in advance, so
+the two-sided value is the one to report). A hierarchical bootstrap (corpora, then pairs within a
 corpus, then runs within a pair) gives 95% intervals for the corpus-weighted mean gains.
 
 Tables (results/tables/grid_max_length_512): corpus_level_summary.csv, corpus_level_robustness.csv
@@ -31,6 +33,10 @@ from src.publication_tables import regime_assignment
 
 TABLES = BASE_DIR / "results" / "tables" / "grid_max_length_512"
 MARGINAL_CUT = 0.10
+STUDENT_WRITTEN = ("OffMix-3L", "SentMix-3L")
+PAIR_SETS = {"threshold_shift": ("in_threshold_shift", False), "marginal_shift": ("in_marginal_shift", False),
+             "threshold_shift_natural_corpora": ("in_threshold_shift", True),
+             "marginal_shift_natural_corpora": ("in_marginal_shift", True)}
 BOOTSTRAP = 10_000
 SEED = 20261107
 CORPUS = {"shift_d1_barishal_test": "BIDWESH", "shift_d1_chittagong_test": "BIDWESH",
@@ -72,6 +78,10 @@ def sign_test(positive: int, n: int) -> float:
     return sum(comb(n, k) for k in range(positive, n + 1)) / 2 ** n
 
 
+def sign_test_two_sided(positive: int, n: int) -> float:
+    return min(1.0, 2 * min(sign_test(positive, n), sign_test(n - positive, n)))
+
+
 def weighted_means(d: pd.DataFrame) -> dict:
     pairs = d.groupby(["corpus", "pair"])[list(GAINS)].mean()
     out = {}
@@ -92,6 +102,7 @@ def describe(d: pd.DataFrame) -> dict:
         positive = int((by_corpus[name] > 0).sum())
         row[f"{name}_corpora_positive"] = positive
         row[f"{name}_sign_test_p"] = sign_test(positive, n_corpora)
+        row[f"{name}_sign_test_p_two_sided"] = sign_test_two_sided(positive, n_corpora)
     return row
 
 
@@ -119,8 +130,8 @@ def main():
     p = units()
     rng = np.random.default_rng(SEED)
     summary, robustness = [], []
-    for pair_set in ("threshold_shift", "marginal_shift"):
-        d = p[p[f"in_{pair_set}"]]
+    for pair_set, (member, natural_only) in PAIR_SETS.items():
+        d = p[p[member] & ~(natural_only & p.corpus.isin(STUDENT_WRITTEN))]
         for (c, pair), g in d.groupby(["corpus", "pair"]):
             summary.append({"pair_set": pair_set, "corpus": c, "pair": pair, "regime": g.regime.iloc[0],
                             "n_runs": len(g), "predicted_marginal_tv": g.predicted_marginal_tv.mean(),

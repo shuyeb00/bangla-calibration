@@ -7,6 +7,7 @@ Figures (thesis/figures/grid_max_length_512/publication/, PDF and PNG):
   cross_definition_auroc              BD-SHS-trained vs OLID-trained encoders of the same architectures
   collapse_causes                     the two previous figures as panels (a) and (b) of one full-width figure
   few_label_adaptation_curves         macro-F1 vs number of target labels for the label-spending options
+  all_pairs_bias_gain                 macro-F1 gain of a bias correction vs predicted-marginal shift, all 21 pairs
 
     python -m src.publication_figures
 """
@@ -28,6 +29,7 @@ OUT = BASE_DIR / "thesis" / "figures" / "grid_max_length_512" / "publication"
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
 MARKERS = ["o", "s", "^", "D"]
 INK, INK_SECONDARY, GRID = "#0b0b0b", "#52514e", "#e4e3df"
+RETENTION_RAMP = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b"]
 GENERAL_LLMS = ["llama3_1_8b_instruct", "qwen3_4b_instruct", "qwen3_5_9b", "qwen3_8b"]
 
 CONDITION_NAMES = {
@@ -306,8 +308,46 @@ def few_label_curves():
     return save(fig, "few_label_adaptation_curves")
 
 
+def all_pairs_bias_gain():
+    from matplotlib.colors import LinearSegmentedColormap, Normalize
+    d = pd.read_csv(TABLES / "all_pairs_bias_gain.csv")
+    cmap = LinearSegmentedColormap.from_list("retention", RETENTION_RAMP)
+    norm = Normalize(vmin=0.5, vmax=1.0)
+    order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
+    fig, axes = plt.subplots(1, 2, figsize=(5.5, 2.7), sharey=True)
+    panels = [("batch_calibration_macro_f1_gain", "(a) Batch calibration (no labels)"),
+              ("map_bcts_macro_f1_gain", "(b) MAP BCTS (50 target labels)")]
+    for ax, (column, title) in zip(axes, panels):
+        ax.axhline(0, color=INK_SECONDARY, lw=0.8)
+        ax.axvline(0.10, color=INK_SECONDARY, lw=0.8, ls=":")
+        for i, src in enumerate(order):
+            g = d[d.source_task == src]
+            ax.scatter(g.predicted_marginal_tv, g[column], c=g.auroc_retention, cmap=cmap, norm=norm, s=34,
+                       marker=MARKERS[i], edgecolor="white", linewidth=0.8, zorder=3)
+        collapse = d[d.regime == "R4"]
+        ax.scatter(collapse.predicted_marginal_tv, collapse[column], s=120, facecolor="none", edgecolor=INK,
+                   linewidth=0.9, zorder=4)
+        ax.set_title(title, loc="left")
+        ax.set_xlim(-0.02, 0.50)
+        ax.set_xlabel("Shift of the predicted-label marginal")
+    axes[0].set_ylabel("Macro-F1 gain over source TS")
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    bar = fig.colorbar(sm, ax=axes, fraction=0.035, pad=0.02)
+    bar.set_label("AUROC retention", fontsize=7.5)
+    bar.ax.tick_params(labelsize=7)
+    bar.outline.set_visible(False)
+    handles = [plt.Line2D([], [], marker=MARKERS[i], ls="", markerfacecolor=INK_SECONDARY, markeredgecolor="white",
+                          markersize=6, label=SOURCE_NAMES[src].split(" (")[0] + " source") for i, src in enumerate(order)]
+    handles.append(plt.Line2D([], [], marker="o", ls="", markerfacecolor="none", markeredgecolor=INK, markersize=9,
+                              label="ranking collapse (OffMix-3L, BD-SHS source)"))
+    fig.legend(handles=handles, loc="upper center", ncol=3, bbox_to_anchor=(0.45, -0.03), handletextpad=0.2,
+               columnspacing=1.0)
+    return save(fig, "all_pairs_bias_gain")
+
+
 FIGURES = {"regime_map": regime_map, "encoder_llm_auroc": encoder_llm_auroc, "script_intervention": script_intervention,
-           "cross_definition": cross_definition, "collapse_causes": collapse_causes, "few_label_curves": few_label_curves}
+           "cross_definition": cross_definition, "collapse_causes": collapse_causes, "few_label_curves": few_label_curves,
+           "all_pairs_bias_gain": all_pairs_bias_gain}
 
 
 def main():
