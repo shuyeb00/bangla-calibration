@@ -11,6 +11,8 @@ complete and consistent and writes results/tables/grid_max_length_512_training_s
     python -m src.fetch_run_outputs --no-download
     python -m src.fetch_run_outputs --hidden-target-splits
     python -m src.fetch_run_outputs --cross-language-only   (outputs of the Hinglish-trained encoders only)
+    python -m src.fetch_run_outputs --translation-factorial-only   (outputs of the encoders trained on the machine-
+        translated sources, and the translation shard records)
     python -m src.fetch_run_outputs --natural-codemixed-task sentiment   (encoder and LLM outputs of one task's
         natural code-mixed targets only; no full re-check of the Hub repository)
 """
@@ -22,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config import HUB_OUTPUT_REPO, NATURAL_CODEMIXED, RESULTS_DIR, SEEDS, TASKS, \
+from src.config import HUB_OUTPUT_REPO, NATURAL_CODEMIXED, RESULTS_DIR, SEEDS, TASKS, TRANSLATION_FACTORIAL_TASKS, \
     get_natural_codemixed_paths, get_shift_conditions_paths
 from src.training_grid_parallel import AUDIT_GRIDS, grid_run_id, grid_runs
 
@@ -54,6 +56,13 @@ CROSS_DEFINITION_PATTERNS = ["runs/offensive_olid_*/*.json", "runs/offensive_oli
 # Outputs of the Hinglish-trained encoders (cross-language grid).
 CROSS_LANGUAGE_PATTERNS = ["runs/sentiment_hinglish_*/*.json", "runs/sentiment_hinglish_*/*_logits.npy",
                            "runs/sentiment_hinglish_*/*_labels.npy"]
+
+
+# Outputs of the definition-by-language factorial (encoders trained on the machine-translated sources) and the records
+# of the translation shards (the translated texts stay on the Hub).
+TRANSLATION_FACTORIAL_PATTERNS = ([f"runs/{task}_*/{suffix}" for task in TRANSLATION_FACTORIAL_TASKS
+                                   for suffix in ("*.json", "*_logits.npy", "*_labels.npy")]
+                                  + ["machine_translation/shard*.json"])
 
 
 def natural_codemixed_patterns(task: str) -> list:
@@ -146,12 +155,15 @@ def main():
                         help="Download only the cross-definition outputs (avoids re-checking every file on the Hub).")
     parser.add_argument("--cross-language-only", action="store_true",
                         help="Download only the outputs of the Hinglish-trained encoders.")
+    parser.add_argument("--translation-factorial-only", action="store_true",
+                        help="Download only the outputs of the encoders trained on the machine-translated sources.")
     parser.add_argument("--natural-codemixed-task", choices=sorted(NATURAL_CODEMIXED),
                         help="Download only the outputs of this task's natural code-mixed targets.")
     args = parser.parse_args()
     if not args.no_download:
         only = (CROSS_DEFINITION_PATTERNS if args.cross_definition_only
                 else CROSS_LANGUAGE_PATTERNS if args.cross_language_only
+                else TRANSLATION_FACTORIAL_PATTERNS if args.translation_factorial_only
                 else natural_codemixed_patterns(args.natural_codemixed_task) if args.natural_codemixed_task else None)
         download(args.with_hidden, args.hidden_target_splits, only)
 

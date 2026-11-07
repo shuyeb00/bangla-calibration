@@ -240,7 +240,28 @@ CROSS_DEFINITION_MODELS = ["xlmr_base", "muril", "mdeberta"]
 # SentMix-3L and Sylheti. Kept out of TASKS for the same reason as the cross-definition task.
 CROSS_LANGUAGE_TASKS = {"sentiment_hinglish": 3}
 CROSS_LANGUAGE_MODELS = ["xlmr_base", "muril", "mdeberta"]
-TRAINING_TASKS = {**TASKS, **CROSS_DEFINITION_TASKS, **CROSS_LANGUAGE_TASKS}
+# Definition-by-language factorial (src/translate_source_corpora.py): the two offensive-language definitions (OLID,
+# BD-SHS) crossed with the two languages (English, Bangla) by machine translation of the source corpora, with a round
+# trip through the other language as the control for translation itself. Labels are those of the original items.
+# Together with the original corpora (offensive: BD-SHS, Bangla; offensive_olid: OLID, English) every definition is
+# observed in both languages both with and without machine translation. Kept out of TASKS like the other sources.
+TRANSLATION_FACTORIAL_TASKS = {
+    "offensive_olid_bangla_mt": 2,
+    "offensive_bdshs_english_mt": 2,
+    "offensive_olid_english_roundtrip": 2,
+    "offensive_bdshs_bangla_roundtrip": 2,
+}
+TRANSLATION_FACTORIAL_MODELS = ["xlmr_base", "muril", "mdeberta"]
+# Factor levels of every offensive source task in the factorial: (definition, language, machine translation passes).
+SOURCE_FACTORS = {
+    "offensive": ("bdshs", "bangla", 0),
+    "offensive_olid": ("olid", "english", 0),
+    "offensive_olid_bangla_mt": ("olid", "bangla", 1),
+    "offensive_bdshs_english_mt": ("bdshs", "english", 1),
+    "offensive_olid_english_roundtrip": ("olid", "english", 2),
+    "offensive_bdshs_bangla_roundtrip": ("bdshs", "bangla", 2),
+}
+TRAINING_TASKS = {**TASKS, **CROSS_DEFINITION_TASKS, **CROSS_LANGUAGE_TASKS, **TRANSLATION_FACTORIAL_TASKS}
 
 
 def get_cross_definition_paths(task_name: str) -> dict:
@@ -264,6 +285,26 @@ def get_cross_definition_paths(task_name: str) -> dict:
     else:
         candidates = {}
     return {key: path for key, path in candidates.items() if path.exists()}
+
+
+def get_translation_factorial_paths(task_name: str) -> dict:
+    """Evaluation splits of the translated source tasks: both original source corpora (BD-SHS and English OLID, each
+    with its calibration split), OffMix-3L and the natural code-mixed offensive targets. Every target is the original
+    text; only the training corpus is translated."""
+    if task_name not in TRANSLATION_FACTORIAL_TASKS:
+        return {}
+    offensive_dir = DATA_DIR / "offensive"
+    candidates = {}
+    for part in ("cal", "test"):
+        candidates[f"shift_bdshs_{part}"] = offensive_dir / f"{part}.csv"
+        candidates[f"shift_olid_english_{part}"] = DATA_DIR / "offensive_olid" / f"{part}.csv"
+        candidates[f"shift_d2_{part}"] = offensive_dir / f"d2_codemixed_{part}.csv"
+        for key, stem in NATURAL_CODEMIXED["offensive"].items():
+            candidates[f"{key}_{part}"] = offensive_dir / f"{stem}_{part}.csv"
+    missing = sorted(key for key, path in candidates.items() if not path.exists())
+    if missing:
+        raise FileNotFoundError(f"Evaluation splits of {task_name} are missing: {missing}")
+    return candidates
 
 
 def get_cross_language_paths(task_name: str) -> dict:

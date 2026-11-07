@@ -38,7 +38,7 @@ from sklearn.metrics import f1_score
 
 from src.batch_calibration import batch_calibrate
 from src.config import ALL_MODELS, EVALUATION_TABLES_DIR, RUNS_DIR, SCALE_MODELS, TASKS, TRAINING_TASKS, \
-    non_converged_runs, recipe_tag
+    TRANSLATION_FACTORIAL_TASKS, non_converged_runs, recipe_tag
 from src.llm_shift_recalibration import bcts_transform, fit_bcts
 from src.shift_recalibration import (ALPHA, LOG_T_BOUNDS, conformal_eval, conformal_threshold, fit_log_temperature,
                                      metrics, subset_indices)
@@ -75,7 +75,9 @@ def discover() -> list:
     for run_dir in sorted(p for p in RUNS_DIR.glob("*") if (p / "config.json").exists()):
         cfg = json.loads((run_dir / "config.json").read_text(encoding="utf-8"))
         task = cfg.get("task")
-        if (task not in TRAINING_TASKS or cfg.get("model_key") not in ALL_MODELS or run_dir.name in excluded
+        # Machine-translated sources belong to the definition-by-language factorial only.
+        if (task not in TRAINING_TASKS or task in TRANSLATION_FACTORIAL_TASKS or cfg.get("model_key") not in ALL_MODELS
+                or run_dir.name in excluded
                 or (cfg.get("objective") or "cross_entropy") != "cross_entropy"
                 or not (run_dir / "cal_logits.npy").exists() or not (run_dir / "test_logits.npy").exists()):
             continue

@@ -13,6 +13,10 @@ Grids
   cross_language  XLM-R-base, MuRIL, mDeBERTa-v3 x full FT x 5 seeds trained on SentiMix Hinglish (task
               sentiment_hinglish), base-model recipes; outputs on Hinglish test, Spanglish, SentNoB, SentMix-3L and
               Sylheti (15 runs, 1 shard)
+  definition_language_factorial  XLM-R-base, MuRIL, mDeBERTa-v3 x full FT x 5 seeds on the four machine-translated
+              offensive sources (config.TRANSLATION_FACTORIAL_TASKS; data from src.translate_source_corpora), recipes
+              of the BD-SHS runs; outputs on BD-SHS, English OLID, OffMix-3L and the natural code-mixed targets
+              (60 runs, 7 shards)
 Audit only (not launchable; trained with the base-model recipe before FULL_FT_TRAINING existed):
   scale_recipe_base  the same large encoders x 3 seeds (SCALE_SEEDS) at lr 2e-5 without warmup
 
@@ -46,6 +50,8 @@ from src.config import (
     SCALE_SEEDS,
     SEEDS,
     TASKS,
+    TRANSLATION_FACTORIAL_MODELS,
+    TRANSLATION_FACTORIAL_TASKS,
     make_run_id,
     recipe_tag,
 )
@@ -87,6 +93,20 @@ EST_MINUTES = {
     ("sentiment_hinglish", "xlmr_base", "full_ft"): 9.0,
     ("sentiment_hinglish", "muril", "full_ft"): 7.0,
     ("sentiment_hinglish", "mdeberta", "full_ft"): 18.0,
+    # Translated offensive sources: training minutes of the measured BD-SHS (33k items) and OLID (10.7k) runs of the
+    # same encoders, plus output passes over about 90k (BD-SHS) or 75k (OLID) items, loading and upload (estimates).
+    ("offensive_bdshs_english_mt", "xlmr_base", "full_ft"): 25.0,
+    ("offensive_bdshs_english_mt", "muril", "full_ft"): 21.0,
+    ("offensive_bdshs_english_mt", "mdeberta", "full_ft"): 54.0,
+    ("offensive_bdshs_bangla_roundtrip", "xlmr_base", "full_ft"): 25.0,
+    ("offensive_bdshs_bangla_roundtrip", "muril", "full_ft"): 21.0,
+    ("offensive_bdshs_bangla_roundtrip", "mdeberta", "full_ft"): 54.0,
+    ("offensive_olid_bangla_mt", "xlmr_base", "full_ft"): 12.0,
+    ("offensive_olid_bangla_mt", "muril", "full_ft"): 10.0,
+    ("offensive_olid_bangla_mt", "mdeberta", "full_ft"): 24.0,
+    ("offensive_olid_english_roundtrip", "xlmr_base", "full_ft"): 12.0,
+    ("offensive_olid_english_roundtrip", "muril", "full_ft"): 10.0,
+    ("offensive_olid_english_roundtrip", "mdeberta", "full_ft"): 24.0,
 }
 GPUS_PER_SHARD = 2
 KEEP = ("=====", "[UPLOADED", "[LOCAL", "[UPLOAD_FAILED", "[UPLOAD RETRY", "[SKIP", "[COLLAPSE",
@@ -109,6 +129,9 @@ def grid_runs(grid: str) -> list:
     if grid == "cross_language":
         return list(itertools.product(CROSS_LANGUAGE_TASKS, CROSS_LANGUAGE_MODELS, ["full_ft"],
                                       ["cross_entropy"], SEEDS))
+    if grid == "definition_language_factorial":
+        return list(itertools.product(TRANSLATION_FACTORIAL_TASKS, TRANSLATION_FACTORIAL_MODELS, ["full_ft"],
+                                      ["cross_entropy"], SEEDS))
     if grid == "scale_recipe_base":
         return list(itertools.product(TASKS, SCALE_MODELS, ["full_ft"], ["cross_entropy"], SCALE_SEEDS))
     raise ValueError(f"Unknown grid {grid!r}")
@@ -120,7 +143,8 @@ def grid_run_id(grid: str, run: tuple) -> str:
     return make_run_id(task, model, ft, seed, objective, recipe)
 
 
-N_SHARDS = {"base": 2, "objectives": 2, "scale": 3, "architectures": 2, "cross_definition": 1, "cross_language": 1}
+N_SHARDS = {"base": 2, "objectives": 2, "scale": 3, "architectures": 2, "cross_definition": 1, "cross_language": 1,
+            "definition_language_factorial": 7}
 # Grids audited by src.fetch_run_outputs into the training summary (BD-SHS and SentNoB source tasks only).
 AUDIT_GRIDS = ["base", "objectives", "scale", "architectures", "scale_recipe_base"]
 

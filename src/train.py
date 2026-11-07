@@ -52,9 +52,11 @@ from src.config import (
     CROSS_DEFINITION_TASKS,
     CROSS_LANGUAGE_TASKS,
     TRAIN_HYPERPARAMS,
+    TRANSLATION_FACTORIAL_TASKS,
     TRAINING_TASKS,
     get_cross_definition_paths,
     get_cross_language_paths,
+    get_translation_factorial_paths,
     get_natural_codemixed_paths,
     get_shift_conditions_paths,
     get_task_splits_paths,
@@ -124,11 +126,14 @@ def load_task_splits(task_name: str) -> dict:
 def load_shift_conditions(task_name: str) -> dict:
     """Shift splits scored after training, including the natural code-mixed targets; for a cross-definition
     source task, the splits of src/config.get_cross_definition_paths; for a cross-language source task, those of
-    src/config.get_cross_language_paths."""
+    src/config.get_cross_language_paths; for a translated source task, those of
+    src/config.get_translation_factorial_paths."""
     if task_name in CROSS_DEFINITION_TASKS:
         paths = get_cross_definition_paths(task_name)
     elif task_name in CROSS_LANGUAGE_TASKS:
         paths = get_cross_language_paths(task_name)
+    elif task_name in TRANSLATION_FACTORIAL_TASKS:
+        paths = get_translation_factorial_paths(task_name)
     else:
         paths = {**get_shift_conditions_paths(task_name), **get_natural_codemixed_paths(task_name)}
     return {name: standardize_dataframe(pd.read_csv(path)) for name, path in paths.items()}
@@ -371,7 +376,7 @@ def upload_run(api, run_id: str, weights_dir: Path, weights_path: str, run_dir: 
 def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, hub: bool = False,
                           smoke: bool = False, keep_checkpoints: bool = False, source: str = None,
                           objective: str = "cross_entropy", train_hidden: bool = True,
-                          upload_weights: bool = True) -> dict:
+                          upload_weights: bool = True, save_hidden: bool = True) -> dict:
     if objective not in OBJECTIVES:
         raise ValueError(f"Unknown objective {objective!r}")
     recipe = recipe_tag(model_key, ft_method)
@@ -462,7 +467,7 @@ def run_single_experiment(task: str, model_key: str, ft_method: str, seed: int, 
         logits, hidden = forward_outputs(trainer.model, dataset, collator, device)
         np.save(run_dir / f"{name}_logits.npy", logits)
         np.save(run_dir / f"{name}_labels.npy", dataset.labels)
-        if name != "val" and (train_hidden or name != "train"):
+        if save_hidden and name != "val" and (train_hidden or name != "train"):
             np.save(run_dir / f"{name}_hidden.npy", hidden)
     output_runtime = time.time() - t0
 
@@ -535,6 +540,7 @@ def main():
     parser.add_argument("--smoke", action="store_true", help="Tiny subsets and one epoch, under smoke/ paths.")
     parser.add_argument("--keep_checkpoints", action="store_true")
     parser.add_argument("--no-train-hidden", action="store_true", help="Do not save hidden states of the train split.")
+    parser.add_argument("--no-hidden", action="store_true", help="Do not save hidden states of any split.")
     parser.add_argument("--no-upload-weights", action="store_true",
                         help="With --hub, upload outputs only and keep the weights out of the checkpoint repository.")
     parser.add_argument("--model-source", action="append", metavar="MODEL=PATH",
@@ -550,7 +556,8 @@ def main():
                                              keep_checkpoints=args.keep_checkpoints,
                                              source=sources.get(model_key), objective=objective,
                                              train_hidden=not args.no_train_hidden,
-                                             upload_weights=not args.no_upload_weights))
+                                             upload_weights=not args.no_upload_weights,
+                                             save_hidden=not args.no_hidden))
     print("\nSUMMARY " + json.dumps(summary), flush=True)
 
 
