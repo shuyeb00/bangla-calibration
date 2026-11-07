@@ -18,7 +18,7 @@ Implementation for this study (base grid, converged cross-entropy runs, both fin
   distance     Euclidean distance to the K_NEIGHBOURS-th nearest reference embedding
   base model   source-TS probabilities (temperature fitted on the whole source calibration split)
   OOD set      the unlabelled target calibration inputs of each condition (the condition's own target)
-  grid         phi in {0} and PHI_GRID; Kneedle on the Pareto front of (ECE, 1 - PRAUC), both normalised to [0, 1],
+  grid         phi in {0} and 61 log-spaced values in [1e-2, 1e3] (phi_grid); Kneedle on the Pareto front of (ECE, 1 - PRAUC), both normalised to [0, 1],
                knee = argmax(1 - ECE_n - (1 - PRAUC)_n) (convex decreasing curve, sensitivity 1, no smoothing)
 Compared on the same runs and full target test splits: source TS and label-free batch calibration (unlabelled target
 calibration batch, src/batch_calibration.py). Regimes are those of the regime map (publication_tables.regime_assignment).
@@ -26,7 +26,9 @@ calibration batch, src/batch_calibration.py). Regimes are those of the regime ma
 Numerics: for large phi d the weight underflows and p_dac rounds to exactly 1/K for every class, which would turn
 argmax into a tie broken towards class 0 and tie the rankings. In exact arithmetic p_dac - 1/K = w (p - 1/K), so the
 decisions are those of p, and every ranking (confidence for AURC and PRAUC, class scores for AUROC) uses the exact
-order key log w + log|p - 1/K| with the sign of p - 1/K (dac_order_key). NLL, ECE and Brier use p_dac.
+order of log w + log|p - 1/K| with the sign of p - 1/K (dac_order_key, dense ranks). NLL, ECE and Brier use p_dac.
+DAC is applied to the probabilities after the clipping and renormalisation that shift_recalibration.metrics applies
+to every method (clip_like_metrics), so at phi = 0 DAC equals source TS exactly and all methods share one convention.
 
 Requires the hidden states of python -m src.fetch_run_outputs --hidden-target-splits.
 
@@ -37,6 +39,8 @@ Tables (results/tables/grid_max_length_512/):
 
     python -m src.distance_aware_calibration
     python -m src.distance_aware_calibration --natural-codemixed   (held-out natural code-mixed targets only)
+    python -m src.distance_aware_calibration --phi-max-exponent 5   (sensitivity: phi grid up to 1e5; tables carry the
+                                                                    suffix _phi_max_1e5)
 """
 
 import argparse
@@ -59,7 +63,8 @@ from src.shift_aware_routing import target_conditions
 from src.shift_recalibration import EPS, fit_log_temperature, metrics
 
 K_NEIGHBOURS = 50
-PHI_GRID = np.logspace(-2, 3, 61)
+PHI_MAX_EXPONENT = 3
+PHI_POINTS_PER_DECADE = 12
 REFERENCE_SEED = 20261107
 OUTCOMES = ("accuracy", "macro_f1", "nll", "ece_15", "brier", "aurc", "auroc")
 ECE_BINS = 15
@@ -85,24 +90,42 @@ def dac(probs: np.ndarray, distance: np.ndarray, phi: float) -> np.ndarray:
     return probs * w + (1.0 - w) / probs.shape[1]
 
 
+def clip_like_metrics(probs: np.ndarray) -> np.ndarray:
+    clipped = np.clip(probs, EPS, 1.0)
+    return clipped / clipped.sum(axis=1, keepdims=True)
+
+
+def _dense_rank(primary: np.ndarray, sign: np.ndarray, value: np.ndarray) -> np.ndarray:
+    keys = np.empty(len(primary), dtype=[("primary", "f8"), ("sign", "i1"), ("value", "f8")])
+    keys["primary"], keys["sign"], keys["value"] = primary, sign, value
+    return np.unique(keys, return_inverse=True)[1].reshape(-1).astype(np.float64)
+
+
 def dac_order_key(values: np.ndarray, distance: np.ndarray, phi: float, k: int) -> np.ndarray:
-    """Exact order of 1/K + w (values - 1/K) with w = exp(-phi d), without forming w: a large offset separates values
-    above and below 1/K (log w >= -phi * 2 > -OFFSET on unit vectors for the phi grid)."""
-    centred = values - 1.0 / k
+    """Dense ranks of 1/K + w (values - 1/K), w = exp(-phi d): ordered by the value computed in floating point and,
+    where that value ties (w so small that the sum rounds to 1/K), by the sign of values - 1/K and then by
+    +-(log w + log|values - 1/K|), which is the exact order of the sum. Only the order is meaningful."""
+    w = np.exp(-phi * distance)
     log_w = -phi * distance
     if values.ndim == 2:
-        log_w = log_w[:, None]
+        w, log_w = w[:, None], log_w[:, None]
+    primary = values * w + (1.0 - w) / k
+    centred = values - 1.0 / k
     with np.errstate(divide="ignore"):
         magnitude = log_w + np.log(np.abs(centred))
-    offset = 1e5
-    return np.where(centred > 0, offset + magnitude, np.where(centred < 0, -offset - magnitude, 0.0))
+    sign = np.sign(centred).astype(np.int8)
+    value = np.where(sign > 0, magnitude, np.where(sign < 0, -magnitude, 0.0))
+    if values.ndim == 1:
+        return _dense_rank(primary, sign, value)
+    return np.stack([_dense_rank(primary[:, c], sign[:, c], value[:, c]) for c in range(values.shape[1])], axis=1)
 
 
 def dac_metrics(probs: np.ndarray, distance: np.ndarray, phi: float, labels: np.ndarray) -> dict:
-    """metrics() of the DAC probabilities with decisions and rankings taken in exact arithmetic."""
+    """metrics() of the DAC probabilities, with the decisions of the base probabilities (which DAC never changes) and
+    rankings that stay exact where the mixed probabilities round to 1/K."""
+    probs = clip_like_metrics(probs)
     k = probs.shape[1]
-    mixed = np.clip(dac(probs, distance, phi), EPS, 1.0)
-    mixed = mixed / mixed.sum(axis=1, keepdims=True)
+    mixed = dac(probs, distance, phi)
     preds = probs.argmax(axis=1)
     correct = (preds == labels).astype(float)
     order = np.argsort(-dac_order_key(probs.max(axis=1), distance, phi, k), kind="stable")
@@ -150,8 +173,14 @@ def kneedle(ece: np.ndarray, one_minus_prauc: np.ndarray) -> int:
     return int(front[np.argmax(1.0 - xn - yn)])
 
 
-def select_phi(p_ind: np.ndarray, y_ind: np.ndarray, d_ind: np.ndarray, p_ood: np.ndarray, d_ood: np.ndarray) -> tuple:
-    grid = np.r_[0.0, PHI_GRID]
+def phi_grid(max_exponent: int = PHI_MAX_EXPONENT) -> np.ndarray:
+    return np.r_[0.0, np.logspace(-2, max_exponent, PHI_POINTS_PER_DECADE * (max_exponent + 2) + 1)]
+
+
+def select_phi(p_ind: np.ndarray, y_ind: np.ndarray, d_ind: np.ndarray, p_ood: np.ndarray, d_ood: np.ndarray,
+               max_exponent: int = PHI_MAX_EXPONENT) -> tuple:
+    grid = phi_grid(max_exponent)
+    p_ind, p_ood = clip_like_metrics(p_ind), clip_like_metrics(p_ood)
     membership = np.r_[np.ones(len(p_ind)), np.zeros(len(p_ood))]
     ece, one_minus = np.empty(len(grid)), np.empty(len(grid))
     for i, phi in enumerate(grid):
@@ -163,7 +192,7 @@ def select_phi(p_ind: np.ndarray, y_ind: np.ndarray, d_ind: np.ndarray, p_ood: n
     return float(grid[j]), float(ece[j]), float(1.0 - one_minus[j])
 
 
-def process_run(run: dict, gold: dict, natural_codemixed: bool) -> list:
+def process_run(run: dict, gold: dict, natural_codemixed: bool, max_exponent: int = PHI_MAX_EXPONENT) -> list:
     d, task = run["dir"], run["task"]
     if not (d / "cal_hidden.npy").exists():
         return []
@@ -193,8 +222,9 @@ def process_run(run: dict, gold: dict, natural_codemixed: bool) -> list:
         d_c = knn_distance(normalise(np.load(d / f"{cal}_hidden.npy").astype(np.float64)), bank)
         if len(p_t) != len(y_t) or len(d_t) != len(y_t):
             raise ValueError(f"{d.name}: {cond} outputs do not match the labels")
-        phi, ece_ind, prauc = select_phi(p_ind, y_src[ind_idx], d_ind, p_c, d_c)
-        base = {**key, "condition": cond, "n_items": len(y_t), "phi": phi, "ind_ece_at_phi": ece_ind,
+        phi, ece_ind, prauc = select_phi(p_ind, y_src[ind_idx], d_ind, p_c, d_c, max_exponent)
+        base = {**key, "condition": cond, "n_items": len(y_t), "phi": phi,
+                "phi_at_upper_bound": bool(phi >= 10.0 ** max_exponent), "ind_ece_at_phi": ece_ind,
                 "membership_prauc_at_phi": prauc, "distance_ind_median": float(np.median(d_ind)),
                 "distance_target_median": float(np.median(d_t)),
                 "mixing_weight_target_mean": float(np.exp(-phi * d_t).mean())}
@@ -220,7 +250,9 @@ def summarise(per_run: pd.DataFrame) -> pd.DataFrame:
         w = wins[(wins.task == task) & (wins.condition == cond)]
         row = {"task": task, "condition": cond, "regime": regimes.get((task, cond), "unassigned"),
                "method": method, "n_runs": g.run_id.nunique(), **{c: g[c].mean() for c in OUTCOMES},
-               "phi_median": g.phi.median(), "mixing_weight_target_mean": g.mixing_weight_target_mean.mean()}
+               "phi_median": g.phi.median(), "phi_at_upper_bound_share": g.phi_at_upper_bound.mean(),
+               "phi_zero_share": (g.phi == 0).mean(),
+               "mixing_weight_target_mean": g.mixing_weight_target_mean.mean()}
         if method == "dac":
             row.update({"dac_nll_win_share": w.dac_nll_win.mean(),
                         "dac_macro_f1_change_max_abs": w.dac_macro_f1_change.abs().max(),
@@ -235,6 +267,8 @@ def main() -> None:
     parser.add_argument("--natural-codemixed", action="store_true",
                         help="evaluate only the held-out natural code-mixed targets")
     parser.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) // 2))
+    parser.add_argument("--phi-max-exponent", type=int, default=PHI_MAX_EXPONENT,
+                        help="largest phi of the grid is 10**this; non-default values write suffixed tables")
     args = parser.parse_args()
     use_natural_codemixed_scope(args.natural_codemixed)
     for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -244,7 +278,8 @@ def main() -> None:
     runs = encoder_runs()
     rows = []
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(process_run, run, gold, args.natural_codemixed): run["dir"].name for run in runs}
+        futures = {pool.submit(process_run, run, gold, args.natural_codemixed, args.phi_max_exponent): run["dir"].name
+                   for run in runs}
         for i, future in enumerate(as_completed(futures)):
             rows += future.result()
             print(f"[{i + 1}/{len(runs)}] {futures[future]} ({time.time() - start:.0f} s)", flush=True)
@@ -253,14 +288,17 @@ def main() -> None:
     per_run = pd.DataFrame(rows).sort_values(["task", "condition", "run_id", "method"]).reset_index(drop=True)
     summary = summarise(per_run).sort_values(["task", "condition", "method"]).reset_index(drop=True)
     TABLES.mkdir(parents=True, exist_ok=True)
+    suffix = "" if args.phi_max_exponent == PHI_MAX_EXPONENT else f"_phi_max_1e{args.phi_max_exponent}"
     for name, table in (("distance_aware_calibration_per_run.csv", per_run),
                         ("distance_aware_calibration_summary.csv", summary)):
-        table.to_csv(TABLES / scoped_table_name(name), index=False, float_format="%.6g", lineterminator="\n")
-        print(f"Wrote {TABLES / scoped_table_name(name)} ({len(table)} rows)")
+        out = TABLES / scoped_table_name(name.replace(".csv", f"{suffix}.csv"))
+        table.to_csv(out, index=False, float_format="%.6g", lineterminator="\n")
+        print(f"Wrote {out} ({len(table)} rows)")
     pd.set_option("display.width", 200)
     view = summary.pivot_table(index=["task", "condition", "regime"], columns="method", values=["macro_f1", "nll"])
     print(view.round(3).to_string())
-    d = summary[summary.method == "dac"][["task", "condition", "regime", "phi_median", "mixing_weight_target_mean",
+    d = summary[summary.method == "dac"][["task", "condition", "regime", "phi_median", "phi_at_upper_bound_share",
+                                          "phi_zero_share", "mixing_weight_target_mean",
                                           "dac_nll_win_share", "dac_macro_f1_change_max_abs", "dac_auroc_change_mean"]]
     print(d.round(4).to_string(index=False))
     print(f"Finished in {time.time() - start:.0f} s")

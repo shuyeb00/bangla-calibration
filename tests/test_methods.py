@@ -124,8 +124,9 @@ def test_shrinkage_beats_mle_exactly_when_proposition_2_says_so(tau2, sigma2, n,
 
 def test_distance_aware_calibration_keeps_decisions_under_underflow():
     from scipy.special import softmax
+    from sklearn.metrics import roc_auc_score
 
-    from src.distance_aware_calibration import dac, dac_metrics
+    from src.distance_aware_calibration import clip_like_metrics, dac, dac_metrics, dac_order_key
     from src.shift_recalibration import metrics
 
     rng = np.random.default_rng(0)
@@ -133,8 +134,18 @@ def test_distance_aware_calibration_keeps_decisions_under_underflow():
         y = rng.integers(0, k, 2000)
         logits = rng.normal(0, 1, (2000, k))
         logits[np.arange(2000), y] += 1.5
+        logits[:500] *= 12.0  # saturated probabilities, which differ from each other by about 1e-12
         p = softmax(logits, axis=1)
         d = rng.uniform(0.2, 1.4, 2000)
-        exact, reference = dac_metrics(p, d, 0.5, y), metrics(dac(p, d, 0.5), y)
-        assert all(abs(exact[m] - reference[m]) < 1e-12 for m in reference)
+        assert dac_metrics(p, d, 0.0, y) == metrics(p, y)
+        clipped = clip_like_metrics(p)
+        for phi in (0.5, 2.0):
+            exact, mixed = dac_metrics(p, d, phi, y), dac(clipped, d, phi)
+            assert exact["macro_f1"] == metrics(p, y)["macro_f1"]
+            assert abs(exact["nll"] - metrics(mixed, y)["nll"]) < 1e-9
+            if k == 2:
+                assert abs(exact["auroc"] - roc_auc_score(y, mixed[:, 1])) < 1e-12
+            confidence = mixed.max(axis=1)
+            ranks = dac_order_key(clipped.max(axis=1), d, phi, k)
+            assert (np.argsort(confidence, kind="stable") == np.argsort(ranks, kind="stable")).all()
         assert dac_metrics(p, d, 1000.0, y)["macro_f1"] == metrics(p, y)["macro_f1"]
