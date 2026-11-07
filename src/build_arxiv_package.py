@@ -1,12 +1,13 @@
 """Self-contained LaTeX source of the manuscript for arXiv, and the two PDFs built from the same source.
 
-The arXiv source uses the TMLR `preprint` option (author names, no venue header), places every figure and generated
-LaTeX table next to main.tex, and ships the compiled bibliography (main.bbl), so arXiv needs no BibTeX run and no file
-outside the archive. The same sources, with the default option, give the anonymous review PDF. Both PDFs are compiled
-from the extracted archive in an empty directory, which checks that the archive is complete.
+The manuscript uses the ACM class (acmart, acmsmall format of ACM TALLIP). The arXiv source uses the `nonacm` option
+(no ACM reference block, copyright notice or line numbers), places every figure and generated LaTeX table next to
+main.tex, and ships the class file and the compiled bibliography (main.bbl), so arXiv needs no BibTeX run and no file
+outside the archive. The same sources with the journal options (`review`: line numbers) give the submission PDF. Both
+PDFs are compiled from the extracted archive in an empty directory, which checks that the archive is complete.
 
     python -m src.build_arxiv_package [--out release]
-Writes release/arxiv_source.tar.gz, release/manuscript_preprint.pdf and release/manuscript_anonymous.pdf.
+Writes release/arxiv_source.tar.gz, release/manuscript_preprint.pdf and release/manuscript_submission.pdf.
 Needs pdflatex and bibtex on the PATH.
 """
 
@@ -23,7 +24,9 @@ from src.config import BASE_DIR
 PAPER = BASE_DIR / "paper"
 FIGURES = BASE_DIR / "thesis" / "figures" / "grid_max_length_512" / "publication"
 TABLES = BASE_DIR / "thesis" / "tables"
-STYLE_FILES = ("tmlr.sty", "tmlr.bst", "fancyhdr.sty", "math_commands.tex", "references.bib", "TMLR_STYLE_LICENSE")
+STYLE_FILES = ("acmart.cls", "ACM-Reference-Format.bst", "math_commands.tex", "references.bib")
+DOCUMENTCLASS = re.compile(r"\\documentclass\[[^\]]*\]\{acmart\}")
+CLASS_OPTIONS = {"preprint": "acmsmall,screen,nonacm", "submission": "acmsmall,screen,review"}
 INPUT_TABLE = re.compile(r"\\input\{\.\./thesis/tables/([^}]+)\}")
 GRAPHIC = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 
@@ -78,8 +81,9 @@ def staged_source(stage: Path) -> None:
 
 def with_option(main: Path, option: str) -> None:
     text = main.read_text(encoding="utf-8")
-    new = re.sub(r"\\usepackage(\[[^\]]*\])?\{tmlr\}", r"\\usepackage" + (f"[{option}]" if option else "") + "{tmlr}",
-                 text, count=1)
+    new, n = DOCUMENTCLASS.subn(lambda m: "\\documentclass[" + CLASS_OPTIONS[option] + "]{acmart}", text, count=1)
+    if n != 1:
+        raise SystemExit("main.tex has no \\documentclass[...]{acmart} line")
     main.write_text(new, encoding="utf-8")
 
 
@@ -91,7 +95,7 @@ def build(out: Path) -> None:
         staged_source(stage)
         with_option(stage / "main.tex", "preprint")
         latex(stage)
-        for name in ("references.bib", "tmlr.bst"):
+        for name in ("references.bib", "ACM-Reference-Format.bst"):
             (stage / name).unlink()
         for p in stage.iterdir():
             if p.suffix in (".aux", ".log", ".blg", ".out", ".pdf"):
@@ -104,8 +108,8 @@ def build(out: Path) -> None:
                     info.mtime, info.uid, info.gid, info.uname, info.gname = 0, 0, 0, "", ""
                     with open(p, "rb") as f:
                         tar.addfile(info, f)
-        for option, pdf in (("preprint", "manuscript_preprint.pdf"), ("", "manuscript_anonymous.pdf")):
-            check = tmp / f"check_{option or 'anonymous'}"
+        for option, pdf in (("preprint", "manuscript_preprint.pdf"), ("submission", "manuscript_submission.pdf")):
+            check = tmp / f"check_{option}"
             check.mkdir()
             with tarfile.open(archive) as tar:
                 if hasattr(tarfile, "data_filter"):
@@ -113,13 +117,10 @@ def build(out: Path) -> None:
                 else:
                     tar.extractall(check)
             with_option(check / "main.tex", option)
-            if not option:
-                main = check / "main.tex"
-                main.write_text("\\pdfinfoomitdate=1\n\\pdftrailerid{}\n" + main.read_text(encoding="utf-8"), encoding="utf-8")
             latex(check)
             shutil.copy2(check / "main.pdf", out / pdf)
     print(f"Wrote {archive} ({archive.stat().st_size / 1e6:.2f} MB), {out / 'manuscript_preprint.pdf'} and "
-          f"{out / 'manuscript_anonymous.pdf'}; both compiled from the archive alone")
+          f"{out / 'manuscript_submission.pdf'}; both compiled from the archive alone")
 
 
 def main():

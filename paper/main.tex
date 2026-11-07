@@ -1,44 +1,72 @@
-\documentclass[10pt]{article}
-\usepackage{tmlr}
-% Camera-ready: \usepackage[accepted]{tmlr}; preprint: \usepackage[preprint]{tmlr}
+\documentclass[acmsmall,screen,review]{acmart}
+\acmJournal{TALLIP}
+\citestyle{acmauthoryear}
+\setcopyright{none}
+\acmYear{2026}
 
 \input{math_commands.tex}
 
-\usepackage{hyperref}
-\usepackage{url}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{amsmath,amssymb,amsthm}
 \graphicspath{{../thesis/figures/grid_max_length_512/publication/}}
 
-\newtheorem{proposition}{Proposition}
-\newtheorem{corollary}{Corollary}
-
-\title{Temperature Is the Wrong Knob: How Text Classifiers Fail\\Across Dialects, Scripts and Code-Mixing}
-
-\author{\name Md Suheb Ahmed \email suhebahmedabdullah@gmail.com \\
-      \addr Department of Computer Science and Engineering, Metropolitan University, Sylhet, Bangladesh
-      \AND
-      \name Ferdus Ahmed \\
-      \addr Department of Computer Science and Engineering, Metropolitan University, Sylhet, Bangladesh
-      \AND
-      \name Abu Jafar Md Jakaria \\
-      \addr Department of Computer Science and Engineering, Metropolitan University, Sylhet, Bangladesh}
-
-\def\month{MM}
-\def\year{YYYY}
-\def\openreview{\url{https://openreview.net/forum?id=XXXX}}
-
 \begin{document}
+
+\title{Temperature Is the Wrong Knob: How Text Classifiers Fail Across Dialects, Scripts and Code-Mixing}
+
+\author{Md Suheb Ahmed}
+\email{suhebahmedabdullah@gmail.com}
+\affiliation{%
+  \institution{Metropolitan University}
+  \department{Department of Computer Science and Engineering}
+  \city{Sylhet}
+  \country{Bangladesh}}
+
+\author{Ferdus Ahmed}
+\affiliation{%
+  \institution{Metropolitan University}
+  \department{Department of Computer Science and Engineering}
+  \city{Sylhet}
+  \country{Bangladesh}}
+
+\author{Abu Jafar Md Jakaria}
+\affiliation{%
+  \institution{Metropolitan University}
+  \department{Department of Computer Science and Engineering}
+  \city{Sylhet}
+  \country{Bangladesh}}
+
+\renewcommand{\shortauthors}{Ahmed et al.}
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>10010147.10010178.10010179</concept_id>
+  <concept_desc>Computing methodologies~Natural language processing</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10010147.10010257</concept_id>
+  <concept_desc>Computing methodologies~Machine learning</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Computing methodologies~Natural language processing}
+\ccsdesc[300]{Computing methodologies~Machine learning}
+
+\keywords{Bangla, code-mixing, dialects, distribution shift, calibration, temperature scaling, conformal prediction,
+selective prediction}
 
 \maketitle
 
 {\renewcommand{\thefootnote}{}\footnotetext{\textit{Use of AI tools.} Part of the code used in this study was generated with Claude (Anthropic); the authors reviewed, verified and tested all generated code. AI assistance was also used for grammar and language editing; all edits were reviewed and approved by the authors. The methods, analyses and their verification were carried out by the authors, who take full responsibility for the content.}}
 % Further declaration points, if any, to be written by the authors.
-
-\begin{abstract}
-\input{sections/abstract}
-\end{abstract}
 
 \input{sections/introduction}
 \input{sections/problem_setting}
@@ -51,8 +79,8 @@
 
 \input{sections/statements}
 
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
-\bibliographystyle{tmlr}
 
 \appendix
 \input{sections/appendix}
