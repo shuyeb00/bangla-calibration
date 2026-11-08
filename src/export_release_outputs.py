@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import (BASE_DIR, DATA_DIR, RESULTS_DIR, get_cross_definition_paths, get_cross_language_paths,
-                        get_natural_codemixed_paths, get_shift_conditions_paths)
+                        get_natural_codemixed_paths, get_shift_conditions_paths, get_translation_factorial_paths)
 
 GRID_DIR = RESULTS_DIR / "grid_max_length_512"
 TRAINING_SUMMARY = RESULTS_DIR / "tables" / "grid_max_length_512_training_summary.csv"
@@ -275,7 +275,7 @@ def verify(bundle: Path) -> dict:
 def split_paths(task: str) -> dict:
     paths = {s: DATA_DIR / task / f"{s}.csv" for s in ("train", "val", "cal", "test")}
     for fn in (get_shift_conditions_paths, get_natural_codemixed_paths, get_cross_definition_paths,
-               get_cross_language_paths):
+               get_cross_language_paths, get_translation_factorial_paths):
         paths.update(fn(task))
     return paths
 
