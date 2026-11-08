@@ -95,6 +95,7 @@ LoRA learning rate and warmup are selected per task and encoder on validation ma
 | `src/output_dependent_analyses.py` | Runs every analysis above that needs the private outputs, in one command, and checks that regenerated committed tables keep their rows |
 | `src/export_release_outputs.py` | Release bundle of the saved model outputs (logits and item indices, no text, no labels) as checksummed shards, and its restoration with labels rebuilt from the prepared datasets |
 | `src/build_supplementary_archive.py` | Anonymised supplementary archive for double-blind review (identifying strings removed and scanned for, size limit checked) |
+| `src/supplementary_file_map.py` | Maps every file of the supplementary archive to the manuscript sections it supports, or marks it as not used for a claim (`paper/supplementary_file_map.csv`, checked by `tests/test_supplementary_file_map.py`) |
 | `src/build_arxiv_package.py` | Self-contained arXiv source (preprint option, figures, tables and `main.bbl` next to `main.tex`) and the preprint and anonymous PDFs, both compiled from that archive alone |
 | `tests/test_manuscript_numbers.py` | Recomputes every number quoted in the manuscript text from the committed tables |
 | `thesis/figures/`, `thesis/tables/` | Figures and LaTeX tables |

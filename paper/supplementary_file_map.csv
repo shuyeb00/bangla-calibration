@@ -1,0 +1,382 @@
+path,role,supports
+LICENSE,environment,reproduction (REPRODUCIBILITY.md)
+REPRODUCIBILITY.md,environment,reproduction (REPRODUCIBILITY.md)
+data/DATASET_SCHEMA.md,data documentation,data_protocol; appendix
+data/DATA_SOURCES.md,data documentation,data_protocol; appendix
+data/bidwesh_source_overlap.csv,claim table,data_protocol
+data/corpus_licences.csv,data documentation,data_protocol; appendix
+notebooks/00_data_preparation.ipynb,data documentation,data_protocol; appendix
+paper/references.bib,manuscript,all sections
+paper/sections/abstract.tex,manuscript,all sections
+paper/sections/appendix.tex,manuscript,all sections
+paper/sections/background.tex,manuscript,all sections
+paper/sections/conclusion.tex,manuscript,all sections
+paper/sections/data_protocol.tex,manuscript,all sections
+paper/sections/discussion.tex,manuscript,all sections
+paper/sections/introduction.tex,manuscript,all sections
+paper/sections/related_work.tex,manuscript,all sections
+paper/sections/results_diagnosis.tex,manuscript,all sections
+paper/sections/results_interventions.tex,manuscript,all sections
+paper/sections/shift_triage.tex,manuscript,all sections
+paper/sections/statements.tex,manuscript,all sections
+paper/supplementary_file_map.csv,manuscript,this map
+reproduce.sh,environment,reproduction (REPRODUCIBILITY.md)
+requirements-analysis-lock.txt,environment,reproduction (REPRODUCIBILITY.md)
+requirements-analysis.txt,environment,reproduction (REPRODUCIBILITY.md)
+requirements-training.txt,environment,reproduction (REPRODUCIBILITY.md)
+requirements.txt,environment,reproduction (REPRODUCIBILITY.md)
+results/lora_lr_sweep/lora_hparam_selection.csv,data documentation,appendix (LoRA learning-rate selection)
+results/lora_lr_sweep/lora_hparam_sweep_seed42.csv,data documentation,appendix (LoRA learning-rate selection)
+results/lora_lr_sweep_pretraining_matched/lora_hparam_selection.csv,data documentation,appendix (LoRA learning-rate selection)
+results/lora_lr_sweep_pretraining_matched/lora_hparam_sweep_seed42.csv,data documentation,appendix (LoRA learning-rate selection)
+results/tables/grid_max_length_512/BENCHMARK_SUMMARY_REPORT.md,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/EXTENDED_DIAGNOSTICS_REPORT.md,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/all_pairs_bias_gain.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/all_pairs_bias_gain_association.csv,claim table,abstract
+results/tables/grid_max_length_512/analysis_cohorts.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/batch_calibration_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/batch_calibration_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/batch_calibration_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/batch_calibration_summary_natural_codemixed.csv,claim table,results_interventions
+results/tables/grid_max_length_512/bcts_shift_coordinates_per_run.csv,claim table,abstract
+results/tables/grid_max_length_512/bcts_shift_coordinates_summary.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/calibration_metric_robustness_agreement.csv,claim table,appendix
+results/tables/grid_max_length_512/calibration_metric_robustness_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_exchangeability_stress.csv,claim table,appendix
+results/tables/grid_max_length_512/conformal_exchangeability_stress_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_lac_aps_raps_aggregated.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_lac_aps_raps_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_mapie_crosscheck.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_under_shift_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_under_shift_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/conformal_under_shift_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/conformal_under_shift_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/contrast_statistics.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/convergence_sensitivity_all_seeds.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/corpus_level_robustness.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/corpus_level_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/correction_ablation_weighting.csv,claim table,abstract; results_diagnosis
+results/tables/grid_max_length_512/cross_definition_contrasts.csv,display source,appendix
+results/tables/grid_max_length_512/cross_definition_english_share.csv,claim table,results_interventions
+results/tables/grid_max_length_512/cross_definition_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/cross_definition_summary.csv,claim table,appendix; results_interventions; shift_triage
+results/tables/grid_max_length_512/cross_definition_training_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/cross_language_training_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/definition_language_factorial_cells.csv,claim table,results_interventions
+results/tables/grid_max_length_512/definition_language_factorial_contrasts.csv,claim table,results_interventions
+results/tables/grid_max_length_512/definition_language_factorial_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/definition_language_factorial_training_summary.csv,claim table,abstract; results_interventions
+results/tables/grid_max_length_512/definition_language_factorial_within_cluster.csv,claim table,results_interventions
+results/tables/grid_max_length_512/distance_aware_calibration_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_per_run_phi_max_1e5.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_per_run_phi_max_1e5_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/distance_aware_calibration_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_summary_phi_max_1e5.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/distance_aware_calibration_summary_phi_max_1e5_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/error_annotation_agreement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/error_annotation_cause_distribution.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/error_correlates_adjusted.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/error_correlates_annotation_validity.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/error_correlates_marginal.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/extended_calibration_aggregated.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/extended_calibration_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/few_label_finetuning_comparison.csv,claim table,shift_triage
+results/tables/grid_max_length_512/few_label_finetuning_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_conditions.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_conditions_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_heldout_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_pairs.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_pairs_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_free_severity_validation.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_requirement_power.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_requirement_summary.csv,claim table,shift_triage
+results/tables/grid_max_length_512/label_shift_estimators_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/label_shift_estimators_summary.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/last_layer_retraining_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/last_layer_retraining_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/last_layer_retraining_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/last_layer_retraining_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_conformal_risk_control_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_conformal_risk_control_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_conformal_risk_control_summary.csv,claim table,shift_triage
+results/tables/grid_max_length_512/llm_conformal_risk_control_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_coverage.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_coverage_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_encoder_comparison.csv,claim table,appendix; shift_triage
+results/tables/grid_max_length_512/llm_encoder_comparison_natural_codemixed.csv,claim table,shift_triage
+results/tables/grid_max_length_512/llm_human_agreement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_label_token_counts.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_metrics_per_run.csv,claim table,appendix
+results/tables/grid_max_length_512/llm_metrics_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_metrics_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_metrics_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_recalibration_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_recalibration_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_recalibration_prior.csv,claim table,appendix
+results/tables/grid_max_length_512/llm_recalibration_prior_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_recalibration_summary.csv,claim table,appendix; shift_triage
+results/tables/grid_max_length_512/llm_recalibration_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_routing_recalibrated.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_routing_recalibrated_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/location_shift_simulation.csv,claim table,appendix
+results/tables/grid_max_length_512/location_shift_simulation_settings.csv,claim table,abstract
+results/tables/grid_max_length_512/map_bcts_prior_sensitivity.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/map_bcts_prior_sensitivity_natural_codemixed.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/mechanistic_shift_correlations.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/membership_completion_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/membership_likelihood_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/metrics_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/metrics_seed_aggregated.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/mixed_effects_sensitivity.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/operating_point_by_regime.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/operating_point_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/operating_point_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/prior_drift_stress_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/prior_drift_stress_summary.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/prior_shift_stress_per_run.csv,claim table,appendix; results_diagnosis
+results/tables/grid_max_length_512/prior_shift_stress_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/prompt_variant_human_agreement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/prompt_variant_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/prompt_variant_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/proposition_simulation_checks.csv,claim table,appendix
+results/tables/grid_max_length_512/regime_map_convergence_sensitivity.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/risk_control_under_shift_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/risk_control_under_shift_per_run_natural_codemixed.csv,claim table,introduction
+results/tables/grid_max_length_512/risk_control_under_shift_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/risk_control_under_shift_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/routing_few_label.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/routing_few_label_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/routing_gate.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/routing_gate_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/run_inclusion_summary.csv,claim table,data_protocol
+results/tables/grid_max_length_512/script_intervention_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/script_intervention_summary.csv,claim table,results_interventions
+results/tables/grid_max_length_512/selective_prediction_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/selective_prediction_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/selective_prediction_routed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/selective_prediction_routed_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/selective_prediction_summary.csv,claim table,shift_triage
+results/tables/grid_max_length_512/selective_prediction_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/sentiment_prompt_variant_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/sentiment_prompt_variant_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/shift_detection.csv,claim table,shift_triage
+results/tables/grid_max_length_512/shift_detection_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_domain_classifier.csv,claim table,appendix
+results/tables/grid_max_length_512/shift_domain_classifier_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_indicators_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_indicators_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_quantification.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_recalibration_few_label_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_recalibration_few_label_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_recalibration_label_free_per_run.csv,claim table,introduction; results_diagnosis
+results/tables/grid_max_length_512/shift_recalibration_label_free_per_run_natural_codemixed.csv,claim table,appendix; introduction
+results/tables/grid_max_length_512/shift_recalibration_prior.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_recalibration_prior_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_recalibration_summary.csv,claim table,appendix; results_interventions
+results/tables/grid_max_length_512/shift_recalibration_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_triage_summary.csv,claim table,appendix; shift_triage
+results/tables/grid_max_length_512/shift_triage_summary_natural_codemixed.csv,claim table,shift_triage
+results/tables/grid_max_length_512/shift_triage_survival.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/shift_triage_survival_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/significance_results.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/source_transfer_per_run.csv,claim table,abstract; appendix; data_protocol; discussion; introduction; results_diagnosis
+results/tables/grid_max_length_512/source_transfer_regime_map.csv,claim table,abstract; appendix; background; discussion; introduction; results_diagnosis
+results/tables/grid_max_length_512/source_transfer_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/source_transfer_validation.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/subset_robustness_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/subset_robustness_summary.csv,claim table,data_protocol
+results/tables/grid_max_length_512/surface_feature_baseline.csv,claim table,appendix
+results/tables/grid_max_length_512/surface_feature_baseline_natural_codemixed.csv,display source,appendix
+results/tables/grid_max_length_512/sylheti_consensus_per_run.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/sylheti_consensus_summary.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/target_demonstration_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/target_demonstration_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/tokenization_shift_correlations.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/topic_cluster_assignments.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/topic_cluster_assignments_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/topic_cluster_label_dependence.csv,claim table,appendix
+results/tables/grid_max_length_512/topic_cluster_label_dependence_natural_codemixed.csv,claim table,appendix
+results/tables/grid_max_length_512/topic_cluster_within_auroc.csv,claim table,appendix
+results/tables/grid_max_length_512/topic_cluster_within_auroc_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/translation_preparation_record.json,claim table,statements
+results/tables/grid_max_length_512/translation_quality.csv,claim table,appendix
+results/tables/grid_max_length_512/translation_term_retention.csv,claim table,results_interventions
+results/tables/grid_max_length_512/triage_joint_collapse_stress.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/triage_joint_collapse_survival.csv,claim table,appendix
+results/tables/grid_max_length_512/triage_label_requirement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/triage_prevalence_stress_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/triage_prevalence_stress_summary_natural_codemixed.csv,claim table,shift_triage
+results/tables/grid_max_length_512/triage_ranking_certification.csv,claim table,shift_triage
+results/tables/grid_max_length_512/triage_ranking_certification_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/triage_selection_sensitivity_summary.csv,claim table,shift_triage
+results/tables/grid_max_length_512/triage_selection_sensitivity_summary_natural_codemixed.csv,claim table,shift_triage
+results/tables/grid_max_length_512_training_summary.csv,claim table,abstract; appendix
+results/tables/human_validation_adequacy.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/human_validation_agreement.csv,claim table,appendix
+results/tables/human_validation_diagnostics.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/human_validation_item_labels.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/label_audit_agreement.csv,claim table,appendix; data_protocol
+results/tables/sequence_length_cost.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/shift_statistics_lexical.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/shift_statistics_noise.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/shift_statistics_tokenization.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/shift_statistics_tokenizers.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/shift_statistics_truncation.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/sylheti_verification_agreement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/tokenization_consistency_autotokenizer_default.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/tokenization_consistency_pretraining_matched.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/tokenizer_normalisation_mlm_probe.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/tokenizer_normalisation_vocabulary.csv,thesis analysis,"thesis analysis, not used for a claim"
+src/__init__.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/all_pairs_bias_gain.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/analysis_and_plots.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/batch_calibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/bcts_shift_coordinates.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/bidwesh_source_overlap.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/build_arxiv_package.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/calibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/calibration_metric_robustness.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/config.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/conformal_exchangeability_stress_test.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/contrast_statistics.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/convergence_audit.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/convergence_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/corpus_level_robustness.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/cross_definition_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/definition_language_factorial.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/distance_aware_calibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/error_annotation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/error_correlates.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/evaluate.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/export_release_outputs.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/extended_diagnostics.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/factorial_within_cluster_contrasts.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/fetch_run_outputs.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/few_label_finetuning.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/few_label_finetuning_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/human_validation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/label_audit.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/label_free_severity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/label_requirement_power.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/label_shift_estimators.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/last_layer_retraining.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_evaluation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_human_agreement.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_inference.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_label_token_audit.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_membership_inference.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/llm_shift_recalibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/location_shift_simulation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/lora_lr_sweep.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/lora_lr_sweep_parallel.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/lora_retrain_parallel.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/map_bcts_prior_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/membership_inference_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/mixed_effects_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/model_inputs.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/operating_point_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/output_dependent_analyses.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prepare_natural_codemixed.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prepare_olid.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prepare_sentimix.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prepare_sylheti.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prior_drift_stress_test.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prior_shift_stress_test.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/prompt_variant_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/proposition_simulation_checks.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/publication_figures.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/publication_tables.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/run_cache.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/run_inclusion_summary.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/score_saved_encoders.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/script_intervention_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/select_lora_hparams.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/selective_prediction_under_shift.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/sentiment_prompt_variant_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/sequence_length_cost.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/shift_aware_routing.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/shift_recalibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/shift_statistics.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/shift_triage.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/significance.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/source_transfer_regimes.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/source_transfer_validation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/subset_robustness.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/supplementary_file_map.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/surface_feature_baseline.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/sylheti_consensus_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/target_demonstration_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/tokenization_consistency.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/tokenization_shift_correlations.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/tokenizer_normalisation_audit.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/topic_cluster_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/train.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/training_grid_parallel.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/translate_source_corpora.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/translation_audit.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/triage_joint_collapse_stress_test.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/triage_prevalence_stress_test.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/triage_selection_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+tests/test_manuscript_numbers.py,test,checks of the code and of every number in the text
+tests/test_methods.py,test,checks of the code and of every number in the text
+tests/test_reference_and_licence_records.py,test,checks of the code and of every number in the text
+tests/test_shift_estimators.py,test,checks of the code and of every number in the text
+tests/test_supplementary_file_map.py,test,checks of the code and of every number in the text
+thesis/figures/grid_max_length_512/conformal_lac_aps_raps_comparison.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/ece_variants_by_architecture_sentiment.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/noise_severity_curve_offensive.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/noise_severity_curve_sentiment.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/publication/all_pairs_bias_gain.pdf,figure,results_diagnosis
+thesis/figures/grid_max_length_512/publication/all_pairs_bias_gain.png,figure,results_diagnosis
+thesis/figures/grid_max_length_512/publication/bcts_shift_coordinates.pdf,figure,results_diagnosis
+thesis/figures/grid_max_length_512/publication/bcts_shift_coordinates.png,figure,results_diagnosis
+thesis/figures/grid_max_length_512/publication/collapse_causes.pdf,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/publication/collapse_causes.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/publication/cross_definition_auroc.pdf,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/publication/cross_definition_auroc.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/publication/encoder_llm_auroc_by_condition.pdf,figure,shift_triage
+thesis/figures/grid_max_length_512/publication/encoder_llm_auroc_by_condition.png,figure,shift_triage
+thesis/figures/grid_max_length_512/publication/few_label_adaptation_curves.pdf,figure,appendix
+thesis/figures/grid_max_length_512/publication/few_label_adaptation_curves.png,figure,appendix
+thesis/figures/grid_max_length_512/publication/regime_map_source_transfer.pdf,figure,appendix
+thesis/figures/grid_max_length_512/publication/regime_map_source_transfer.png,figure,appendix
+thesis/figures/grid_max_length_512/publication/script_intervention_auroc.pdf,figure,results_interventions
+thesis/figures/grid_max_length_512/publication/script_intervention_auroc.png,figure,results_interventions
+thesis/figures/grid_max_length_512/publication/source_corpus_factorial.pdf,figure,results_interventions
+thesis/figures/grid_max_length_512/publication/source_corpus_factorial.png,figure,results_interventions
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_barishal_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_barishal_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_chittagong_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_chittagong_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_noakhali_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d1_noakhali_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d2_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d2_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d3_noise10_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_shift_d3_noise10_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_offensive_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d1_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d1_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d2_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d2_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d3_noise10_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_shift_d3_noise10_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_test_source_scaled.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/reliability_sentiment_test_uncalibrated.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/risk_coverage_offensive_banglabert.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/figures/grid_max_length_512/risk_coverage_sentiment_banglabert.png,thesis analysis,"thesis analysis, not used for a claim"
+thesis/tables/contrast_families_holm.tex,generated table,appendix
+thesis/tables/correction_ablation_by_regime.tex,thesis analysis,"thesis analysis, not used for a claim"
+thesis/tables/cross_definition_contrasts.tex,generated table,appendix
+thesis/tables/prior_shift_ablation.tex,generated table,appendix
+thesis/tables/prior_shift_sentiment.tex,generated table,appendix
+thesis/tables/regime_map_source_transfer.tex,generated table,appendix
+thesis/tables/regime_threshold_sensitivity.tex,generated table,appendix
+thesis/tables/shift_triage_policies.tex,generated table,appendix
+thesis/tables/threshold_shift_operating_point.tex,generated table,results_diagnosis
+thesis/tables/training_objectives.tex,generated table,appendix
+thesis/tables/triage_prevalence_stress.tex,generated table,appendix
+thesis/theory/shift_triage_theory.md,theory,background; shift_triage; appendix

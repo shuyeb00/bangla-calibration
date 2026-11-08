@@ -27,7 +27,8 @@ from src.config import BASE_DIR
 DEFAULT_OUT = BASE_DIR / "release" / "supplementary.zip"
 LIMIT_BYTES = 100 * 10**6
 INCLUDE_PREFIXES = ("src/", "tests/", "notebooks/", "data/", "results/", "thesis/", "paper/sections/", "reproduce.sh",
-                    "requirements", "REPRODUCIBILITY.md", "LICENSE", "paper/references.bib")
+                    "requirements", "REPRODUCIBILITY.md", "LICENSE", "paper/references.bib",
+                    "paper/supplementary_file_map.csv")
 # This builder lists the identifying strings it removes, so it cannot itself be shipped anonymised.
 EXCLUDE = {"src/build_supplementary_archive.py", "notebooks/01_pipeline_validation.ipynb",
            "results/all_runs_summary.json"}
