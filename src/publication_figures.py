@@ -103,12 +103,11 @@ def regime_map():
         for _, row in d.iterrows():
             ax.annotate(condition_name(src, row.condition), (row.predicted_marginal_tv, row.auroc_retention),
                         xytext=LABEL_OFFSETS.get((src, row.condition), (4, 3)), textcoords="offset points", fontsize=6.5, color=INK_SECONDARY)
-        ax.set_title(f"{SOURCE_NAMES[src]}: {int(d.n_runs.iloc[0])} runs, {int(d.n_models.iloc[0])} encoders",
+        ax.set_title(f"{SOURCE_NAMES[src]}\n{int(d.n_runs.iloc[0])} runs, {int(d.n_models.iloc[0])} encoders",
                      loc="left")
         ax.set_xlim(-0.02, 0.58)
         ax.set_ylim(0.45, 1.04)
-    for ax in axes[1]:
-        ax.set_xlabel("Shift of the predicted-label marginal (total variation)")
+    fig.supxlabel("Shift of the predicted-label marginal (total variation)", fontsize=8, y=0.1, color=INK)
     fig.supylabel("AUROC retention (target / in domain)", fontsize=8, x=0.012, color=INK)
     handles = [plt.Line2D([], [], marker="o", ls="", color=SERIES[0], markersize=6, label="ranking retained"),
                plt.Line2D([], [], marker="o", ls="", markerfacecolor="white", markeredgecolor=SERIES[0], markersize=6,
@@ -117,7 +116,7 @@ def regime_map():
                           label="oracle temperature unbounded (collapse)"),
                plt.Line2D([], [], color=INK_SECONDARY, ls=":", lw=0.8, label="chance AUROC")]
     fig.legend(handles=handles, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06))
-    fig.tight_layout(rect=(0.012, 0.07, 1, 1))
+    fig.tight_layout(rect=(0.012, 0.11, 1, 1))
     return save(fig, "regime_map_source_transfer")
 
 
@@ -334,7 +333,7 @@ def all_pairs_bias_gain():
                    linewidth=0.9, zorder=4)
         ax.set_title(title, loc="left")
         ax.set_xlim(-0.02, 0.50)
-        ax.set_xlabel("Shift of the predicted-label marginal")
+        ax.set_xlabel("Predicted-label marginal shift")
     axes[0].set_ylabel("Macro-F1 gain over source TS")
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     bar = fig.colorbar(sm, ax=axes, fraction=0.035, pad=0.02)
