@@ -1,20 +1,20 @@
 model,pair_set,outcome,term,estimate,se,z,p,ci_low,ci_high,structure,var_corpus,var_pair,var_residual,n_obs,n_corpora,n_pairs,converged,usable,warnings
 intercept,threshold_shift,batch_f1,Intercept,0.107835,0.0200328,5.3829,7.3296e-08,0.068571,0.147098,corpus + pair within corpus,0.0017719,0.00137985,0.00197913,386,7,12,True,True,ConvergenceWarning
 intercept,threshold_shift,map_bcts_f1,Intercept,0.0725176,0.0224091,3.23608,0.00121185,0.0285966,0.116439,corpus + pair within corpus,0.00296658,0.000688609,0.00143751,386,7,12,True,True,ConvergenceWarning
-intercept,threshold_shift,batch_nll,Intercept,0.1744,0.028768,6.06231,1.34182e-09,0.118016,0.230785,corpus + pair within corpus,2.1488e-12,0.0107892,0.00824742,386,7,12,True,True,ConvergenceWarning
+intercept,threshold_shift,batch_nll,Intercept,0.1744,0.028768,6.06231,1.34182e-09,0.118016,0.230785,corpus + pair within corpus,0,0.0107892,0.00824742,386,7,12,True,True,ConvergenceWarning
 intercept,threshold_shift,map_bcts_nll,Intercept,0.174984,0.0330114,5.3007,1.15358e-07,0.110282,0.239685,pair only (corpus variance at boundary),0,0.0126994,0.00871145,386,7,12,True,True,
 intercept,marginal_shift,batch_f1,Intercept,0.0959642,0.0140022,6.85352,7.20569e-12,0.0685204,0.123408,corpus + pair within corpus,0.000620343,0.00176734,0.00176061,515,9,16,True,True,ConvergenceWarning
 intercept,marginal_shift,map_bcts_f1,Intercept,0.0593898,0.0146614,4.05077,5.10497e-05,0.0306541,0.0881256,corpus + pair within corpus,0.000966449,0.00138261,0.00121332,515,9,16,True,True,ConvergenceWarning
-intercept,marginal_shift,batch_nll,Intercept,0.180944,0.0365486,4.95079,7.39145e-07,0.10931,0.252578,corpus + pair within corpus,1.24292e-12,0.0206081,0.00880798,515,9,16,True,True,ConvergenceWarning
-intercept,marginal_shift,map_bcts_nll,Intercept,0.190691,0.0424443,4.49274,7.03132e-06,0.107502,0.27388,corpus + pair within corpus,5.51224e-12,0.0215629,0.00879464,515,9,16,True,True,ConvergenceWarning
-intercept,threshold_shift_natural_corpora,batch_f1,Intercept,0.0815282,0.012276,6.64128,3.10964e-11,0.0574678,0.105589,corpus + pair within corpus,4.30887e-13,0.00128964,0.00165154,306,5,9,True,True,ConvergenceWarning
+intercept,marginal_shift,batch_nll,Intercept,0.180944,0.0365486,4.95079,7.39145e-07,0.10931,0.252578,corpus + pair within corpus,0,0.0206081,0.00880798,515,9,16,True,True,ConvergenceWarning
+intercept,marginal_shift,map_bcts_nll,Intercept,0.190691,0.0424443,4.49274,7.03132e-06,0.107502,0.27388,corpus + pair within corpus,0,0.0215629,0.00879464,515,9,16,True,True,ConvergenceWarning
+intercept,threshold_shift_natural_corpora,batch_f1,Intercept,0.0815282,0.012276,6.64128,3.10964e-11,0.0574678,0.105589,corpus + pair within corpus,0,0.00128964,0.00165154,306,5,9,True,True,ConvergenceWarning
 intercept,threshold_shift_natural_corpora,map_bcts_f1,Intercept,0.0527612,0.0150603,3.50332,0.000459489,0.0232435,0.0822789,corpus + pair within corpus,0.000541759,0.000693953,0.00127788,306,5,9,True,True,ConvergenceWarning
-intercept,threshold_shift_natural_corpora,batch_nll,Intercept,0.164089,0.0364326,4.50391,6.67154e-06,0.0926825,0.235496,corpus + pair within corpus,6.91255e-13,0.0136768,0.00684988,306,5,9,True,True,ConvergenceWarning
+intercept,threshold_shift_natural_corpora,batch_nll,Intercept,0.164089,0.0364326,4.50391,6.67154e-06,0.0926825,0.235496,corpus + pair within corpus,0,0.0136768,0.00684988,306,5,9,True,True,ConvergenceWarning
 intercept,threshold_shift_natural_corpora,map_bcts_nll,Intercept,0.175703,0.0442721,3.96871,7.2263e-05,0.0889314,0.262475,pair only (corpus variance at boundary),0,0.0173257,0.00769562,306,5,9,True,True,
-intercept,marginal_shift_natural_corpora,batch_f1,Intercept,0.0769864,0.00978769,7.86563,3.67246e-15,0.0578028,0.0961699,corpus + pair within corpus,2.33612e-13,0.00112426,0.00148081,386,7,12,True,True,ConvergenceWarning
+intercept,marginal_shift_natural_corpora,batch_f1,Intercept,0.0769864,0.00978769,7.86563,3.67246e-15,0.0578028,0.0961699,corpus + pair within corpus,0,0.00112426,0.00148081,386,7,12,True,True,ConvergenceWarning
 intercept,marginal_shift_natural_corpora,map_bcts_f1,Intercept,0.0442016,0.0120617,3.66462,0.000247704,0.0205611,0.0678421,corpus + pair within corpus,0.00058001,0.000550938,0.00109358,386,7,12,True,True,ConvergenceWarning
-intercept,marginal_shift_natural_corpora,batch_nll,Intercept,0.14327,0.0352357,4.06604,4.78193e-05,0.074209,0.21233,corpus + pair within corpus,1.02403e-12,0.0128856,0.00579555,386,7,12,True,True,ConvergenceWarning
-intercept,marginal_shift_natural_corpora,map_bcts_nll,Intercept,0.161618,0.0419257,3.85488,0.000115789,0.0794455,0.243791,corpus + pair within corpus,6.33892e-12,0.0134158,0.00666491,386,7,12,True,True,ConvergenceWarning
+intercept,marginal_shift_natural_corpora,batch_nll,Intercept,0.14327,0.0352357,4.06604,4.78193e-05,0.074209,0.21233,corpus + pair within corpus,0,0.0128856,0.00579555,386,7,12,True,True,ConvergenceWarning
+intercept,marginal_shift_natural_corpora,map_bcts_nll,Intercept,0.161618,0.0419257,3.85488,0.000115789,0.0794455,0.243791,corpus + pair within corpus,0,0.0134158,0.00666491,386,7,12,True,True,ConvergenceWarning
 covariate,all_shifted,batch_f1,Intercept,0.0734691,0.0114191,6.43387,1.24396e-10,0.051088,0.0958501,corpus + pair within corpus,0.00029796,0.00199097,0.0012867,727,11,21,True,True,ConvergenceWarning
 covariate,all_shifted,batch_f1,tv_centred,0.219314,0.0949357,2.31013,0.020881,0.0332432,0.405384,corpus + pair within corpus,0.00029796,0.00199097,0.0012867,727,11,21,True,True,ConvergenceWarning
 covariate,all_shifted,map_bcts_f1,Intercept,0.046022,0.0130439,3.52824,0.000418325,0.0204565,0.0715876,corpus + pair within corpus,0.00112502,0.00118916,0.000884373,727,11,21,True,True,ConvergenceWarning

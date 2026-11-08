@@ -57,6 +57,11 @@ def fit_model(d: pd.DataFrame, outcome: str, formula_rhs: str, nested: bool):
     return best, sorted({type(w.message).__name__ for w in best_caught})
 
 
+def boundary_zero(variance: float) -> float:
+    # A corpus variance this small is the boundary estimate 0; its digits are optimiser noise that differs across BLAS builds.
+    return 0.0 if variance < 1e-8 else variance
+
+
 def fit(d: pd.DataFrame, outcome: str, formula_rhs: str) -> list:
     result, caught = fit_model(d, outcome, formula_rhs, nested=True)
     structure = "corpus + pair within corpus"
@@ -70,7 +75,7 @@ def fit(d: pd.DataFrame, outcome: str, formula_rhs: str) -> list:
         rows.append({"term": term, "estimate": result.fe_params[term], "se": result.bse_fe[term],
                      "z": result.tvalues[term], "p": result.pvalues[term], "ci_low": ci.loc[term, 0],
                      "ci_high": ci.loc[term, 1], "structure": structure,
-                     "var_corpus": float(result.cov_re.iloc[0, 0]) if nested else 0.0,
+                     "var_corpus": boundary_zero(float(result.cov_re.iloc[0, 0])) if nested else 0.0,
                      "var_pair": float(result.vcomp[0]) if nested else float(result.cov_re.iloc[0, 0]),
                      "var_residual": float(result.scale),
                      "n_obs": int(result.nobs), "n_corpora": d.corpus.nunique(), "n_pairs": d.pair.nunique(),
