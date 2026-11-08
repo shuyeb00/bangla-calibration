@@ -1,0 +1,16 @@
+run_id,model,seed,val_macro_f1,majority_baseline_val_f1,collapsed,non_converged,learning_rate,warmup_ratio,code_commit,transformers
+sentiment_hinglish_mdeberta_full_ft_lr2e-05_warmup0.1_seed123,mdeberta,123,0.64456,0.182141,False,False,2e-05,0.1,,5.16.1
+sentiment_hinglish_mdeberta_full_ft_lr2e-05_warmup0.1_seed2026,mdeberta,2026,0.645689,0.182141,False,False,2e-05,0.1,,5.16.1
+sentiment_hinglish_mdeberta_full_ft_lr2e-05_warmup0.1_seed42,mdeberta,42,0.639405,0.182141,False,False,2e-05,0.1,,5.16.1
+sentiment_hinglish_mdeberta_full_ft_lr2e-05_warmup0.1_seed7,mdeberta,7,0.645066,0.182141,False,False,2e-05,0.1,,5.16.1
+sentiment_hinglish_mdeberta_full_ft_lr2e-05_warmup0.1_seed99,mdeberta,99,0.646968,0.182141,False,False,2e-05,0.1,,5.16.1
+sentiment_hinglish_muril_full_ft_seed123,muril,123,0.636822,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_muril_full_ft_seed2026,muril,2026,0.633109,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_muril_full_ft_seed42,muril,42,0.637675,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_muril_full_ft_seed7,muril,7,0.640047,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_muril_full_ft_seed99,muril,99,0.640242,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_xlmr_base_full_ft_seed123,xlmr_base,123,0.638845,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_xlmr_base_full_ft_seed2026,xlmr_base,2026,0.634597,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_xlmr_base_full_ft_seed42,xlmr_base,42,0.634567,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_xlmr_base_full_ft_seed7,xlmr_base,7,0.629686,0.182141,False,False,2e-05,0,,5.16.1
+sentiment_hinglish_xlmr_base_full_ft_seed99,xlmr_base,99,0.641344,0.182141,False,False,2e-05,0,,5.16.1

@@ -1,0 +1,173 @@
+{
+  "mt_model": "facebook/nllb-200-3.3B",
+  "mt_revision": "1a07f7d195896b2114afcb79b7b57ab512e7b43e",
+  "labse_model": "setu4993/LaBSE",
+  "labse_revision": "5afa72968dfe068421082cbc30411073b15a6693",
+  "settings": {
+    "num_beams": 4,
+    "max_input_tokens": 256,
+    "max_new_tokens_factor": 1.5,
+    "max_new_tokens_offset": 10,
+    "max_batch_tokens": 3072,
+    "max_batch_items": 96
+  },
+  "limit_rows": null,
+  "shards": [
+    {
+      "shard": 0,
+      "items": 8760,
+      "sha256": "0e71c2581d909ce1b891a05f019cfa5c954b27cee6c511c39241fcb900ed3d38",
+      "wall_seconds": 2388.8,
+      "host": "28d2ce108c5f"
+    },
+    {
+      "shard": 1,
+      "items": 8760,
+      "sha256": "9f49d05e13fb525355ca5d2e3518a670fc0b4bab8e6dfb17145d0ec9ddde34f5",
+      "wall_seconds": 2232.7,
+      "host": "2841c9426e3b"
+    },
+    {
+      "shard": 2,
+      "items": 8760,
+      "sha256": "5f8333bd410660d7e39179fcd394ebe2d5548fef15adb014148f986e97e70872",
+      "wall_seconds": 2360.2,
+      "host": "eba62461fcc7"
+    },
+    {
+      "shard": 3,
+      "items": 8760,
+      "sha256": "1e20cc443f922fc2417512492a77b670ffc576c7c8e34ef1d0e1f7c54ccdf309",
+      "wall_seconds": 2435.4,
+      "host": "785b8a7e4b80"
+    },
+    {
+      "shard": 4,
+      "items": 8760,
+      "sha256": "cb2a33e910309259776b6b2a08146a569cda173bab57dffee337692b78e7a3fc",
+      "wall_seconds": 2280.2,
+      "host": "7e8061f7977e"
+    },
+    {
+      "shard": 5,
+      "items": 8760,
+      "sha256": "51c56d778fd57268d9f7126506b89637ed21add246c4fa61d2f34bf4e179b737",
+      "wall_seconds": 2387.0,
+      "host": "53ba6cbeed5f"
+    },
+    {
+      "shard": 6,
+      "items": 8760,
+      "sha256": "59665e1ce6e20b3f1a7dff83cc812c3d52b3471ef838ea00042cbb04fb6d6e58",
+      "wall_seconds": 2291.4,
+      "host": "3982f054d228"
+    }
+  ],
+  "tasks": {
+    "offensive_olid_bangla_mt": {
+      "train": {
+        "rows": 10725,
+        "dropped_empty": 0,
+        "offensive_share": 0.3307,
+        "sha256": "985c66203491f866eab229fe740b2a555d7e861d7681d814f447fae3aefe090e"
+      },
+      "val": {
+        "rows": 1324,
+        "dropped_empty": 0,
+        "offensive_share": 0.3467,
+        "sha256": "a7902bfaa939d6c5ace641c0e36f3808cdc01eae27c1863f93c33ae666fd5707"
+      },
+      "cal": {
+        "rows": 1191,
+        "dropped_empty": 0,
+        "offensive_share": 0.3308,
+        "sha256": "2de09b4d09ef8c2a3669b589e29f0523ad33f9df7788822a2d1edab23b1d625b"
+      },
+      "test": {
+        "rows": 860,
+        "dropped_empty": 0,
+        "offensive_share": 0.2791,
+        "sha256": "8b077cc4767e62d31f9df615215d80e4462529ed728c4002f1f794f25943c31e"
+      }
+    },
+    "offensive_olid_english_roundtrip": {
+      "train": {
+        "rows": 10725,
+        "dropped_empty": 0,
+        "offensive_share": 0.3307,
+        "sha256": "c4ba5d748dda75da86e9a9d29d9551f17dc6e828d7279e656dab5c1f3b0918b0"
+      },
+      "val": {
+        "rows": 1324,
+        "dropped_empty": 0,
+        "offensive_share": 0.3467,
+        "sha256": "f4013f89d8549ee7b467d9963a51815ddc26127109c2bed94e73842c842abb33"
+      },
+      "cal": {
+        "rows": 1191,
+        "dropped_empty": 0,
+        "offensive_share": 0.3308,
+        "sha256": "1f554b8458a204ba4bc2ec8dee56fde0e014745b78ca946fb6799a28422dd0b5"
+      },
+      "test": {
+        "rows": 860,
+        "dropped_empty": 0,
+        "offensive_share": 0.2791,
+        "sha256": "d39d6b0e1ccf46249610a9bf0c5b2e57f905c0c03cc03f4934aff6b8da787280"
+      }
+    },
+    "offensive_bdshs_english_mt": {
+      "train": {
+        "rows": 33057,
+        "dropped_empty": 0,
+        "offensive_share": 0.4795,
+        "sha256": "33faec586700f313d10a5e92b141e7d8b265b940b9785a4ea224a50168069d47"
+      },
+      "val": {
+        "rows": 4723,
+        "dropped_empty": 0,
+        "offensive_share": 0.4796,
+        "sha256": "ca278a8d286d016944ea0ea7c03da918a699f674750cf671075b4843fc47f624"
+      },
+      "cal": {
+        "rows": 4718,
+        "dropped_empty": 0,
+        "offensive_share": 0.4794,
+        "sha256": "eac17afd4a58401f98bd7783283d916c2e8ece19d8591702f96d02f1b83a33ed"
+      },
+      "test": {
+        "rows": 4722,
+        "dropped_empty": 0,
+        "offensive_share": 0.4795,
+        "sha256": "0268fdf220911fe879235135010e3d8ba578e0c62e92aafb78f2b9095b736ebd"
+      }
+    },
+    "offensive_bdshs_bangla_roundtrip": {
+      "train": {
+        "rows": 33057,
+        "dropped_empty": 0,
+        "offensive_share": 0.4795,
+        "sha256": "d229b3424b027ad877178be89eabd54577081a310fab8d549803f6c5bf5fda23"
+      },
+      "val": {
+        "rows": 4723,
+        "dropped_empty": 0,
+        "offensive_share": 0.4796,
+        "sha256": "99b4955a74d1c8e7b14ae09386f176dbd7b25516b886717d701177923c5c82b0"
+      },
+      "cal": {
+        "rows": 4718,
+        "dropped_empty": 0,
+        "offensive_share": 0.4794,
+        "sha256": "c7ac95cc08c2643f2dc4c92eb0ad05d4754e493c8ae239aaba8f9cacb2e5bbb1"
+      },
+      "test": {
+        "rows": 4722,
+        "dropped_empty": 0,
+        "offensive_share": 0.4795,
+        "sha256": "374bf62e4ba2d3c8acbfdf87fa4beea94024112cbc2923a5d460ac4b9c879578"
+      }
+    }
+  },
+  "created": "2026-11-07T15:48:37.368511+00:00"
+}
