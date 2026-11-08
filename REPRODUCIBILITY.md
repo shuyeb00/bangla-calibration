@@ -22,7 +22,7 @@ texts and rendered prompts are replaced by row numbers, and completion records k
 logits are left out because no analysis reads them. Hidden states are left out for size; the two analyses that read
 them (`last_layer_retraining` and `distance_aware_calibration`) can therefore not be regenerated from the bundle, and
 `reproduce.sh outputs` skips them with a message instead of overwriting their committed tables. The bundle is
-deposited on Zenodo at submission as a versioned record (one concept DOI, a new version after each revision). To use
+deposited on Zenodo as a versioned record, doi:10.5281/zenodo.24057514 (a new version after each revision). To use
 it:
 
 1. prepare the datasets with the scripts in `data/DATA_SOURCES.md`;
