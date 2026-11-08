@@ -1054,7 +1054,7 @@ claim("results_diagnosis", "with a marginal shift above 0.10, 7 of 7 are positiv
       _clr.batch_f1_corpora_positive["marginal_shift_natural_corpora"], _clr.batch_f1_sign_test_p_two_sided["marginal_shift_natural_corpora"],
       _clr.batch_f1_corpora["marginal_shift_natural_corpora"], _clr.batch_f1_corpora_ci_low["marginal_shift_natural_corpora"],
       _clr.batch_f1_corpora_ci_high["marginal_shift_natural_corpora"])
-claim("results_diagnosis", "gives a threshold-shift gain of 0.108 (standard error 0.020, $z = 5.39$, 95\\% interval "
+claim("results_diagnosis", "gives a threshold-shift gain of 0.108 (standard error 0.020, $z = 5.38$, 95\\% interval "
       "0.069--0.147) and, over all 21 pairs, a slope of 0.219 on the predicted-marginal shift ($z = 2.31$, $p = 0.021$",
       *[mixed("intercept", "threshold_shift", "batch_f1", "Intercept", c) for c in ("estimate", "se", "z")], 95,
       mixed("intercept", "threshold_shift", "batch_f1", "Intercept", "ci_low"),

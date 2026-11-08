@@ -34,6 +34,7 @@ from src.corpus_level_robustness import GAINS, PAIR_SETS, STUDENT_WRITTEN, units
 
 TABLES = BASE_DIR / "results" / "tables" / "grid_max_length_512"
 MAX_SE = 1.0
+OPTIMISERS = ("lbfgs", "powell", "nm")
 
 
 def fit_model(d: pd.DataFrame, outcome: str, formula_rhs: str, nested: bool):
@@ -42,10 +43,18 @@ def fit_model(d: pd.DataFrame, outcome: str, formula_rhs: str, nested: bool):
                             vc_formula={"pair": "0 + C(pair)"})
     else:
         model = smf.mixedlm(f"{outcome} ~ {formula_rhs}", d, groups="pair", re_formula="1")
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        result = model.fit(reml=True, method=["lbfgs", "powell"])
-    return result, sorted({type(w.message).__name__ for w in caught})
+    best, best_caught = None, []
+    for method in OPTIMISERS:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result = model.fit(reml=True, method=method, maxiter=5000)
+            except (np.linalg.LinAlgError, ValueError):
+                continue
+        # lbfgs can stop short of the REML optimum on some BLAS builds; the largest likelihood is kept.
+        if best is None or result.llf > best.llf + 1e-9:
+            best, best_caught = result, caught
+    return best, sorted({type(w.message).__name__ for w in best_caught})
 
 
 def fit(d: pd.DataFrame, outcome: str, formula_rhs: str) -> list:
