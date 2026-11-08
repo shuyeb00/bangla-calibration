@@ -779,8 +779,7 @@ claim("appendix", "was 0.650 and 0.616 (Cohen's $\\kappa$ 0.498 and 0.422), agai
       human("sylheti_vs_sentnob_gold", "annotator_2", "reference_agreement"))
 claim("appendix", "the inter-annotator $\\kappa$ was 0.589", human("sylheti_vs_sentnob_gold", "inter_annotator",
                                                                     "kappa_between"))
-claim("appendix", "distributed under CC BY-NC-ND 4.0", None)
-claim("appendix", "are under CC BY 4.0", None)
+claim("appendix", "are released under CC BY 4.0", None)
 
 # Appendix: training and prompting.
 claim("appendix", "learning rate $2 \\cdot 10^{-5}$, batch size 16, weight decay 0.01", None, None, None,
