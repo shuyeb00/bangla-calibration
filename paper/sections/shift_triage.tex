@@ -40,7 +40,10 @@ over the converged runs of the three base encoders.}
 \subsection{Guarantees}
 \label{sec:triage-guarantees}
 
-Four short propositions state what the procedure can promise. Proofs are in Appendix~\ref{sec:appendix-proofs} and
+The procedure rests on four standard results, stated in the form it uses: the information bound on the log-loss of
+any post-hoc map, shrinkage of a maximum-likelihood estimate towards a prior, permutation and concentration tests for
+the AUROC \citep{phipson2010permutation, hoeffding1963}, and conformal calibration after a data-dependent choice
+\citep{angelopoulos2024crc, liang2024conformal}. Their proofs are in Appendix~\ref{sec:appendix-proofs} and their
 simulation checks in Appendix~\ref{sec:appendix-simulation}.
 
 \begin{proposition}[No post-hoc map repairs an uninformative score]
@@ -101,26 +104,32 @@ predict with its MAP BCTS probabilities. (5) Certify a fixed score: in the \emph
 and the FNR threshold use the chosen candidate's source-TS score on all $n$ items at level $\alpha/M$; in the
 \emph{split} variant steps 2--4 use one half of the items and the sets use the resulting MAP BCTS score on the other
 half at level $\alpha$. In the Bonferroni variant the point predictions therefore come from MAP BCTS and the sets from
-source TS; for $K = 2$ the threshold on the source-TS score flags the same items as a threshold on any monotone
-recalibration of it.
+source TS: the certified sets and the deployed predictor are different objects, although for $K = 2$ the threshold on
+the source-TS score flags the same items as a threshold on any monotone recalibration of it. The two variants also
+differ in what they guarantee. The Bonferroni guarantee holds for whichever candidate is chosen, but because the same
+labels decide whether to deploy at all, it bounds the probability of deploying and then failing, not the probability
+of failing given deployment; only the split variant, which pays with half of its labels, gives the conditional
+guarantee.
 
 We run the procedure on every shifted condition with a target calibration split, for every converged base-encoder run
 paired with each general language model and 20 resamples of $n \in \{25, 50, 100\}$ labels. The resamples are shared
 across systems, so the shares below are shares of correlated resamples, not of independent deployments. With $n = 50$
-on the original shifts the Bonferroni variant reaches macro-F1 0.794 (oracle choice 0.796, a router that reuses the
+on the original shifts the Bonferroni variant reaches macro-F1 0.794 (choice by test log-loss 0.796, a router that reuses the
 labels without correction 0.788, always the language model 0.715, the encoder with the same labels 0.682, the encoder
 calibrated on the source 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router
-0.124, source-calibrated encoder 0.472; Table~\ref{tab:shift-triage-policies} in the appendix). Choosing by in-sample
+0.124, source-calibrated encoder 0.472; Table~\ref{tab:shift-triage-policies} in the appendix). Its macro-F1 is close to that of the router; what the
+procedure adds is coverage that holds. Choosing by in-sample
 log-loss is optimistic, so we also cross-fitted the choice: at $n = 50$ it picks the same system as the in-sample rule
 in 0.959--0.979 of deployments on the original shifts and 0.884--0.945 on the natural targets, and mean macro-F1
 changes by at most 0.015. Abstention in this study comes only from low power, since no target defeats both systems; a
 stress test that destroys both rankings on a growing share of the items confirms that the gate then rejects at about
 its nominal level (Appendix~\ref{sec:appendix-stress}).
 
-Certifying a usable ranking costs more labels than detecting one. With 50 labels, the DeLong test certifies
-AUROC above 0.65 for the offensive encoders in 0.738 of resamples and for the offensive language models in 0.664,
+Showing that a ranking is usable costs more labels than showing that it exists. With 50 labels, the asymptotic DeLong
+test supports AUROC above 0.65 for the offensive encoders in 0.738 of resamples and for the offensive language models in 0.664,
 against 0.443 and 0.097 with the distribution-free bound; for sentiment the shares are 0.194 and 0.481 with DeLong and
-zero with the bound. The label requirement of the survival test itself is planning guidance under a model of the
+zero with the bound. The DeLong test is a screen rather than a finite-sample certificate; the bound is the
+certificate, and it is expensive. The label requirement of the survival test itself is planning guidance under a model of the
 score distribution. On a balanced target, the test on all $n$ labels at the level of the first Holm step for two
 candidates needs 25, 50, 75 and 300 labels for power 0.8 at AUROC 0.90, 0.80, 0.70 and 0.60, and the four score models we tried (binormal with
 equal variances, with the positive class at half or twice the spread, and a shifted exponential) give the same

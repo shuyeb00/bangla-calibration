@@ -4,11 +4,16 @@ import csv
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.build_supplementary_archive import tracked_files  # noqa: E402
 from src import supplementary_file_map as fm  # noqa: E402
+
+pytestmark = pytest.mark.skipif(not (ROOT / ".git").exists(),
+                                reason="the file map is built from git ls-files; run inside a git checkout")
 
 ROLES = {"manuscript", "claim table", "display source", "generated table", "figure", "theory", "code", "test",
          "data documentation", "environment", "thesis analysis"}

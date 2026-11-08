@@ -91,6 +91,7 @@ if [ "$STAGE" = tables ] || [ "$STAGE" = verify ] || [ "$STAGE" = all ]; then
   run source_transfer_validation
   run corpus_level_robustness
   run all_pairs_bias_gain
+  run all_pairs_dependence_robustness
   run factorial_within_cluster_contrasts
   run mixed_effects_sensitivity
   run run_inclusion_summary

@@ -1,15 +1,17 @@
 \section{Script, Source Corpus and the One Collapse}
 \label{sec:results-interventions}
 
-Section~\ref{sec:results-diagnosis} treated the score as given. This section asks what moves it, with two
-interventions that hold the target items fixed: one changes only the script of the target text, the other changes
-the source corpus and the training language of the model.
+The diagnosis so far took each model's scores as given. Two interventions now ask what moves them while holding the
+target items fixed: the first changes only the script in which the target comments are written, the second changes
+the corpus on which the model was trained.
 
-\subsection{Changing only the script}
+\subsection{The same comments in another script}
 \label{sec:results-script}
 
-Code-mixed Chaos exists in Banglish and in a row-aligned Bangla-script transliteration with identical labels. Changing
-only the script raises encoder AUROC by 0.212--0.225 for IndicBERT (four training variants), 0.159 for mDeBERTa-v3,
+Code-mixed Chaos comes in Banglish and in a row-aligned Bangla-script rendition of the same comments with identical
+labels. The release describes this rendition as a transliteration and also as a translation, so the comparison holds
+the comments and labels fixed but may change some wording along with the script. Moving the comments into Bangla
+script raises encoder AUROC by 0.212--0.225 for IndicBERT (four training variants), 0.159 for mDeBERTa-v3,
 0.071--0.096 for XLM-R-base, 0.043 for MuRIL and 0.022--0.036 for BanglaBERT, while the zero-shot language models
 change by $-0.001$ to $+0.055$ (Figure~\ref{fig:script}). Script coverage thus explains part of the encoders'
 difficulty with romanised text, and most for the models whose pretraining saw least of it. It also moves the
@@ -38,8 +40,9 @@ same three architectures on English OLID instead of BD-SHS raises OffMix-3L AURO
 comparison changes the training corpus, its label definition and its language at once. The factorial separates the
 language. Cells A and B are the untranslated sources (BD-SHS in Bangla, OLID in English); C is OLID translated into
 Bangla and D is BD-SHS translated into English; E and F are round trips that bring each corpus back to its own language
-through the other one, so that within each language two machine-translated cells differ only in their source corpus
-(E against D in English, C against F in Bangla).
+through the other one. Within each language two machine-translated cells then differ in their source corpus (E
+against D in English, C against F in Bangla), and also in the number of translation passes (two for E and F, one for C
+and D); the main effect over the four translated cells balances the passes.
 
 \begin{figure}[t]
 \centering
@@ -52,8 +55,8 @@ through Bangla; D, BD-SHS translated into English. orig.: untranslated; MT: tran
 \label{fig:factorial}
 \end{figure}
 
-The confirmatory family of four contrasts on OffMix-3L AUROC was committed before cells C to F were trained, after A
-and B were known. All four favour the OLID corpus (Figure~\ref{fig:factorial}): $+0.220$ in English (E minus D, 95\%
+The family of four contrasts on OffMix-3L AUROC was fixed in the public repository before cells C to F were trained
+but after A and B were known, so it is pre-specified for the translated cells rather than for the whole experiment. All four favour the OLID corpus (Figure~\ref{fig:factorial}): $+0.220$ in English (E minus D, 95\%
 interval 0.175--0.267), $+0.264$ in Bangla (C minus F, 0.207--0.316), $+0.242$ for the main effect over the four
 translated cells (0.205--0.278), and $+0.343$ for its difference-in-differences against Banglish Chaos (0.311--0.375),
 each with a Holm-adjusted stratified permutation $p < 0.001$ over 15 runs per cell. The language of the translated
@@ -64,8 +67,8 @@ effect remains ($+0.209$ in English and $+0.244$ in Bangla).
 The same contrast does not generalise. On natural Banglish the source-corpus main effect reverses to $-0.101$
 (interval $-0.112$ to $-0.089$), on the BD-SHS test set it is $-0.129$, and on the OLID test set $+0.101$: each corpus
 ranks its own kind of text best, and on MixTox-SA the effect is $-0.005$ ($p = 0.431$). The factor that the factorial
-manipulates is therefore the source corpus, with its label definition, its annotators and its sampling of text,
-rather than the definition alone, and the inference covers the variation over seeds and architectures given one
+manipulates is therefore the source corpus together with its translation pipeline, that is, its label definition,
+annotators and sampling of text as they survive machine translation, rather than the definition alone, and the inference covers the variation over seeds and architectures given one
 translation, one MT system and one target. Translation also removes offensive words more than other words: over a
 round trip, OLID keeps 0.680 of the offensive-associated words of offensive items (95\% interval 0.625--0.733) against
 0.817 for frequency-matched control words, and BD-SHS keeps 0.249 against 0.294. This word-level sanitisation is a

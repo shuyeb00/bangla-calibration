@@ -7,8 +7,8 @@
 A fine-tuned classifier maps an input $x$ to logits $z(x) \in \mathbb{R}^K$, with $K = 2$ for offensive language and
 $K = 3$ for sentiment. It is trained on a source distribution $P$ and deployed on a target distribution $Q$ of another
 language variety. We observe labelled source splits and, on the target, unlabelled inputs and possibly $n$ labelled
-calibration items; every target quantity is evaluated on a disjoint target test split. All corrections are maps
-applied to the logits of a fixed model, and they differ in what they adjust.
+calibration items; every target quantity is evaluated on a disjoint target test split. Every correction considered here is a
+map applied to the logits of a fixed model; what distinguishes them is which part of the decision they can move.
 
 Temperature scaling (TS; \citealp{guo2017calibration}) predicts $\mathrm{softmax}(z/T)$, with $T$ fitted on the source
 calibration split (\emph{source TS}) or on target labels. With $n$ target labels we fit $\log T$ by maximum a
@@ -34,11 +34,12 @@ classes and changes decisions; for $K = 2$ it leaves the ranking of items intact
 \subsection{When a bias is the right repair}
 \label{sec:background-location}
 
-Write the binary case with $Z = z_1(X) - z_0(X)$, the source-TS log-odds, and $\sigma(u) = 1/(1 + e^{-u})$. Two
-assumptions describe the simplest shift that keeps the ranking. (A1) The score is calibrated on the source:
+Consider the binary case, with $Z = z_1(X) - z_0(X)$ the source-TS log-odds and $\sigma(u) = 1/(1 + e^{-u})$. Two
+assumptions describe the simplest shift that keeps the ranking intact. (A1) The score is calibrated on the source:
 $P_P(Y = 1 \mid Z = u) = \sigma(u)$. (A2) Both classes move by the same amount: there is one $\delta \in \mathbb{R}$
 such that, for each class $y$, the law of $Z$ given $Y = y$ under $Q$ is the law of $Z + \delta$ given $Y = y$ under
-$P$; the class prior may move from $\pi_P$ to $\pi_Q$. Let $\lambda = \mathrm{logit}\, \pi_Q - \mathrm{logit}\, \pi_P$
+$P$; the class prior may move from $\pi_P$ to $\pi_Q$. The class-conditional laws are assumed to have densities
+with respect to a common measure. Let $\lambda = \mathrm{logit}\, \pi_Q - \mathrm{logit}\, \pi_P$
 and $\beta = \lambda - \delta$.
 
 \begin{proposition}[A common location shift needs a bias]
@@ -51,12 +52,14 @@ positive amount; (d) with $K$ classes and a common shift $d \in \mathbb{R}^K$ of
 is $\mathrm{softmax}(s + b)$ with $b_k = \log(\pi_{Q,k}/\pi_{P,k}) - d_k$.
 \end{proposition}
 
-The proof (Appendix~\ref{sec:appendix-proofs}) is a direct application of Bayes' rule. Its use here is to name the
-assumption under which a bias, not a temperature, is the right repair, and to say what a fitted temperature means
+None of this is new as mathematics: parts (a) and (d) are the prior correction of \citet{saerens2002adjusting} with
+a score shift added, and the link between a class prior and a decision threshold goes back at least to
+\citet{elkan2001foundations}. The proof (Appendix~\ref{sec:appendix-proofs}) is a direct application of Bayes' rule.
+The proposition is used here to name the assumption under which a bias, not a temperature, is the right repair, and to say what a fitted temperature means
 when the assumption holds: a temperature fitted on target labels under (A2) is not 1, because it rises to hedge the
 misplaced threshold. In a Gaussian model with $|\beta| = 2$ the oracle log temperature is 0.71--1.12, depending on
-the class separation and the direction of the shift (Appendix~\ref{sec:appendix-simulation}). A measured temperature shift can therefore be a bias shift
-read through the wrong parameter. The decomposition $\beta = \lambda - \delta$ also separates a change of the class
+the class separation and the direction of the shift (Appendix~\ref{sec:appendix-simulation}). A measured
+temperature shift can therefore be a bias shift read through the wrong parameter. The decomposition $\beta = \lambda - \delta$ also separates a change of the class
 prior ($\lambda$) from a shift of the score ($\delta$). Label-shift estimators assume $\delta = 0$ and attribute every
 change of the predicted proportions to the prior; when the score moves they estimate the wrong prior. Proposition~\ref{prop:location} is
 an idealised limit: under (A2) the AUROC is retained exactly, whereas real threshold shifts lose some ranking. If the

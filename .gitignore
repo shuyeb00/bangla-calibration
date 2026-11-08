@@ -30,3 +30,4 @@ data/duplicate_exclusion_list.json
 
 # Release bundles of model outputs and the anonymised supplementary archive (built locally, uploaded elsewhere).
 release/
+paper/*.cut

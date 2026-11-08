@@ -9,7 +9,9 @@ corpus with a binary label (33{,}057 training items), and three-class sentiment 
 (9{,}520). Two further source tasks test whether the findings depend on the source language: English OLID
 \citep{zampieri2019olid} in the TweetEval release \citep{barbieri2020tweeteval}, and SentiMix Hinglish
 \citep{patwa2020sentimix}. Table~\ref{tab:data} lists the calibration and test splits of every source and target;
-training and validation sizes and preprocessing are in Appendix~\ref{sec:appendix-data}. Every target has a labelled
+training and validation sizes and preprocessing are in Appendix~\ref{sec:appendix-data}. All targets are close to
+balanced (normalised entropy of the target labels at least 0.85), which favours corrections that assume a balanced
+target; Section~\ref{sec:results-few-labels} resamples the targets to test the opposite case. Every target has a labelled
 calibration split, used only by few-label methods and oracle quantities, and a disjoint test split.
 
 \begin{table}[t]
@@ -18,7 +20,8 @@ calibration split, used only by few-label methods and oracle quantities, and a d
 \caption{Source tasks and targets with their calibration and test splits (numbers of items after preprocessing).
 Each target is listed with the source tasks whose models are evaluated on it.}
 \label{tab:data}
-\setlength{\tabcolsep}{4pt}
+\small
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lllrr}
 \toprule
 Role & Data set & Variety & Calibration & Test \\
@@ -32,14 +35,14 @@ Target (BD-SHS) & BIDWESH Barishal & Bangla dialect & 611 & 2{,}445 \\
 Target (BD-SHS) & BIDWESH Chittagong & Bangla dialect & 610 & 2{,}443 \\
 Target (BD-SHS) & BIDWESH Noakhali & Bangla dialect & 611 & 2{,}445 \\
 Target (BD-SHS, OLID) & Code-mixed Chaos & Banglish (Latin script) & 2{,}035 & 8{,}144 \\
-Target (BD-SHS, OLID) & Code-mixed Chaos & Same comments, Bangla script & 2{,}035 & 8{,}144 \\
-Target (BD-SHS, OLID) & MixTox-SA & Bangla, Hindi, English, mixed & 2{,}456 & 9{,}824 \\
-Target (BD-SHS, OLID) & OffMix-3L & Bangla--English--Hindi, three scripts & 200 & 800 \\
+Target (BD-SHS, OLID) & Code-mixed Chaos & Same, Bangla script & 2{,}035 & 8{,}144 \\
+Target (BD-SHS, OLID) & MixTox-SA & Bangla, Hindi, English & 2{,}456 & 9{,}824 \\
+Target (BD-SHS, OLID) & OffMix-3L & Bangla--English--Hindi & 200 & 800 \\
 Target (BD-SHS) & OLID & English & 1{,}191 & 860 \\
 Target (OLID) & BD-SHS & Bangla & 4{,}718 & 4{,}722 \\
 \midrule
 Target (SentNoB, Hinglish) & Sylheti (this work) & Bangla dialect & 200 & 201 \\
-Target (SentNoB, Hinglish) & SentMix-3L & Bangla--English--Hindi, three scripts & 201 & 804 \\
+Target (SentNoB, Hinglish) & SentMix-3L & Bangla--English--Hindi & 201 & 804 \\
 Target (SentNoB) & SentiMix Hinglish & Hindi--English & 2{,}998 & 3{,}000 \\
 Target (SentNoB, Hinglish) & SentiMix Spanglish & Spanish--English & 3{,}000 & 2{,}988 \\
 Target (Hinglish) & SentNoB & Bangla & 1{,}359 & 1{,}360 \\
@@ -50,15 +53,17 @@ Target (Hinglish) & SentNoB & Bangla & 1{,}359 & 1{,}360 \\
 The dialect targets are the Barishal, Chittagong and Noakhali portions of BIDWESH \citep{bidwesh}, three parallel
 translations of the same BD-SHS sentences, so the three are not independent. For sentiment we built a Sylheti test set
 by human translation of a uniform random sample of 401 SentNoB test items (calibration 200, test 201). Two of the
-authors, both native Sylheti speakers, translated the items into Sylheti written in Bangla script; the protocol and the
+authors, both native Sylheti speakers, translated the items into Sylheti written in Bangla script, so the set is a
+translated variant of SentNoB items in the way BIDWESH is of BD-SHS sentences, not independently collected Sylheti
+text; the protocol and the
 label-validity check are in Appendix~\ref{sec:appendix-data}. Of the BIDWESH test items, 8.6\% are translations of
 BD-SHS training sentences and 11.3\% of sentences in some BD-SHS split; removing the latter changes macro-F1 by at most
 0.0066 and AUROC by at most 0.0048 in any encoder configuration, so the dialect results are not driven by this
 overlap.
 
 The natural Bangla--English code-mixed targets are Code-mixed Chaos \citep{codemixedchaos}, toxic and non-toxic
-social-media comments in Banglish together with a row-aligned Bangla-script transliteration, which gives a script
-intervention with the same comments and identical labels, and MixTox-SA \citep{mixtox}, comments in native and
+social-media comments in Banglish together with a row-aligned Bangla-script rendition, which gives a paired
+comparison of the same comments and labels in two scripts, and MixTox-SA \citep{mixtox}, comments in native and
 romanised scripts whose neutral class we merge into non-toxic. Code-mixed Chaos reaches its exact balance by adding
 non-toxic comments from a public emotion corpus, so its label is partly tied to the source of a comment. These two
 corpora carry the general claims about code-mixing. The tri-lingual targets OffMix-3L \citep{goswami2023offmix} and
@@ -114,7 +119,7 @@ and a hierarchical bootstrap over corpora, pairs and runs; a linear mixed model 
 for pair within corpus is a sensitivity check (Appendix~\ref{sec:appendix-mixed}). Contrasts between training choices
 and between correction methods use exact permutation or sign-flip tests with Holm's correction \citep{holm1979} within
 families fixed in the analysis code (Appendix~\ref{sec:appendix-statistics}). These families were not registered
-before the data were seen; the factorial's confirmatory family is the exception in part, since it was committed
-before four of its six cells were trained, after the two untranslated cells were known. Unless stated otherwise,
+before the data were seen; the factorial's family of four contrasts is pre-specified in part, since it was fixed in
+the public repository before four of its six cells were trained, after the two untranslated cells were known. Unless stated otherwise,
 means are over runs; where the weighting matters we give the mean over corpora as well. Appendix
 Table~\ref{tab:analysis-status} classifies every analysis as confirmatory or exploratory and gives its cohort.

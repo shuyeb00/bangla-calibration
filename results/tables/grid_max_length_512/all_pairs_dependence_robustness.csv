@@ -1,0 +1,13 @@
+analysis,gain,n,rho,t,df,p_t,p_permutation,permutations,rho_min,rho_max,balance_min,estimate,ci_low,ci_high,share_positive,replicates
+all_pairs,batch_calibration_macro_f1_gain,21,0.687013,4.12116,19,0.00058099,0.000699993,100000,,,,,,,,
+without_bidwesh,batch_calibration_macro_f1_gain,18,0.521156,2.44255,16,0.0265657,0.0281497,100000,,,,,,,,
+leave_one_corpus_out,batch_calibration_macro_f1_gain,11,,,,,,,0.521156,0.742647,,,,,,
+partial_balance,batch_calibration_macro_f1_gain,21,0.722111,,,,,,,,0.854181,,,,,
+all_pairs,map_bcts_macro_f1_gain,21,0.48961,2.4476,19,0.0242705,0.0256697,100000,,,,,,,,
+without_bidwesh,map_bcts_macro_f1_gain,18,0.20743,0.848169,16,0.408854,0.408696,100000,,,,,,,,
+leave_one_corpus_out,map_bcts_macro_f1_gain,11,,,,,,,0.20743,0.752451,,,,,,
+partial_balance,map_bcts_macro_f1_gain,21,0.780132,,,,,,,,0.854181,,,,,
+crossed_bootstrap,rho_batch,,,,,,,,,,,0.687013,0.193774,0.917034,0.99275,4000
+crossed_bootstrap,rho_map,,,,,,,,,,,0.48961,-0.137465,0.892037,0.9365,4000
+crossed_bootstrap,r2_batch,,,,,,,,,,,0.109182,0.069862,0.154,1,4000
+crossed_bootstrap,r2_batch_natural,,,,,,,,,,,0.0807058,0.0512109,0.10561,1,3995

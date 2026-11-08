@@ -542,13 +542,13 @@ claim("data_protocol", "BIDWESH Barishal & Bangla dialect & 611 & 2445", *SIZE("
 claim("data_protocol", "BIDWESH Chittagong & Bangla dialect & 610 & 2443", *SIZE("offensive", "shift_d1_chittagong_test"))
 claim("data_protocol", "BIDWESH Noakhali & Bangla dialect & 611 & 2445", *SIZE("offensive", "shift_d1_noakhali_test"))
 claim("data_protocol", "Banglish (Latin script) & 2035 & 8144", *SIZE("offensive", "shift_d4_banglish_test"))
-claim("data_protocol", "Same comments, Bangla script & 2035 & 8144", *SIZE("offensive", "shift_d4_banglish_bangla_script_test"))
-claim("data_protocol", "Bangla, Hindi, English, mixed & 2456 & 9824", *SIZE("offensive", "shift_d5_mixtox_test"))
-claim("data_protocol", "three scripts & 200 & 800", *SIZE("offensive", "shift_d2_test"))
+claim("data_protocol", "Same, Bangla script & 2035 & 8144", *SIZE("offensive", "shift_d4_banglish_bangla_script_test"))
+claim("data_protocol", "Bangla, Hindi, English & 2456 & 9824", *SIZE("offensive", "shift_d5_mixtox_test"))
+claim("data_protocol", "Hindi & 200 & 800", *SIZE("offensive", "shift_d2_test"))
 claim("data_protocol", "Target (BD-SHS) & OLID & English & 1191 & 860", *SIZE("offensive", "shift_olid_english_test"))
 claim("data_protocol", "Target (OLID) & BD-SHS & Bangla & 4718 & 4722", *SIZE("offensive_olid", "shift_bdshs_test"))
 claim("data_protocol", "Sylheti (this work) & Bangla dialect & 200 & 201", *SIZE("sentiment", "shift_d1_test"))
-claim("data_protocol", "three scripts & 201 & 804", *SIZE("sentiment", "shift_d2_test"))
+claim("data_protocol", "Hindi & 201 & 804", *SIZE("sentiment", "shift_d2_test"))
 claim("data_protocol", "SentiMix Hinglish & Hindi--English & 2998 & 3000", *SIZE("sentiment", "shift_d6_hinglish_test"))
 claim("data_protocol", "Spanish--English & 3000 & 2988", *SIZE("sentiment", "shift_d7_spanglish_test"))
 claim("data_protocol", "Target (Hinglish) & SentNoB & Bangla & 1359 & 1360", *SIZE("sentiment_hinglish", "shift_sentnob_test"))
@@ -569,7 +569,7 @@ claim("appendix", "empty texts and exact duplicates, leaves 1000", sum(SIZE("off
 claim("appendix", "We drew 760 items uniformly at random from the SentNoB test split", None)
 claim("appendix", "translated the first 401 of them", sum(SIZE("sentiment", "shift_d1_test")))
 claim("appendix", "The 401 items do not differ", sum(SIZE("sentiment", "shift_d1_test")))
-claim("data_protocol", "\\setlength{\\tabcolsep}{4pt}", None)
+claim("data_protocol", "\\setlength{\\tabcolsep}{3.5pt}", None)
 claim("appendix", "They are split by label into 200 calibration and 201 test items", *SIZE("sentiment", "shift_d1_test"))
 claim("appendix", "labelled a stratified sample of 100 Sylheti items",
       human("sylheti_vs_sentnob_gold", "annotator_1", "n_items"))
@@ -813,9 +813,9 @@ _mt_record = __import__("json").loads((TABLES / "translation_preparation_record.
 _sim_settings = table("location_shift_simulation_settings")
 _sim_beta2 = _sim_settings[(_sim_settings.model == "gaussian") & (_sim_settings.beta.abs().round(6) == 2)]
 
-claim("abstract", "evaluated on 21 source--target pairs from 11 target corpora", n_shifted_pairs(), N_CORPORA)
-claim("abstract", "(Spearman correlation 0.69). In 12 pairs",
-      assoc("pairs", "predicted_marginal_tv", "batch_calibration_macro_f1_gain", "rho"), len(cells("R2")))
+claim("abstract", "evaluated on 21 source--target pairs from 11 near-balanced target corpora", n_shifted_pairs(),
+      N_CORPORA)
+claim("abstract", "Dialect shift proves mild. In 12 pairs", len(cells("R2")))
 claim("abstract", "raises macro-F1 from 0.527 to 0.620", ablation("R2", "source_ts", "macro_f1"),
       ablation("R2", "batch_calibration", "macro_f1"))
 
@@ -936,10 +936,11 @@ assert all((_lse_moved[f"{e}_macro_f1"] < _lse_moved.source_ts_macro_f1).all() f
 
 claim("results_diagnosis", "(Spearman $\\rho = 0.687$, $t(19) = 4.12$, permutation $p = 0.0008$)",
       *[assoc("pairs", "predicted_marginal_tv", "batch_calibration_macro_f1_gain", c) for c in ("rho", "df", "t", "p_permutation")])
-claim("results_diagnosis", "MAP BCTS fitted on 50 labels as well ($\\rho = 0.490$, $t(19) = 2.45$, $p = 0.026$)", st.N_LABELS,
+claim("results_diagnosis", "MAP BCTS, which fits its bias on 50 labels and does not look at the marginal, shows a weaker "
+      "association ($\\rho = 0.490$, $t(19) = 2.45$, $p = 0.026$)", st.N_LABELS,
       *[assoc("pairs", "predicted_marginal_tv", "map_bcts_macro_f1_gain", c) for c in ("rho", "df", "t", "p_permutation")])
-claim("results_diagnosis", "each of the 11 target corpora: $\\rho = 0.773$ ($t(9) = 3.65$, $p = 0.007$) for batch "
-      "calibration and $\\rho = 0.500$ ($t(9) = 1.73$, $p = 0.121$)", N_CORPORA,
+claim("results_diagnosis", "each of the 11 target corpora the batch-calibration association is $\\rho = 0.773$ "
+      "($t(9) = 3.65$, $p = 0.007$) and the MAP BCTS association $\\rho = 0.500$ ($t(9) = 1.73$, $p = 0.121$)", N_CORPORA,
       *[assoc("corpora", "predicted_marginal_tv", "batch_calibration_macro_f1_gain", c) for c in ("rho", "t", "p_permutation")],
       *[assoc("corpora", "predicted_marginal_tv", "map_bcts_macro_f1_gain", c) for c in ("rho", "t", "p_permutation")])
 assert assoc("corpora", "predicted_marginal_tv", "batch_calibration_macro_f1_gain", "df") == 9
@@ -974,7 +975,8 @@ claim("results_diagnosis", "the lowest NLL among the deployable corrections (0.6
 claim("results_diagnosis", "(source TS 0.505, batch calibration 0.615, MAP BCTS 0.578); batch calibration then also has the "
       "lower NLL (0.725 against 0.732)", op("source_ts", "corpora", "macro_f1"), op("batch_calibration", "corpora", "macro_f1"),
       op("map_bcts", "corpora", "macro_f1"), op("batch_calibration", "corpora", "nll"), op("map_bcts", "corpora", "nll"))
-claim("results_diagnosis", "reaches 0.631 with 50 labels but has a worse NLL than the bias corrections (0.713)",
+claim("results_diagnosis", "is the best deployable correction for macro-F1 (0.631 with 50 labels) but has a worse NLL than "
+      "the bias corrections (0.713)",
       op("threshold_tuned", "runs", "macro_f1"), st.N_LABELS, op("threshold_tuned", "runs", "nll"))
 claim("results_diagnosis", "can reach (0.660)", op("threshold_oracle", "runs", "macro_f1"))
 claim("results_diagnosis", "(0.620 against 0.626), so the remaining gap of the 50-label methods",
@@ -988,9 +990,10 @@ claim("results_diagnosis", "the temperature-only change is 0.972 and the joint c
       bcts_pair("offensive", "shift_d4_banglish_bangla_script_test", "delta_log_t_bcts"),
       bcts_pair("offensive_olid", "shift_d4_banglish_test", "delta_log_t_ts"),
       bcts_pair("offensive_olid", "shift_d4_banglish_test", "delta_log_t_bcts"))
-claim("results_diagnosis", "on the Chittagong dialect (0.323 alone, 0.258 jointly) and on the OffMix-3L collapse (2.461 and "
-      "2.212)", bcts_regime("R1", "delta_log_t_ts"), bcts_regime("R1", "delta_log_t_bcts"),
-      bcts_regime("R4", "delta_log_t_ts"), bcts_regime("R4", "delta_log_t_bcts"))
+claim("results_diagnosis", "on the Chittagong dialect (0.297 alone, 0.277 jointly) and on the OffMix-3L collapse (2.461 and "
+      "2.212)", bcts_pair("offensive", "shift_d1_chittagong_test", "delta_log_t_ts"),
+      bcts_pair("offensive", "shift_d1_chittagong_test", "delta_log_t_bcts"),
+      bcts_pair("offensive", "shift_d2_test", "delta_log_t_ts"), bcts_pair("offensive", "shift_d2_test", "delta_log_t_bcts"))
 claim("results_diagnosis", "sit in between (0.407 and 0.195)", bcts_pair("offensive_olid", "shift_bdshs_test", "delta_log_t_ts"),
       bcts_pair("offensive_olid", "shift_bdshs_test", "delta_log_t_bcts"))
 claim("results_diagnosis", "\\caption{Temperature against bias in the 21 shifted pairs", n_shifted_pairs())
@@ -1174,9 +1177,9 @@ claim("shift_triage", "cures the collapse only with about 200 labels (AUROC 0.50
       100, SIZE("offensive", "shift_d2_test")[0])
 claim("shift_triage", "so with up to 100 labels the better use", 100)
 claim("shift_triage", "Holm over candidates at $\\delta = 0.05$)", 0.05)
-claim("shift_triage", "the sets from source TS; for $K = 2$ the threshold", 2)
+claim("shift_triage", "although for $K = 2$ the threshold on", 2)
 claim("shift_triage", "and 20 resamples of $n \\in \\{25, 50, 100\\}$ labels", sr.N_RESAMPLES, 25, 50, 100)
-claim("shift_triage", "With $n = 50$ on the original shifts the Bonferroni variant reaches macro-F1 0.794 (oracle choice 0.796, a "
+claim("shift_triage", "With $n = 50$ on the original shifts the Bonferroni variant reaches macro-F1 0.794 (choice by test log-loss 0.796, a "
       "router that reuses the labels without correction 0.788, always the language model 0.715, the encoder with the same "
       "labels 0.682, the encoder calibrated on the source 0.658) and lets test coverage fall below 0.85 in only 0.006 of "
       "deployments (reuse router 0.124, source-calibrated encoder 0.472", 50,
@@ -1186,7 +1189,7 @@ claim("shift_triage", "With $n = 50$ on the original shifts the Bonferroni varia
 claim("shift_triage", "at $n = 50$ it picks the same system as the in-sample rule in 0.959--0.979 of deployments on the "
       "original shifts and 0.884--0.945 on the natural targets, and mean macro-F1 changes by at most 0.015", 50,
       _agree_o.min(), _agree_o.max(), _agree_n.min(), _agree_n.max(), Bound("atmost", crossfit_change()))
-claim("shift_triage", "With 50 labels, the DeLong test certifies AUROC above 0.65 for the offensive encoders in 0.738 of "
+claim("shift_triage", "With 50 labels, the asymptotic DeLong test supports AUROC above 0.65 for the offensive encoders in 0.738 of "
       "resamples and for the offensive language models in 0.664, against 0.443 and 0.097 with the distribution-free bound; "
       "for sentiment the shares are 0.194 and 0.481", 50, 0.65, certified("offensive", "encoder", "delong"),
       certified("offensive", "llm", "delong"), certified("offensive", "encoder", "hoeffding"),
@@ -1257,6 +1260,73 @@ claim("appendix", "with 50 labels, mean coverage stays at 0.895 against 0.897 fo
       _xstress.coverage.mean()["cluster_held_out"], _xstress.coverage.mean()["random"], 0.85,
       _xstress.coverage_below_target.mean()["random"], _xstress.coverage_below_target.mean()["cluster_held_out"],
       _xstress.lowest_cluster_coverage.mean()["random"], _xstress.lowest_cluster_coverage.mean()["cluster_held_out"])
+
+# Revisions after the pre-submission review: dependence checks, priors, prompts and licences.
+_dep = table("all_pairs_dependence_robustness")
+_prior_llm = table("llm_recalibration_prior")
+_prior_sens = table("map_bcts_prior_sensitivity")
+_llm_rec = table("llm_recalibration_per_system")
+_prompt = table("sentiment_prompt_variant_summary")
+_syl_verify = table("sylheti_verification_agreement", top=True)
+_licences = pd.read_csv(ROOT / "data" / "corpus_licences.csv")
+
+
+def dep(analysis: str, gain: str, column: str) -> float:
+    return float(one(_dep, analysis=analysis, gain=gain)[column])
+
+
+def plugin(kind: str, task: str, column: str) -> float:
+    return float(one(_prior_llm, kind=kind, task=task)[column])
+
+
+def prompt(condition: str, instruction: str, column: str) -> float:
+    return float(one(_prompt, condition=condition, instruction=instruction)[column])
+
+
+_B, _M = "batch_calibration_macro_f1_gain", "map_bcts_macro_f1_gain"
+assert dep("partial_balance", _B, "balance_min") >= 0.85
+assert set(_licences.licence_as_stated.str.contains("CC BY 4.0")) == {True, False}
+
+claim("data_protocol", "(normalised entropy of the target labels at least 0.85)",
+      Bound("atleast", dep("partial_balance", _B, "balance_min")))
+claim("results_diagnosis", "Without the three dialect pairs the batch-calibration association remains ($\\rho = 0.521$, "
+      "$t(16) = 2.44$, $p = 0.028$), whereas the MAP BCTS association rests on them ($\\rho = 0.207$, $p = 0.409$)",
+      *[dep("without_bidwesh", _B, c) for c in ("rho", "df", "t", "p_permutation")],
+      dep("without_bidwesh", _M, "rho"), dep("without_bidwesh", _M, "p_permutation"))
+claim("results_diagnosis", "gives a 95\\% interval of 0.194--0.917 for the batch-calibration correlation, and partialling out "
+      "the balance of the target labels leaves it at 0.722", 95, dep("crossed_bootstrap", "rho_batch", "ci_low"),
+      dep("crossed_bootstrap", "rho_batch", "ci_high"), dep("partial_balance", _B, "rho"))
+claim("results_diagnosis", "moves the number of threshold-shift pairs between 11 and 14", min(_variant_r2), max(_variant_r2))
+claim("results_diagnosis", "(0.063, against 1.24 in the other direction)", plugin("encoder", "sentiment", "prior_variance_bcts_bias"),
+      plugin("encoder", "offensive", "prior_variance_bcts_bias"))
+claim("results_diagnosis", "MAP BCTS macro-F1 on SentMix-3L from 0.425 to 0.474, close to the maximum-likelihood BCTS fit on "
+      "the same 50 labels (0.483)",
+      float(one(_prior_sens, task="sentiment", condition="shift_d2_test", kind="encoder", prior="scale_1").macro_f1),
+      float(one(_prior_sens, task="sentiment", condition="shift_d2_test", kind="encoder", prior="unit_variance").macro_f1),
+      st.N_LABELS, float(_llm_rec[(_llm_rec.task == "sentiment") & (_llm_rec.condition == "shift_d2_test")
+                                  & (_llm_rec.kind == "encoder") & (_llm_rec.method == "mle_bcts")
+                                  & (_llm_rec.n_labels.astype(str) == "50")].macro_f1.mean()))
+claim("results_diagnosis", "a crossed bootstrap that also resamples trained runs across their targets gives 0.051--0.106",
+      dep("crossed_bootstrap", "r2_batch_natural", "ci_low"), dep("crossed_bootstrap", "r2_batch_natural", "ci_high"))
+assert abs(dep("crossed_bootstrap", "r2_batch_natural", "estimate") - _clr.batch_f1_corpora["threshold_shift_natural_corpora"]) < 1e-9
+claim("appendix", "that check agreed with the gold label on 0.943 of the 401 items",
+      float(_syl_verify.agreement_accuracy.iloc[0]), int(_syl_verify.n_verified.iloc[0]))
+claim("appendix", "0.42 and 4.98 for offensive language and 0.80 and 45.1 for sentiment",
+      plugin("llm", "offensive", "prior_variance_bcts_log_t"), plugin("llm", "offensive", "prior_variance_bcts_bias"),
+      plugin("llm", "sentiment", "prior_variance_bcts_log_t"), plugin("llm", "sentiment", "prior_variance_bcts_bias"))
+claim("appendix", "AUROC moved by $+0.007$, ECE rose from 0.074 to 0.127, and the probability mass on the three label words "
+      "rose from 0.964 to 1.000", prompt("shift_d7_spanglish_test", "language_neutral", "auroc_difference"),
+      prompt("shift_d7_spanglish_test", "default", "ece_15"), prompt("shift_d7_spanglish_test", "language_neutral", "ece_15"),
+      prompt("shift_d7_spanglish_test", "default", "label_mass"), prompt("shift_d7_spanglish_test", "language_neutral", "label_mass"))
+claim("appendix", "gives Spearman correlations of 0.521--0.743 for the batch-calibration gain and 0.207--0.752 for the MAP BCTS",
+      dep("leave_one_corpus_out", _B, "rho_min"), dep("leave_one_corpus_out", _B, "rho_max"),
+      dep("leave_one_corpus_out", _M, "rho_min"), dep("leave_one_corpus_out", _M, "rho_max"))
+claim("appendix", "The crossed bootstrap uses 4{,}000 replicates", int(code_constant("src/all_pairs_dependence_robustness.py",
+                                                                                   "REPLICATES").replace("_", "")))
+claim("appendix", "It gives a 95\\% interval of $-0.137$ to $0.892$ for the MAP BCTS correlation, and the partial correlation "
+      "controlling for label balance is 0.780", 95, dep("crossed_bootstrap", "rho_map", "ci_low"),
+      dep("crossed_bootstrap", "rho_map", "ci_high"), dep("partial_balance", _M, "rho"))
+claim("statements", "are released under CC BY 4.0;", None)
 
 MATH_BLOCKS = [re.compile(r"\\begin\{proposition\}.*?\\end\{proposition\}", re.S),
                re.compile(r"\\section\{Proofs\}.*?(?=\\section\{)", re.S)]
@@ -1386,10 +1456,12 @@ def test_split_sizes_match_the_processed_data():
         pytest.skip("data/processed is not present; run the preparation scripts")
 
 
-AI_FOOTNOTE = (r"\textit{Use of AI tools.} Part of the code used in this study was generated with Claude (Anthropic); the "
-               r"authors reviewed, verified and tested all generated code. AI assistance was also used for grammar and "
-               r"language editing; all edits were reviewed and approved by the authors. The methods, analyses and their "
-               r"verification were carried out by the authors, who take full responsibility for the content.")
+AI_DISCLOSURE = ("Claude (Anthropic; Claude Opus models) was used in this work in two ways. It generated parts of the code, namely the "
+                 "evaluation and statistical-analysis scripts, the scripts that build the figures and LaTeX tables, the "
+                 "unit tests and the launchers of the GPU training jobs, and it helped to locate and fix bugs in the "
+                 "training and evaluation code. It was also used to improve the structure, wording and grammar of the "
+                 "manuscript. All authors reviewed every part of the generated code and text, the code was verified and "
+                 "tested by the authors, and the authors take full responsibility for the content of this article.")
 DROPPED_REFERENCES = ("dmonte", "thimma", "krishnaram", "sakib", "das2025", "almeida")
 
 
@@ -1407,9 +1479,11 @@ def test_title_length():
     assert 6 <= len(title.replace(":", " ").split()) <= 12, title
 
 
-def test_ai_use_footnote_is_verbatim():
-    main = (ROOT / "paper" / "main.tex").read_text(encoding="utf-8")
-    assert AI_FOOTNOTE in " ".join(main.split())
+def test_ai_use_is_disclosed_in_the_acknowledgements():
+    statements = (SECTIONS / "statements.tex").read_text(encoding="utf-8")
+    acks = statements[statements.index("\\begin{acks}"):statements.index("\\end{acks}")]
+    assert AI_DISCLOSURE in " ".join(acks.split())
+    assert "footnotetext" not in (ROOT / "paper" / "main.tex").read_text(encoding="utf-8")
 
 
 def test_every_citation_resolves_and_no_dropped_reference_is_cited():

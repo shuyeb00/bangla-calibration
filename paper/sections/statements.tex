@@ -14,11 +14,14 @@ labelled check before deployment, but its guarantee on missed posts is paid for 
 speakers.
 
 \section*{Data and Code Availability}
-All datasets are used under the terms published by their authors, and no dataset text is redistributed. The code,
-every derived table, and the logits and item indices of every converged run and language-model system are released
-(\zenodoRecord); preparation scripts rebuild every split from the original releases except the Sylheti texts, which
-derive from SentNoB, whose repository states no licence. We will release the Sylheti texts if the SentNoB authors
-agree. The licence of every corpus, as read on its source page, is listed in Appendix~\ref{sec:appendix-data}.
+The nine public datasets are used for research only, and no dataset text is redistributed with this article. Their
+terms differ (Appendix~\ref{sec:appendix-data}): SentiMix, BIDWESH, Code-mixed Chaos and MixTox-SA are released under
+CC BY 4.0; BD-SHS, OffMix-3L and SentMix-3L carry a software licence on their repositories (MIT and AGPL-3.0) but no
+separate data statement; SentNoB states no licence; and the offensive subset of TweetEval states none and remains
+subject to the platform's terms. What is released is derived output from which no text can be recovered: the code,
+every derived table, and the logits and item indices of every converged run and language-model system
+(\zenodoRecord). Preparation scripts rebuild every split from the original releases except the Sylheti texts, which
+are a translation of SentNoB items; we will release them if the SentNoB authors agree.
 
 \section*{Use of Generative Models in the Research}
 Two kinds of generative model are part of the methods and are reported as such. NLLB-200 3.3B translated the source
@@ -35,3 +38,12 @@ released outputs.
 
 \section*{Funding and Competing Interests}
 This work received no external funding. The authors declare no competing interests.
+
+\begin{acks}
+Claude (Anthropic; Claude Opus models) was used in this work in two ways. It generated parts of the code, namely the evaluation and
+statistical-analysis scripts, the scripts that build the figures and LaTeX tables, the unit tests and the launchers of
+the GPU training jobs, and it helped to locate and fix bugs in the training and evaluation code. It was also used to
+improve the structure, wording and grammar of the manuscript. All authors reviewed every part of the generated code
+and text, the code was verified and tested by the authors, and the authors take full responsibility for the content
+of this article.
+\end{acks}

@@ -1,12 +1,13 @@
 Bangla text classifiers meet regional dialects, Bangla typed in Latin letters and posts mixing Bangla, English and
-Hindi, and their confidence is usually repaired with temperature scaling, which cannot change a single decision. This
-empirical study asks which part of a fine-tuned classifier fails under such shifts and what repairs it. Seven encoders
+Hindi, and their confidence is usually repaired with temperature scaling, which changes no decision. This
+empirical study asks which part of a fine-tuned classifier fails and what repairs it. Seven encoders
 fine-tuned on Bangla offensive-language and sentiment data, encoders trained on English and Hindi--English sources,
-and four instruction-tuned language models are evaluated on 21 source--target pairs from 11 target corpora. The
-macro-F1 gain of a bias correction rises with the shift of the predicted-label distribution (Spearman correlation
-0.69). In 12 pairs the ranking survives while the decision threshold moves: a label-free bias correction raises
-macro-F1 from 0.527 to 0.620, whereas temperature scaling changes no prediction. Fitted jointly with a bias, the
-apparent temperature change in these pairs almost vanishes; the class-prior change explains little of the needed
-correction, and label-shift estimators fail. The single ranking collapse, on a student-written tri-lingual corpus,
-follows the source corpus in a translation factorial but reverses on natural romanised Bangla. A triage procedure
-turns these findings into a deployment rule with an explicit label budget.
+and four instruction-tuned language models are evaluated on 21 source--target pairs from 11 near-balanced target
+corpora. Dialect shift proves mild. In 12 pairs, mostly of code-mixed text, the ranking survives while the decision
+threshold moves: a label-free bias correction raises macro-F1 from 0.527 to 0.620, with gains that grow with the shift of
+the predicted labels, whereas a temperature leaves macro-F1 unchanged. Fitted jointly with a
+bias, the apparent temperature change almost vanishes; the class prior explains little of it, and
+label-shift estimators fail. When positives are rare, the label-free correction backfires and a few
+target labels are needed. The single ranking collapse, on a student-written tri-lingual corpus, follows the
+source corpus in a translation factorial but reverses on natural romanised Bangla. A triage procedure turns the
+findings into a deployment rule with a stated label budget.

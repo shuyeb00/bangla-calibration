@@ -7,10 +7,18 @@
 Figure~\ref{fig:all-pairs} places each of the 21 shifted source--target pairs by the shift of its predicted-label
 distribution, which needs no target labels, and by the macro-F1 that a bias correction adds to source TS. With
 label-free batch calibration the gain rises with the predicted-marginal shift (Spearman $\rho = 0.687$,
-$t(19) = 4.12$, permutation $p = 0.0008$), and it does so with MAP BCTS fitted on 50 labels as well ($\rho = 0.490$,
-$t(19) = 2.45$, $p = 0.026$). Pairs that share a target corpus are not independent, so we repeat the analysis on the
-mean gain of each of the 11 target corpora: $\rho = 0.773$ ($t(9) = 3.65$, $p = 0.007$) for batch calibration and
-$\rho = 0.500$ ($t(9) = 1.73$, $p = 0.121$) for MAP BCTS. The gain is not a reward for a preserved ranking: across pairs
+$t(19) = 4.12$, permutation $p = 0.0008$). Part of this association is built in, since batch calibration corrects
+exactly the predicted marginal; what it adds is that the corrected marginal also raises macro-F1, which would not
+happen if the moved predictions tracked a changed class prior. MAP BCTS, which fits its bias on 50 labels and does
+not look at the marginal, shows a weaker association ($\rho = 0.490$, $t(19) = 2.45$, $p = 0.026$). The pairs are not
+independent: a trained run is evaluated on every target of its source task, and the three BIDWESH dialects translate
+the same sentences. On the mean gain of each of the 11 target corpora the batch-calibration association is
+$\rho = 0.773$ ($t(9) = 3.65$, $p = 0.007$) and the MAP BCTS association $\rho = 0.500$ ($t(9) = 1.73$, $p = 0.121$).
+Without the three dialect pairs the batch-calibration association remains ($\rho = 0.521$, $t(16) = 2.44$,
+$p = 0.028$), whereas the MAP BCTS association rests on them ($\rho = 0.207$, $p = 0.409$). A crossed bootstrap
+that resamples trained runs once across all their targets and target corpora as clusters gives a 95\% interval of
+0.194--0.917 for the batch-calibration correlation, and partialling out the balance of the target labels leaves it at
+0.722 (Appendix~\ref{sec:appendix-mixed}). The gain is not a reward for a preserved ranking: across pairs
 it is negatively associated with AUROC retention ($\rho = -0.471$, $t(19) = -2.33$, $p = 0.032$), because the pairs
 with the largest marginal shifts also lose some ranking. Shrinkage TS changes no predicted class, so its macro-F1 gain
 is exactly zero in every run.
@@ -41,8 +49,8 @@ BD-SHS models; OffMix-3L, both scripts of Code-mixed Chaos and MixTox-SA for the
 for the SentNoB models; and SentMix-3L and SentNoB for the Hinglish models. Spanglish keeps AUROC 0.609 and 0.648 for
 the two sentiment sources but target TS is no better than a constant in most runs, as is Sylheti for the Hinglish
 models. One pair collapses: BD-SHS models on OffMix-3L rank at AUROC 0.496 (0.387--0.589 across runs) with an
-unbounded oracle temperature in every run. Where the operational thresholds are drawn moves these counts by a pair or
-two (Appendix~\ref{sec:appendix-regime-sensitivity}), but not the conclusion that matters for practice: in each of the
+unbounded oracle temperature in every run. Where the operational thresholds are drawn moves the number of threshold-shift pairs
+between 11 and 14 (Appendix~\ref{sec:appendix-regime-sensitivity}), but not the conclusion that matters for practice: in each of the
 16 pairs whose predicted marginal moves by more than 0.10, label-free bias correction raises macro-F1 in at least 93\%
 of runs.
 
@@ -50,7 +58,8 @@ of runs.
 \label{sec:results-threshold}
 
 Table~\ref{tab:threshold-shift-operating-point} compares the corrections in the 12 threshold-shift pairs. Shrinkage
-TS with 50 target labels lowers NLL from 0.892 to 0.728 but leaves macro-F1 at 0.527, as it must. Of the largest NLL
+TS with 50 target labels lowers NLL from 0.892 to 0.728 but leaves macro-F1 at 0.527, as it must. These pairs were selected after the results
+were seen, so the comparison describes them rather than testing a hypothesis about them. Of the largest NLL
 gain that any correction achieves, the temperature alone recovers 0.790 when units are weighted equally and 0.710 when
 target corpora are: most of the log-loss, but none of the decisions. Every correction that moves the boundary changes
 the decisions: batch calibration raises macro-F1 to 0.620, the MAP bias to 0.601 and MAP BCTS to 0.594, which also has
@@ -60,8 +69,8 @@ lower NLL (0.725 against 0.732).
 
 \input{../thesis/tables/threshold_shift_operating_point}
 
-A tuned threshold, the most direct correction of a decision, reaches 0.631 with 50 labels but has a worse NLL than the
-bias corrections (0.713), and the oracle threshold tuned on the test labels themselves bounds what any correction of
+A tuned threshold, the most direct correction of a decision, is the best deployable correction for macro-F1 (0.631
+with 50 labels) but has a worse NLL than the bias corrections (0.713), and the oracle threshold tuned on the test labels themselves bounds what any correction of
 this score can reach (0.660). Batch calibration is nearly as good as the NLL-optimal bias fitted on all target
 calibration labels (0.620 against 0.626), so the remaining gap of the 50-label methods is an estimation problem, which
 Section~\ref{sec:results-few-labels} locates. Training-time remedies that act like a temperature behave like one:
@@ -77,10 +86,11 @@ misplaced threshold, while a temperature fitted jointly with a bias would stay a
 target calibration labels of every run shows that this is what happens (Figure~\ref{fig:bcts-coordinates}). In the
 threshold-shift pairs the mean change of $\log T$ is 0.976 when the temperature is fitted alone but 0.028 when it is
 fitted with a bias (medians 0.989 and 0.069), and the bias alone recovers 0.932 of the BCTS log-loss gain, against
-0.624 for the temperature alone. Two examples show the size of the effect: for the BD-SHS models on Bangla-script Chaos
+0.624 for the temperature alone. The two shares come from separate ablations and are not additive: each says how much
+of the joint gain one parameter achieves when it is fitted on its own. The effect is large in individual pairs: for the BD-SHS models on Bangla-script Chaos
 the temperature-only change is 0.972 and the joint change $-0.075$, and for the OLID models on Banglish 1.185 and 0.078.
 The temperature change survives the joint fit only where the descriptive labels say it should: on the Chittagong
-dialect (0.323 alone, 0.258 jointly) and on the OffMix-3L collapse (2.461 and 2.212). The OLID models on BD-SHS, labelled
+dialect (0.297 alone, 0.277 jointly) and on the OffMix-3L collapse (2.461 and 2.212). The OLID models on BD-SHS, labelled
 a temperature shift, sit in between (0.407 and 0.195), so part of their apparent temperature shift is also a bias.
 
 \begin{figure}[t]
@@ -96,8 +106,9 @@ recovered by the temperature alone and by the bias alone. Colour: descriptive re
 
 The bias is not a change of the class prior. In the threshold-shift pairs, a prior adjustment with the true target
 prior lifts macro-F1 only from 0.527 to 0.536 (Table~\ref{tab:threshold-shift-operating-point}), against 0.626 for the
-oracle bias: the prior change explains almost none of the required move, and the rest is a shift of the score itself,
-the $\delta$ of Proposition~\ref{prop:location}. Label-shift estimators assume that the score does not move, so they
+oracle bias: the prior change explains almost none of the required move. In the terms of Proposition~\ref{prop:location}, the data identify the
+total bias $\beta$ and the prior term $\lambda$, and the score shift $\delta = \lambda - \beta$ is what remains; it is
+a residual of the decomposition, not a separately measured quantity. Label-shift estimators assume that the score does not move, so they
 should fail on these targets, and they do. Black-box shift estimation \citep{lipton2018bbse} and maximum-likelihood
 label shift \citep{saerens2002adjusting, alexandari2020maximum} on TS and on BCTS posteriors estimate the target prior
 with a total-variation error of 0.297--0.480 on the five BD-SHS-source targets beyond the dialects, whose true prior
@@ -115,9 +126,11 @@ MAP BCTS trails batch calibration in macro-F1 although it uses labels. Projectin
 50 labels onto the oracle bias, with 1 meaning the full move, locates the shortfall. On the offensive targets the
 maximum-likelihood bias reaches a median of 0.960 of the move and the MAP bias 0.873; on the sentiment targets the
 maximum-likelihood bias reaches 0.980 but the MAP bias only 0.314 and the bias of MAP BCTS 0.187, against 0.639 for the
-bias implied by batch calibration. The sentiment prior variance for the bias is estimated from the offensive task and
-is small, so it holds the sentiment bias near its source value. The labels are informative; the prior, not the label
-budget, is why MAP BCTS falls behind on the threshold-shift pairs.
+bias implied by batch calibration. The prior variance of the sentiment bias is a plug-in transferred from the offensive task
+(0.063, against 1.24 in the other direction) and holds the sentiment bias near its source value. The labels point to
+the full move; the transferred prior keeps MAP BCTS from following them. Loosening the prior to unit variance raises
+the base encoders' MAP BCTS macro-F1 on SentMix-3L from 0.425 to 0.474, close to the maximum-likelihood BCTS fit on
+the same 50 labels (0.483).
 
 Batch calibration has its own assumption: it pulls the predicted proportions towards uniform. Resampling every target
 of the two offensive source tasks to a fixed positive share $\pi_+$ shows when this backfires
@@ -141,7 +154,8 @@ macro-F1 (exact two-sided sign test, 7 of 7, $p = 0.0156$), and the same holds f
 with a predicted-marginal shift above 0.10 (9 of 9, $p = 0.0039$). Without the two student-written corpora, OffMix-3L
 and SentMix-3L, five corpora remain and five of five are positive, which gives $p = 0.0625$, the smallest value a
 two-sided sign test can reach with five units; the corpus-weighted gain is 0.081 with a hierarchical bootstrap 95\%
-interval of 0.052--0.105. On the natural corpora of the pairs with a marginal shift above 0.10, 7 of 7 are positive
+interval of 0.052--0.105, and a crossed bootstrap that also resamples trained runs across their targets gives
+0.051--0.106. On the natural corpora of the pairs with a marginal shift above 0.10, 7 of 7 are positive
 ($p = 0.0156$; gain 0.076, interval 0.055--0.096). A mixed model with random intercepts for corpus and for pair within
 corpus gives a threshold-shift gain of 0.108 (standard error 0.020, $z = 5.38$, 95\% interval 0.069--0.147) and, over
 all 21 pairs, a slope of 0.219 on the predicted-marginal shift ($z = 2.31$, $p = 0.021$;

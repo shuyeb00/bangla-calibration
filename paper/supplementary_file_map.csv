@@ -4,7 +4,7 @@ REPRODUCIBILITY.md,environment,reproduction (REPRODUCIBILITY.md)
 data/DATASET_SCHEMA.md,data documentation,data_protocol; appendix
 data/DATA_SOURCES.md,data documentation,data_protocol; appendix
 data/bidwesh_source_overlap.csv,claim table,data_protocol
-data/corpus_licences.csv,data documentation,data_protocol; appendix
+data/corpus_licences.csv,claim table,data_protocol
 notebooks/00_data_preparation.ipynb,data documentation,data_protocol; appendix
 paper/references.bib,manuscript,all sections
 paper/sections/abstract.tex,manuscript,all sections
@@ -33,6 +33,7 @@ results/tables/grid_max_length_512/BENCHMARK_SUMMARY_REPORT.md,thesis analysis,"
 results/tables/grid_max_length_512/EXTENDED_DIAGNOSTICS_REPORT.md,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/all_pairs_bias_gain.csv,claim table,results_diagnosis
 results/tables/grid_max_length_512/all_pairs_bias_gain_association.csv,claim table,abstract
+results/tables/grid_max_length_512/all_pairs_dependence_robustness.csv,claim table,data_protocol
 results/tables/grid_max_length_512/analysis_cohorts.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/batch_calibration_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/batch_calibration_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
@@ -112,9 +113,9 @@ results/tables/grid_max_length_512/llm_metrics_per_run.csv,claim table,appendix
 results/tables/grid_max_length_512/llm_metrics_per_run_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/llm_metrics_summary.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/llm_metrics_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
-results/tables/grid_max_length_512/llm_recalibration_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/grid_max_length_512/llm_recalibration_per_system.csv,claim table,data_protocol
 results/tables/grid_max_length_512/llm_recalibration_per_system_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
-results/tables/grid_max_length_512/llm_recalibration_prior.csv,claim table,appendix
+results/tables/grid_max_length_512/llm_recalibration_prior.csv,claim table,appendix; data_protocol
 results/tables/grid_max_length_512/llm_recalibration_prior_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/llm_recalibration_summary.csv,claim table,appendix; shift_triage
 results/tables/grid_max_length_512/llm_recalibration_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
@@ -122,7 +123,7 @@ results/tables/grid_max_length_512/llm_routing_recalibrated.csv,thesis analysis,
 results/tables/grid_max_length_512/llm_routing_recalibrated_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/location_shift_simulation.csv,claim table,appendix
 results/tables/grid_max_length_512/location_shift_simulation_settings.csv,claim table,abstract
-results/tables/grid_max_length_512/map_bcts_prior_sensitivity.csv,claim table,results_diagnosis
+results/tables/grid_max_length_512/map_bcts_prior_sensitivity.csv,claim table,data_protocol; results_diagnosis
 results/tables/grid_max_length_512/map_bcts_prior_sensitivity_natural_codemixed.csv,claim table,results_diagnosis
 results/tables/grid_max_length_512/mechanistic_shift_correlations.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/membership_completion_summary.csv,claim table,appendix
@@ -160,7 +161,7 @@ results/tables/grid_max_length_512/selective_prediction_routed_natural_codemixed
 results/tables/grid_max_length_512/selective_prediction_summary.csv,claim table,shift_triage
 results/tables/grid_max_length_512/selective_prediction_summary_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/sentiment_prompt_variant_per_system.csv,thesis analysis,"thesis analysis, not used for a claim"
-results/tables/grid_max_length_512/sentiment_prompt_variant_summary.csv,claim table,appendix
+results/tables/grid_max_length_512/sentiment_prompt_variant_summary.csv,claim table,appendix; data_protocol
 results/tables/grid_max_length_512/shift_detection.csv,claim table,shift_triage
 results/tables/grid_max_length_512/shift_detection_natural_codemixed.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/grid_max_length_512/shift_domain_classifier.csv,claim table,appendix
@@ -224,13 +225,14 @@ results/tables/shift_statistics_noise.csv,thesis analysis,"thesis analysis, not 
 results/tables/shift_statistics_tokenization.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/shift_statistics_tokenizers.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/shift_statistics_truncation.csv,thesis analysis,"thesis analysis, not used for a claim"
-results/tables/sylheti_verification_agreement.csv,thesis analysis,"thesis analysis, not used for a claim"
+results/tables/sylheti_verification_agreement.csv,claim table,data_protocol
 results/tables/tokenization_consistency_autotokenizer_default.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/tokenization_consistency_pretraining_matched.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/tokenizer_normalisation_mlm_probe.csv,thesis analysis,"thesis analysis, not used for a claim"
 results/tables/tokenizer_normalisation_vocabulary.csv,thesis analysis,"thesis analysis, not used for a claim"
 src/__init__.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/all_pairs_bias_gain.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/all_pairs_dependence_robustness.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/analysis_and_plots.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/batch_calibration.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/bcts_shift_coordinates.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)

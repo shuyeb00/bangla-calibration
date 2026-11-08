@@ -30,14 +30,16 @@ For the selective error, independence gives $Q(Y = h(S) \mid S) = \pi_Q(h(S)) \l
 integrating over any $A \in \sigma(S)$ with $Q(A) > 0$ preserves the bound. $\square$
 
 \paragraph{Proposition~\ref{prop:shrinkage}.}
-With $n\hat L_n(\theta) \approx \mathrm{const} + \tfrac{n}{2}(\theta - \hat\theta_n)^\top F (\theta - \hat\theta_n)$, the
+With $n\hat L_n(\theta) \approx \mathrm{const} + (n/2)(\theta - \hat\theta_n)^\top F (\theta - \hat\theta_n)$, the
 stationarity condition of the MAP objective is $nF(\theta - \hat\theta_n) + \Sigma^{-1}(\theta - \theta_P) = 0$, which
 gives $\hat\theta_{\mathrm{MAP}} = W_n\hat\theta_n + (I - W_n)\theta_P$ with $W_n = (nF + \Sigma^{-1})^{-1}nF$. In the
 scalar case $\hat\theta_{\mathrm{MAP}} - \theta^* = w_n(\hat\theta_n - \theta^*) - (1 - w_n)\delta$, so with
 $\mathbb{E}[\hat\theta_n - \theta^*] \approx 0$ and $\operatorname{Var}\hat\theta_n \approx \tau^2/n$,
 $\mathrm{MSE}(\hat\theta_{\mathrm{MAP}}) = (1 - w_n)^2\delta^2 + w_n^2\tau^2/n$. This is below $\tau^2/n$ if and only if
-$\delta^2 < \frac{\tau^2}{n}\frac{1 + w_n}{1 - w_n} = \frac{\tau^2}{n} + 2\sigma^2$. The source estimate $\theta_P$ is
-treated as fixed, and the prior variance is a cross-task plug-in rather than an estimate from the target population.
+\[
+  \delta^2 < \frac{\tau^2}{n} \cdot \frac{1 + w_n}{1 - w_n} = \frac{\tau^2}{n} + 2\sigma^2 .
+\]
+The source estimate $\theta_P$ is treated as fixed, and the prior variance is a cross-task plug-in rather than an estimate from the target population.
 $\square$
 
 \paragraph{Proposition~\ref{prop:survival}.}
@@ -118,7 +120,9 @@ To check label validity without relying on the translators' own judgement of the
 stratified sample of 100 Sylheti items without seeing the gold label. Their agreement with the SentNoB gold label was
 0.650 and 0.616 (Cohen's $\kappa$ 0.498 and 0.422), against 0.483 and 0.533 for the same annotators on a blind sample of
 SentNoB's own test items; the inter-annotator $\kappa$ was 0.589. The disagreement concentrates at the boundary between
-positive and neutral, as in the source data. The Sylheti set is a derivative of SentNoB, whose repository states no
+positive and neutral, as in the source data. During translation each author had also labelled the other's
+translations; that check agreed with the gold label on 0.943 of the 401 items, but the checker had seen the source and
+its label at the start, so it is not evidence of label validity and we report only the blind round. The Sylheti set is a derivative of SentNoB, whose repository states no
 licence, so its texts are not redistributed; we will release them if the SentNoB authors agree.
 
 \paragraph{Licences.}
@@ -190,7 +194,10 @@ and runs, so small differences on these targets should be read with that width i
 
 Shrinkage TS and MAP BCTS use Gaussian priors on $\log T$ and on each free bias, with $b_0 = 0$ for identifiability. The
 variances are empirical-Bayes estimates from the other task: for encoders, on $\log T$ and the bias, 0.433 and 1.24 for
-offensive language and 1.55 and 0.063 for sentiment. Refitting MAP BCTS with 50 labels with these variances scaled by
+offensive language and 1.55 and 0.063 for sentiment; for the language models, estimated in the same way from their
+own scores, 0.42 and 4.98 for offensive language and 0.80 and 45.1 for sentiment. These are plug-ins transferred from
+the other task, not estimates for the target, and they make MAP BCTS shrink the encoders' sentiment bias strongly and
+the language models' hardly at all, which favours the language models in comparisons after MAP BCTS. Refitting MAP BCTS with 50 labels with these variances scaled by
 0.25 or 4, or with unit variance, changes mean macro-F1 over the targets by at most 0.01 for encoders and for LLMs, and on
 single targets by $-0.041$ to $+0.048$.
 
@@ -212,8 +219,9 @@ Corrections under threshold shift (Table~\ref{tab:threshold-shift-operating-poin
 BCTS coordinates (Section~\ref{sec:results-decomposition}) & exploratory & runs \\
 Label-shift estimators & exploratory & runs \\
 Corpus-level sign tests and mixed model (Section~\ref{sec:results-robustness}) & exploratory & corpora, pairs \\
+Dependence checks: crossed bootstrap, leave-one-corpus-out (Section~\ref{sec:results-all-pairs}) & exploratory & runs, corpora \\
 Contrast families (Table~\ref{tab:contrast-families-holm}) & confirmatory within families & runs \\
-Factorial, four contrasts on OffMix-3L & confirmatory & runs \\
+Factorial, four contrasts on OffMix-3L & pre-specified for the translated cells & runs \\
 Factorial, other targets and controls & exploratory & runs \\
 Triage evaluation (Section~\ref{sec:triage-procedure}) & exploratory & correlated resamples \\
 \bottomrule
@@ -226,9 +234,16 @@ The linear mixed model of Section~\ref{sec:results-robustness} has random interc
 within corpus and is fitted by restricted maximum likelihood on the run-level gains. On the natural corpora of the
 threshold-shift pairs the batch-calibration gain is 0.082 (95\% interval 0.057--0.106) and the MAP BCTS gain 0.053
 (0.023--0.082). Over all 21 pairs the slope of the MAP BCTS gain on the predicted-marginal shift is 0.063 ($p = 0.42$),
-against 0.219 for batch calibration. Two NLL fits put the corpus variance at its boundary of zero and were refitted with
-the pair intercept only. With seven purposively chosen corpora the model is a sensitivity check, not an estimate for a
+against 0.219 for batch calibration. Several fits put the corpus variance at or near zero; the two NLL fits in which it
+reached the boundary were refitted with the pair intercept only. With seven purposively chosen corpora the model is a sensitivity check, not an estimate for a
 population of corpora.
+
+The pair-level association of Section~\ref{sec:results-all-pairs} was checked against the same dependencies. Leaving
+out one target corpus at a time gives Spearman correlations of 0.521--0.743 for the batch-calibration gain and
+0.207--0.752 for the MAP BCTS gain; the lowest values come from leaving out BIDWESH. The crossed bootstrap uses 4{,}000
+replicates; in each, the trained runs of every source task are drawn with replacement once, so that a run keeps all its
+target evaluations, and the target corpora are drawn with replacement as clusters. It gives a 95\% interval of
+$-0.137$ to $0.892$ for the MAP BCTS correlation, and the partial correlation controlling for label balance is 0.780.
 
 \section{Additional Results}
 \label{sec:appendix-results}
@@ -412,7 +427,10 @@ prediction. A broader definition that also counts hostile or harshly critical re
 all four LLMs and lowered BD-SHS AUROC by 0.027 for all four, a sign crossover consistent with the label-definition
 account. A paraphrase of the default instruction changed macro-F1 by $-0.118$ to $+0.092$ per model and target, so
 zero-shot thresholds are sensitive to wording while rankings are not. The sentiment prompt calls the text Bangla;
-removing that statement did not help on Hinglish or Spanglish (macro-F1 changes of $-0.011$ and $-0.018$).
+removing that statement did not help on Hinglish or Spanglish (macro-F1 changes of $-0.011$ and $-0.018$). It did
+change the calibration on Spanglish: AUROC moved by $+0.007$, ECE rose from 0.074 to 0.127, and the probability mass on
+the three label words rose from 0.964 to 1.000. Each prompt is recalibrated from its own source TS, and the main text
+uses the default prompt throughout, on calibration and test items alike.
 
 
 \section{Reproducibility}

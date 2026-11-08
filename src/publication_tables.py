@@ -30,7 +30,7 @@ SOURCE_SHORT = {"offensive": "BD-SHS (bn)", "offensive_olid": "OLID (en)", "sent
 METHOD_NAMES = {"source_ts": "source TS", "batch_calibration": "batch calib.", "shrinkage_ts": "shrinkage TS",
                 "map_bcts": "MAP BCTS"}
 POLICY_NAMES = {"always_encoder": "Always encoder", "encoder_labels": "Encoder + labels", "always_llm": "Always LLM", "reuse_router": "Reuse router",
-                "triage_split": "Triage (split)", "triage_bonferroni": "Triage (Bonferroni)", "oracle": "Oracle"}
+                "triage_split": "Triage (split)", "triage_bonferroni": "Triage (Bonferroni)", "oracle": "Choice by test NLL"}
 FAMILY_NAMES = {"objectives": "Training objectives", "scale": "Encoder scale",
                 "recalibration_label_free": "Label-free recalibration", "recalibration_few_label": "Few-label recalibration",
                 "llm_recalibration": "LLM recalibration", "architectures": "Architectures (MuRIL, mDeBERTa)",
@@ -162,7 +162,7 @@ def cross_definition_table() -> str:
                r"mDeBERTa-v3; 5 seeds each). Differences are OLID-trained minus BD-SHS-trained; CIs from a paired "
                r"item bootstrap; $p$ from a stratified permutation test, Holm-adjusted over the seven contrasts. The "
                r"last row is the pre-specified difference-in-differences.")
-    return tabular("lrrrcr", header, rows, caption, "tab:cross-definition-contrasts", colsep="4pt")
+    return tabular("lrrrcr", header, rows, caption, "tab:cross-definition-contrasts", colsep="3pt")
 
 
 def contrast_families_table() -> str:
@@ -202,7 +202,9 @@ def triage_table(n_labels: int = 50) -> str:
                r"runs $\times$ LLM systems and 20 resamples; target coverage 0.9, offensive FNR target 0.1). LLM systems "
                r"are the four general LLMs, zero-shot and few-shot with demonstration seed 0. All outcomes are computed "
                r"on the LLM items of each target test split; abstained deployments count in Abstain and are left out of "
-               r"the other columns. Triage (Bonferroni) calibrates at $\alpha/2$, the other policies at $\alpha$. Set "
+               r"the other columns. Choice by test NLL picks, per deployment, the candidate with the lower NLL on the test split "
+               r"itself, a reference that no deployment can use. Triage (Bonferroni) calibrates at $\alpha/2$, the other "
+               r"policies at $\alpha$. Set "
                r"size: mean number of labels in a conformal set (two classes for offensive language, three for "
                r"sentiment). Cov. $<$ 0.85: share of deployments whose test coverage falls below 0.85. FNR and FPR are "
                r"means over the offensive conditions only (-- for sentiment). Natural offensive: Code-mixed Chaos (both "
@@ -309,7 +311,7 @@ def regime_sensitivity_table() -> str:
     caption = (r"Regime assignment of the 21 shifted pairs under other thresholds, built from the means and per-run rows of "
                r"the regime map. ``Most runs'' one run lower or higher moves the count of runs no better than a constant "
                r"that makes a pair weak-ranking. None: the pair meets no regime's conditions.")
-    return tabular("lrrrrrrp{5.4cm}", header, rows, caption, "tab:regime-threshold-sensitivity", r"\small", colsep="4pt")
+    return tabular("lrrrrrrp{4.1cm}", header, rows, caption, "tab:regime-threshold-sensitivity", r"\small", colsep="4pt")
 
 
 def training_objectives_table() -> str:
