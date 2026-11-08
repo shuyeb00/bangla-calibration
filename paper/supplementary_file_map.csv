@@ -6,6 +6,7 @@ data/DATA_SOURCES.md,data documentation,data_protocol; appendix
 data/bidwesh_source_overlap.csv,claim table,data_protocol
 data/corpus_licences.csv,claim table,data_protocol
 notebooks/00_data_preparation.ipynb,data documentation,data_protocol; appendix
+paper/reference_verification_log.csv,manuscript,references (how each cited work was verified)
 paper/references.bib,manuscript,all sections
 paper/sections/abstract.tex,manuscript,all sections
 paper/sections/appendix.tex,manuscript,all sections
@@ -307,6 +308,7 @@ src/source_transfer_regimes.py,code,reproduction of the tables and figures (REPR
 src/source_transfer_validation.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/subset_robustness.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/supplementary_file_map.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
+src/supplementary_selection.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/surface_feature_baseline.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/sylheti_consensus_sensitivity.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)
 src/target_demonstration_analysis.py,code,reproduction of the tables and figures (REPRODUCIBILITY.md)

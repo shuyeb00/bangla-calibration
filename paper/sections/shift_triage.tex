@@ -69,7 +69,8 @@ For a score that is not fitted on the $n$ labelled target items, (a) the Monte C
 with the add-one correction is valid for the null hypothesis that score and label are independent, at every $n$; and
 (b) for $K = 2$ and $m = \min(n_1, n_0)$ labelled items in the smaller class,
 $\Pr(A \ge \hat A - \sqrt{\log(1/\delta)/(2m)}) \ge 1 - \delta$, so rejecting $A \le a_0$ when this lower bound exceeds
-$a_0$ is a level-$\delta$ test.
+$a_0$ is a level-$\delta$ test. For $K > 2$, the mean of the one-vs-rest bounds, each at level $\delta/K$ with $m$
+the smaller side of its split, is a lower bound on the macro AUROC with the same probability.
 \end{proposition}
 
 \begin{proposition}[Coverage and risk control after selection]

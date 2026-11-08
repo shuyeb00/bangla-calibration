@@ -14,7 +14,7 @@ folders (`results/grid_max_length_512/runs/`, `llm_runs/`) are not in the reposi
 restored from the output bundle, and the committed tables are the artefact of record.
 
 ## Saved model outputs (level 2)
-The anonymised supplement for review carries these outputs under `outputs/`; they are otherwise in private storage until the deposit described below. `python -m src.export_release_outputs export` bundles
+An anonymised supplement built with `--outputs` (below) carries the shards that fit its size limit under `outputs/`, and its `README.md` lists them; a supplement built without them supports level 1 only. Until the deposit described below, the outputs are otherwise in private storage. `python -m src.export_release_outputs export` bundles
 the logits and item indices of every converged encoder run and every LLM system, the few-label fine-tuning outputs and
 the contamination statistics into deterministic xz-compressed tar shards with a `MANIFEST.json` and `SHA256SUMS`. The
 bundle contains no dataset text and no labels: label arrays are removed and their SHA-256 is recorded, demonstration
@@ -34,7 +34,7 @@ it:
 For double-blind review, `python -m src.export_release_outputs export --anonymise --out release/outputs_anonymised`
 followed by `python -m src.build_supplementary_archive --outputs release/outputs_anonymised` writes an anonymised ZIP
 of the code, tables, figures and the output shards that fit within 100 MB. That builder lists the identifying strings it
-removes, so it is not part of the anonymised supplement, and `--anonymise` works only in the full repository.
+removes, so it is not part of the anonymised supplement, and `--anonymise` works only in the full repository. The file selection lives in `src/supplementary_selection.py`, which is shipped. The title page (`paper/main.tex`) carries the author list and is left out too, so inside the supplement the title-length test skips, and the file-map tests skip because they need `git ls-files`.
 
 Level 2 needs every dataset prepared. The Sylheti texts are derived from SentNoB, whose repository states no licence, and
 are not redistributed; until they can be released, the tables that depend on them are reproducible at level 1 only.

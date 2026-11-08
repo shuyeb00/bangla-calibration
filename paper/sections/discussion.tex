@@ -30,7 +30,9 @@ Section~\ref{sec:results-robustness} show how far the effect holds without them.
 were set after the results had been seen, and we state the practical conclusions over all pairs instead.
 
 Several limitations concern the data. The Sylheti set is small and was translated by two of the authors, and whether a
-correction helps on it depends on whether the gold or the authors' consensus labels are the reference. OffMix-3L
+correction helps on it depends on whether the gold or the authors' consensus labels are the reference. All dialect targets are translations of source-corpus sentences rather than
+dialect text written as such; a natural dialect corpus \citep{jawad2025benchmarking} has binary sentiment labels,
+which do not match the three-class source task. OffMix-3L
 carries strong writing-style artifacts and labels that two readers could not reproduce, so it serves only as a stress
 case. Most targets are close to balanced, which favours label-free batch calibration, and the few-label results assume
 that the labelled items come from the deployment distribution; under prior drift MAP BCTS can fall far below source TS.

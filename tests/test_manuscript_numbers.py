@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from scipy.stats import beta, binom
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -373,6 +374,7 @@ claim("data_protocol", "(33057 training items)", None)
 claim("data_protocol", "on SentNoB (9520)", None)
 claim("data_protocol", "Inputs are up to 512 tokens", config.TRAIN_HYPERPARAMS["max_length"])
 claim("data_protocol", "macro-F1 by 0.02 is reported", st.COLLAPSE_MARGIN)
+claim("related_work", "annotate 600 YouTube comments", None)
 claim("data_protocol", "run: 49 BD-SHS and 50 SentNoB runs of seven encoders, and 15 runs each", n_runs("offensive"),
       n_runs("sentiment"), n_runs("offensive_olid"))
 _cohort_o = _intro_runs
@@ -1474,6 +1476,10 @@ def test_abstract_follows_the_journal_rules():
     assert not text.lstrip().lower().startswith("this paper")
 
 
+MAIN_TEX = ROOT / "paper" / "main.tex"
+
+
+@pytest.mark.skipif(not MAIN_TEX.exists(), reason="the title page with the author list is not in the anonymised supplement")
 def test_title_length():
     title = re.search(r"\\title\{([^}]*)\}", (ROOT / "paper" / "main.tex").read_text(encoding="utf-8")).group(1)
     assert 6 <= len(title.replace(":", " ").split()) <= 12, title
@@ -1483,14 +1489,15 @@ def test_ai_use_is_disclosed_in_the_acknowledgements():
     statements = (SECTIONS / "statements.tex").read_text(encoding="utf-8")
     acks = statements[statements.index("\\begin{acks}"):statements.index("\\end{acks}")]
     assert AI_DISCLOSURE in " ".join(acks.split())
-    assert "footnotetext" not in (ROOT / "paper" / "main.tex").read_text(encoding="utf-8")
+    if MAIN_TEX.exists():
+        assert not re.search(r"\\footnotetext\{", MAIN_TEX.read_text(encoding="utf-8"))
 
 
 def test_every_citation_resolves_and_no_dropped_reference_is_cited():
     bib = (ROOT / "paper" / "references.bib").read_text(encoding="utf-8")
     keys = set(re.findall(r"^@\w+\{([^,]+),", bib, re.M))
     cited = set()
-    for path in list(SECTIONS.glob("*.tex")) + [ROOT / "paper" / "main.tex"]:
+    for path in list(SECTIONS.glob("*.tex")) + [p for p in [MAIN_TEX] if p.exists()]:
         for group in re.findall(r"\\cite(?:p|t|alp|alt|author|year)?\{([^}]*)\}", path.read_text(encoding="utf-8")):
             cited.update(k.strip() for k in group.split(","))
     assert cited <= keys, sorted(cited - keys)

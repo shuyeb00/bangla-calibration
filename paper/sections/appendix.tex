@@ -48,7 +48,10 @@ under permutations of the labels, so the observed AUROC and its permuted copies 
 Carlo p-value is valid \citep{phipson2010permutation}. The AUROC is a two-sample U-statistic with kernel in $[0, 1]$;
 Hoeffding's inequality for U-statistics \citep{hoeffding1963} gives $\Pr(\hat A - A \ge t) \le \exp(-2mt^2)$, and the
 bound follows. The labelled items are a random subset of the target calibration pool; if the pool is an i.i.d.\ sample of
-the target, so is the subset, and the bound holds for the population AUROC. For three classes we use only the permutation test, applied to the macro one-vs-rest AUROC. $\square$
+the target, so is the subset, and the bound holds for the population AUROC. For $K > 2$ each one-vs-rest AUROC is a
+two-sample U-statistic of the same kind; by the union bound the $K$ bounds at level $\delta/K$ hold together with
+probability at least $1 - \delta$, and then their mean bounds the macro AUROC from below. The gate of the triage
+(Section~\ref{sec:triage-procedure}) uses only part (a), for three classes on the macro one-vs-rest AUROC. $\square$
 
 \paragraph{Proposition~\ref{prop:selection}.}
 Each set calibrated at level $\alpha/M$ on exchangeable items with a fixed score covers with probability at least
@@ -436,8 +439,9 @@ uses the default prompt throughout, on calibration and test items alike.
 \section{Reproducibility}
 \label{sec:appendix-reproducibility}
 
-The released code reproduces the study at three levels. The supplement carries the anonymised model outputs. (1) From the released tables, a single script rebuilds every
-figure, every table and every contrast statistic in this paper and runs the unit tests in about two minutes on a CPU;
+The released code reproduces the study at three levels. The anonymised supplement carries the model outputs that fit
+its size limit, and the archived deposit holds all of them. (1) From the released tables, a single script rebuilds every
+figure, every table and every contrast statistic in this paper and runs the unit tests in about eight minutes on a CPU;
 a clean run reproduces the released files byte for byte, and a test checks every number quoted in the text against
 those tables. (2) From the saved model outputs (the logits and item indices of every encoder run and LLM system), the
 same script regenerates every table of results on a CPU, given the prepared datasets; while the Sylheti texts are

@@ -2,9 +2,10 @@
 
 Packs the tracked code, the tables and figures of the submitted study, LaTeX tables, theory notes and the manuscript
 sections (whose numbers tests/test_manuscript_numbers.py checks; the title page with the author list is left out) into
-a deterministic ZIP. The superseded max_length-128 grid and the repository README stay out: OpenReview shows the
-supplement to the public, and it should hold only material that supports the submission. Author names, e-mail addresses, institution, repository and Hugging Face identifiers and git commit hashes are
-replaced, and the archive is scanned afterwards; the build fails if any identifying string remains or the archive
+a deterministic ZIP. The superseded max_length-128 grid and the repository README stay out, so that the supplement
+holds only material that supports the submission. Author names, e-mail addresses, institution, the authors' repository
+and Hugging Face identifiers and git commit hashes are replaced; links to third-party dataset repositories are kept,
+since the licence table cites them, and the archive is scanned afterwards; the build fails if any identifying string remains or the archive
 exceeds the size limit. With --outputs, shards of the released model outputs (src/export_release_outputs.py export
 --anonymise) are added in priority order while they fit, with a manifest reduced to the shards included; their JSON
 members are scanned as well.
@@ -17,30 +18,15 @@ import hashlib
 import io
 import json
 import re
-import subprocess
 import tarfile
 import zipfile
 from pathlib import Path
 
 from src.config import BASE_DIR
+from src.supplementary_selection import tracked_files
 
 DEFAULT_OUT = BASE_DIR / "release" / "supplementary.zip"
 LIMIT_BYTES = 100 * 10**6
-INCLUDE_PREFIXES = ("src/", "tests/", "notebooks/", "data/", "results/", "thesis/", "paper/sections/", "reproduce.sh",
-                    "requirements", "REPRODUCIBILITY.md", "LICENSE", "paper/references.bib",
-                    "paper/supplementary_file_map.csv")
-# This builder lists the identifying strings it removes, so it cannot itself be shipped anonymised.
-EXCLUDE = {"src/build_supplementary_archive.py", "notebooks/01_pipeline_validation.ipynb",
-           "results/all_runs_summary.json"}
-SUPERSEDED_GRID = re.compile(
-    r"results/(offensive|sentiment)_[^/]+_seed\d+/"
-    r"|results/pipeline_validation/"
-    r"|thesis/figures/[^/]+$"
-    r"|results/tables/(BENCHMARK_SUMMARY_REPORT\.md|EXTENDED_DIAGNOSTICS_REPORT\.md"
-    r"|conformal_lac_aps_raps_\w+\.csv|conformal_mapie_crosscheck\.csv|extended_calibration_\w+\.csv"
-    r"|mahalanobis_percentile_\w+\.csv|mechanistic_shift_correlations\.csv|metrics_\w+\.csv"
-    r"|representation_distance_metrics\.csv|shift_quantification\.csv|significance_results\.csv"
-    r"|weighted_conformal_metrics\.csv)$")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".csv", ".sh", ".tex", ".json", ".ipynb", ".gitignore", ".cfg", ".toml", ""}
 SHARD_PRIORITY = ("runs_offensive", "runs_sentiment", "runs_offensive_olid", "runs_sentiment_hinglish",
                   "llm_runs_offensive", "llm_runs_sentiment", "few_label_finetuning", "llm_prompt_variants_offensive",
@@ -49,7 +35,7 @@ SHARD_PRIORITY = ("runs_offensive", "runs_sentiment", "runs_offensive_olid", "ru
 ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 
 REPLACEMENTS = [
-    (re.compile(r"https?://github\.com/[^\s)\"'\\]+"), "<anonymised URL>"),
+    (re.compile(r"https?://github\.com/(?:shuyeb00|suheb00|FerdusAhmed)[^\s)\"'\\,]*", re.I), "<anonymised URL>"),
     (re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+"), "<anonymised e-mail>"),
     (re.compile(r"\*?Authors:\*?[^\n]*"), "Authors: anonymised for review"),
     (re.compile(r"Abu Jafar Md Jakaria|Md Suheb Ahmed|Suheb Ahmed|Ferdus Ahmed|Ferdous Ahmed", re.I),
@@ -61,15 +47,8 @@ REPLACEMENTS = [
     (re.compile(r"bangla-calibration"), "project"),
 ]
 COMMIT_IN_TEXT = re.compile(r"(?<![0-9a-zA-Z])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7}(?![0-9a-zA-Z])")
-FORBIDDEN = re.compile(r"suheb|shuyeb|ferdus|ferdous|jakaria|metropolitan|github\.com|gmail|bangla-calibration",
+FORBIDDEN = re.compile(r"suheb|shuyeb|ferdus|ferdous|jakaria|metropolitan|gmail|bangla-calibration",
                        re.I)
-
-
-def tracked_files() -> list:
-    out = subprocess.run(["git", "ls-files"], cwd=BASE_DIR, capture_output=True, text=True, check=True).stdout
-    return [f for f in out.splitlines()
-            if f.startswith(INCLUDE_PREFIXES) and f not in EXCLUDE and not SUPERSEDED_GRID.match(f)
-            and (BASE_DIR / f).is_file()]
 
 
 def anonymise_csv(text: str) -> str:
@@ -116,17 +95,23 @@ def reduced_manifest(bundle: Path, shards: list) -> bytes:
 
 
 def readme(shards: list, left_out: list) -> bytes:
-    text = ["# Supplementary material for \"Temperature Is the Wrong Knob: How Text Classifiers Fail Across Dialects, "
-            "Scripts and Code-Mixing\"", "", "Anonymised for review.", "",
+    text = ["# Supplementary material for \"When Thresholds Move: Bangla Text Classification Under Dialect, Script "
+            "and Code-Mixing Shift\"", "", "Anonymised for review.", "",
             "Contents: code (`src/`, `notebooks/00_data_preparation.ipynb`), tests (`tests/`, including the "
             "recomputation of every number in the manuscript text from the tables), the manuscript sections "
-            "(`paper/sections/`), derived tables (`results/tables/grid_max_length_512/` for the study, "
-            "`results/tables/` for data, tokenizer and human-validation tables, `results/lora_lr_sweep*/` for the "
-            "learning-rate selection), figures, LaTeX tables and theory notes (`thesis/`), dataset documentation "
-            "(`data/`) and the reproduction script (`reproduce.sh`). Identifying names, links and commit hashes are "
-            "replaced. See `REPRODUCIBILITY.md` for the levels of reproduction.", "",
-            "Level 1 (tables to figures and LaTeX tables, about two minutes on a CPU): "
-            "`pip install -r requirements-analysis.txt && bash reproduce.sh tables`.", ""]
+            "(`paper/sections/`), the bibliography and its verification log (`paper/`), the map from every file to "
+            "the claims it supports (`paper/supplementary_file_map.csv`), derived tables "
+            "(`results/tables/grid_max_length_512/` for the study, `results/tables/` for data, tokenizer and "
+            "human-validation tables, `results/lora_lr_sweep*/` for the learning-rate selection), figures, LaTeX "
+            "tables and theory notes (`thesis/`), dataset documentation and the licence table (`data/`) and the "
+            "reproduction script (`reproduce.sh`). Identifying names, links and commit hashes are replaced. See "
+            "`REPRODUCIBILITY.md` for the levels of reproduction.", "",
+            "Level 1 (tables to figures, LaTeX tables and unit tests, about eight minutes on a CPU, Python 3.11): "
+            "`pip install -r requirements-analysis.txt && bash reproduce.sh tables`, or `python -m pytest tests` for "
+            "the tests alone. Some tests skip here by design: the title-length test reads the title page "
+            "(`paper/main.tex`), which carries the author list and is left out, and the file-map tests list files "
+            "with `git ls-files`; the split-size test needs the prepared datasets. "
+            "`bash reproduce.sh verify` also needs a git checkout.", ""]
     if shards:
         text += ["Level 2 (model outputs to tables): prepare the datasets with the scripts listed in "
                  "`data/DATA_SOURCES.md`, then run `python -m src.export_release_outputs restore --bundle "
@@ -134,8 +119,11 @@ def readme(shards: list, left_out: list) -> bytes:
                  "text and no labels; labels are rebuilt from the prepared datasets and checked against SHA-256 "
                  "hashes.", "", "Shards included: " + ", ".join(shards) + "."]
         if left_out:
-            text += ["Shards left out for size (part of the public release after review): " + ", ".join(left_out)
-                     + "."]
+            text += ["Shards left out for size (in the archived output deposit): " + ", ".join(left_out) + "."]
+    else:
+        text += ["Level 2 (model outputs to tables): this copy carries no model outputs; the logits and item "
+                 "indices are in the archived output deposit named in the manuscript's data statement. Without "
+                 "them the study is reproducible here at level 1."]
     return ("\n".join(text) + "\n").encode("utf-8")
 
 

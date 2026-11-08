@@ -24,7 +24,7 @@ import io
 import re
 import sys
 
-from src.build_supplementary_archive import tracked_files
+from src.supplementary_selection import tracked_files
 from src.config import BASE_DIR
 
 MAP_PATH = BASE_DIR / "paper" / "supplementary_file_map.csv"
@@ -136,6 +136,8 @@ def classify(path: str, use: dict, inputs: dict) -> tuple:
         return "manuscript", "all sections"
     if path == "paper/supplementary_file_map.csv":
         return "manuscript", "this map"
+    if path == "paper/reference_verification_log.csv":
+        return "manuscript", "references (how each cited work was verified)"
     if path in use:
         return "claim table", "; ".join(sorted(use[path]))
     if path.startswith("thesis/tables/"):

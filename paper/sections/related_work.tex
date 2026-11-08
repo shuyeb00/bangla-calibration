@@ -38,16 +38,19 @@ known density ratios \citep{tibshirani2019weighted}; our sources and targets bar
 reweight. Choosing among models with the same calibration data breaks the guarantee unless corrected
 \citep{liang2024conformal}; we use Bonferroni and sample-splitting corrections and report their cost in labels. For
 language models, conformal coverage falls below its target when the prompt, the decoding temperature or the
-quantisation changes \citep{zhu2026conformalized}, and abstention with deferral to human moderators has been built on
+quantisation changes \citep{zhu2026conformalized}; weighting calibration examples by their similarity to the test
+prompt makes coverage more reliable under domain shift \citep{lin2026domainshift}. Abstention with deferral to human moderators has been built on
 temperature-scaled confidence for offensive text under shift \citep{islam2026shiftaware}.
 
 \paragraph{Code-mixing, dialects and cross-dataset offensive-language detection.}
 Code-mixed benchmarks \citep{khanuja2020gluecos, aguilar2020lince, patwa2020sentimix, goswami2023offmix} evaluate models
 on mixed-language text, and dialect transformations \citep{ziems2023multivalue} document accuracy drops on dialectal
-English. For Bangla, BIDWESH \citep{bidwesh} provides dialect translations of BD-SHS, and Code-mixed Chaos
+English; \citet{joshi2025dialects} survey NLP for dialects more broadly. For Bangla, BIDWESH \citep{bidwesh} provides dialect translations of BD-SHS, and Code-mixed Chaos
 \citep{codemixedchaos} and MixTox-SA \citep{mixtox} provide natural romanised and mixed-script text. Newer resources annotate Bangla--English code-mixing at the token
 level \citep{afridi2026banglamix} and five regional dialects with romanised transliterations
-\citep{jawad2026fivedialects}; both are natural further targets for the procedure of Section~\ref{sec:shift-triage}.
+\citep{jawad2026fivedialects}, and \citet{jawad2025benchmarking} annotate 600 YouTube comments in four dialects, Sylheti
+among them, with binary sentiment. These are natural further targets for the procedure of
+Section~\ref{sec:shift-triage}.
 Hate-speech
 detectors generalise poorly across datasets, in part because the datasets define their labels differently
 \citep{fortuna2020toxic, yin2021generalisable, fortuna2021generalize}, and models trained on a dataset do not
