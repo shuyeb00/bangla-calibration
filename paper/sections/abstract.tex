@@ -1,18 +1,12 @@
-Text classifiers are routinely deployed on language varieties they were not trained on: regional dialects, romanised
-spellings, posts that switch languages mid-sentence. When their confidence stops matching their accuracy, the standard
-repair is temperature scaling. We show, on Bangla-centred evidence, that under such shifts temperature is usually the
-wrong knob. We fine-tune
-seven encoders on Bangla offensive-language and sentiment data, and three of them on English and Hindi--English data
-to separate the phenomenon from the source language, evaluate them on 21 source--target pairs spanning dialects,
-scripts, natural and tri-lingual code-mixing and other languages, and compare them with four instruction-tuned LLMs on
-the Bangla-source targets. In 12 of the 21 pairs, from all four source tasks, the models keep a useful ranking but sit
-at the wrong decision threshold. Temperature scaling cannot change a single predicted class, even when fitted on target
-labels; a label-free bias correction raises macro-F1 from 0.527 to 0.620 on average. That correction assumes balanced
-classes and backfires when positives are rare, and a class prior estimated from 50 labelled examples makes it safer on
-average, though not in every run. The
-ranking collapses in only one pair; retraining on a source that shares the target's labels restores it, which points to
-a mismatch of label definitions rather than to unfamiliar language, although that intervention also changes the
-training language and corpus. We turn these findings into a triage procedure that detects shift without labels and,
-with about 50 target labels on a balanced target, chooses between recalibrating, switching to an LLM and abstaining,
-with finite-sample guarantees on coverage and missed detections; the latter need 19 labelled positives, so about 245
-labels at 10\% prevalence.
+Bangla text classifiers meet regional dialects, Bangla typed in Latin letters and posts mixing Bangla, English and
+Hindi, and their confidence is usually repaired with temperature scaling, which cannot change a single decision. This
+empirical study asks which part of a fine-tuned classifier fails under such shifts and what repairs it. Seven encoders
+fine-tuned on Bangla offensive-language and sentiment data, encoders trained on English and Hindi--English sources,
+and four instruction-tuned language models are evaluated on 21 source--target pairs from 11 target corpora. The
+macro-F1 gain of a bias correction rises with the shift of the predicted-label distribution (Spearman correlation
+0.69). In 12 pairs the ranking survives while the decision threshold moves: a label-free bias correction raises
+macro-F1 from 0.527 to 0.620, whereas temperature scaling changes no prediction. Fitted jointly with a bias, the
+apparent temperature change in these pairs almost vanishes; the class-prior change explains little of the needed
+correction, and label-shift estimators fail. The single ranking collapse, on a student-written tri-lingual corpus,
+follows the source corpus in a translation factorial but reverses on natural romanised Bangla. A triage procedure
+turns these findings into a deployment rule with an explicit label budget.

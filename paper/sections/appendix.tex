@@ -1,6 +1,26 @@
 \section{Proofs}
 \label{sec:appendix-proofs}
 
+\paragraph{Proposition~\ref{prop:location}.}
+(a) Write $f^P_y$ and $f^Q_y$ for the class-conditional densities of $Z$. By Bayes' rule and (A1),
+$\log(f^P_1(u)/f^P_0(u)) = \mathrm{logit}\, P_P(Y = 1 \mid u) - \mathrm{logit}\, \pi_P = u - \mathrm{logit}\, \pi_P$. By
+(A2), $f^Q_y(u) = f^P_y(u - \delta)$. Hence $\mathrm{logit}\, P_Q(Y = 1 \mid u) = \log(f^Q_1(u)/f^Q_0(u)) +
+\mathrm{logit}\, \pi_Q = u - \delta - \mathrm{logit}\, \pi_P + \mathrm{logit}\, \pi_Q = u + \beta$.
+(b) The AUROC is $\Pr(Z_1 > Z_0)$ for independent $Z_y$ drawn from $f^Q_y$; translating both by $\delta$ leaves the
+event unchanged, and the AUROC does not depend on the class prior.
+(c) $\sigma$ is increasing, so $\sigma(u/T)$ predicts class 1 exactly when $u > 0$, for every $T$. For any post-hoc map
+$g$, the excess target log-loss over the bias map is $\mathbb{E}_Q\,\mathrm{KL}(\mathrm{Bern}(\sigma(Z + \beta)) \,\|\,
+\mathrm{Bern}(g(Z)))$, because $\sigma(Z + \beta)$ is the true posterior by (a). For $g = \sigma(\cdot/T)$ the integrand
+vanishes only where $u + \beta = u/T$, which is no point if $T = 1$ and a single point otherwise; without atoms this is a
+null set, so the excess $\Delta(T)$ is positive for every $T$. The bound
+$\mathrm{KL}(\mathrm{Bern}(p) \,\|\, \mathrm{Bern}(\sigma(u/T))) \le \log 2 + |u|/T$ and dominated convergence make
+$\Delta$ continuous on $(0, \infty)$ with a positive limit as $T \to \infty$ (the constant prediction 1/2), and
+$\Delta(T) \to \infty$ as $T \to 0$ by Fatou's lemma. A continuous positive function on $(0, \infty)$ with these limits
+has a positive infimum.
+(d) As in (a), calibration gives $\log f^P_k(u) = u_k - \log \pi_{P,k} + h(u)$ with $h$ common to all classes, and the
+common shift gives $f^Q_k(s) = f^P_k(s - d)$; the class-independent term cancels in the softmax. A temperature divides
+every logit by the same $T > 0$ and keeps their order. $\square$
+
 \paragraph{Proposition~\ref{prop:impossibility}.}
 Conditionally on $S = s$, the expected log-loss of $q = g(s)$ is the cross-entropy
 $\mathbb{E}[-\log q_Y \mid S = s] = H(Q(\cdot \mid s)) + \mathrm{KL}(Q(\cdot \mid s) \,\|\, q) \ge H(Q(\cdot \mid s))$,
@@ -56,46 +76,15 @@ about 100 labels when half of them are held out. Choosing between two equally go
 calibrating the chosen system's set on the same items at $\alpha = 0.1$ gives mean coverage 0.886, with coverage below
 0.85 in 0.189 of deployments; calibrating at $\alpha/2$ gives 0.952 and 0.0055, and sample splitting 0.924 and 0.089.
 The false-negative threshold flags every item exactly when the number of positives is below $M/\alpha - 1$, for one
-and for two candidates.
+and for two candidates. For Proposition~\ref{prop:location}, 236 of 236 checks hold in Gaussian and skewed-mixture
+score models with common shifts: temperature scaling leaves every decision unchanged, the bias map reaches the Bayes
+log-loss, BCTS fitted on target labels returns a temperature change near zero and the AUROC is unchanged. When the two
+classes move by different amounts the joint fit keeps a temperature change, as Section~\ref{sec:background-location}
+describes.
 
 \section{Data}
 \label{sec:appendix-data}
 
-\begin{table}[t]
-\centering
-\small
-\caption{Source tasks and targets. Sizes are numbers of items after preprocessing. Targets are listed with the source
-tasks whose models are evaluated on them; every target has a labelled calibration split (used only by few-label methods
-and oracle quantities) and a disjoint test split.}
-\label{tab:data}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lllrr}
-\toprule
-Role & Data set & Variety & Calibration & Test \\
-\midrule
-Source (BD-SHS models) & BD-SHS & Bangla, Bangla script & 4{,}718 & 4{,}722 \\
-Source (SentNoB models) & SentNoB & Bangla, Bangla script & 1{,}359 & 1{,}360 \\
-Source (OLID models) & OLID (TweetEval) & English & 1{,}191 & 860 \\
-Source (Hinglish models) & SentiMix Hinglish & Hindi--English, Latin script & 1{,}500 & 3{,}000 \\
-\midrule
-Target (BD-SHS) & BIDWESH Barishal & Bangla dialect & 611 & 2{,}445 \\
-Target (BD-SHS) & BIDWESH Chittagong & Bangla dialect & 610 & 2{,}443 \\
-Target (BD-SHS) & BIDWESH Noakhali & Bangla dialect & 611 & 2{,}445 \\
-Target (BD-SHS, OLID) & Code-mixed Chaos & Banglish (Latin script) & 2{,}035 & 8{,}144 \\
-Target (BD-SHS, OLID) & Code-mixed Chaos & Same comments, Bangla script & 2{,}035 & 8{,}144 \\
-Target (BD-SHS, OLID) & MixTox-SA & Bangla, Hindi, English, mixed & 2{,}456 & 9{,}824 \\
-Target (BD-SHS, OLID) & OffMix-3L & Bangla--English--Hindi, three scripts & 200 & 800 \\
-Target (BD-SHS) & OLID & English & 1{,}191 & 860 \\
-Target (OLID) & BD-SHS & Bangla & 4{,}718 & 4{,}722 \\
-\midrule
-Target (SentNoB, Hinglish) & Sylheti (this work) & Bangla dialect & 200 & 201 \\
-Target (SentNoB, Hinglish) & SentMix-3L & Bangla--English--Hindi, three scripts & 201 & 804 \\
-Target (SentNoB) & SentiMix Hinglish & Hindi--English & 2{,}998 & 3{,}000 \\
-Target (SentNoB, Hinglish) & SentiMix Spanglish & Spanish--English & 3{,}000 & 2{,}988 \\
-Target (Hinglish) & SentNoB & Bangla & 1{,}359 & 1{,}360 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \paragraph{Splits and preprocessing.}
 Table~\ref{tab:data} lists every split. BD-SHS (33{,}057 training and 4{,}723 validation items) and SentNoB (9{,}520 and
@@ -109,8 +98,7 @@ natural code-mixed corpora are deduplicated (conflicting duplicates are dropped)
 test, stratified by label; the two scripts of Code-mixed Chaos share one split (10{,}179 of its 10{,}234 rows remain).
 For SentiMix Spanglish, whose official
 test labels are not distributed, the official development split is the test split and the calibration split is drawn
-from the training split, so the two come from different releases. Of the BIDWESH test items, 8.6\% are translations of
-BD-SHS training sentences; removing them changes macro-F1 by at most 0.0053 and AUROC by at most 0.0033 in any run.
+from the training split, so the two come from different releases.
 
 \paragraph{How the targets were built.}
 These facts limit what each target can show. BIDWESH renders the same BD-SHS sentences in three dialects, so its three
@@ -159,7 +147,8 @@ One of the 60 base-grid runs (IndicBERT with LoRA, offensive, one seed) did not 
 is excluded; the configuration is reported over four seeds. One label-smoothing run did not converge. Under the
 base-model recipe, three of six XLM-R-large runs collapsed to a single class; these runs are reported only as a recipe
 sensitivity check, and the large-encoder results use the large-encoder recipe, under which all 20 runs converged. All
-architecture, OLID and Hinglish runs converged.
+architecture, OLID, Hinglish and factorial runs converged. Including the non-converged base-grid run in the analysis
+changes no regime assignment.
 
 \paragraph{LLMs.}
 Each prompt contains an English instruction, the text and a one-word answer format. For offensive language the
@@ -207,15 +196,61 @@ single targets by $-0.041$ to $+0.048$.
 
 \input{../thesis/tables/contrast_families_holm}
 
+\begin{table}[t]
+\centering
+\small
+\caption{Status of the analyses. Confirmatory: a test family fixed in the analysis code with Holm's correction.
+Exploratory: estimates and intervals reported without a claim of pre-specification.}
+\label{tab:analysis-status}
+\begin{tabular}{p{0.42\linewidth}p{0.2\linewidth}p{0.28\linewidth}}
+\toprule
+Analysis & Status & Units \\
+\midrule
+Association over all pairs (Section~\ref{sec:results-all-pairs}) & exploratory & pairs, target corpora \\
+Descriptive regimes (Section~\ref{sec:background-regimes}) & exploratory, defined after the results & pairs \\
+Corrections under threshold shift (Table~\ref{tab:threshold-shift-operating-point}) & exploratory & run $\times$ pair units, corpora \\
+BCTS coordinates (Section~\ref{sec:results-decomposition}) & exploratory & runs \\
+Label-shift estimators & exploratory & runs \\
+Corpus-level sign tests and mixed model (Section~\ref{sec:results-robustness}) & exploratory & corpora, pairs \\
+Contrast families (Table~\ref{tab:contrast-families-holm}) & confirmatory within families & runs \\
+Factorial, four contrasts on OffMix-3L & confirmatory & runs \\
+Factorial, other targets and controls & exploratory & runs \\
+Triage evaluation (Section~\ref{sec:triage-procedure}) & exploratory & correlated resamples \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mixed model}
+\label{sec:appendix-mixed}
+The linear mixed model of Section~\ref{sec:results-robustness} has random intercepts for target corpus and for pair
+within corpus and is fitted by restricted maximum likelihood on the run-level gains. On the natural corpora of the
+threshold-shift pairs the batch-calibration gain is 0.082 (95\% interval 0.057--0.106) and the MAP BCTS gain 0.053
+(0.023--0.082). Over all 21 pairs the slope of the MAP BCTS gain on the predicted-marginal shift is 0.063 ($p = 0.42$),
+against 0.219 for batch calibration. Two NLL fits put the corpus variance at its boundary of zero and were refitted with
+the pair intercept only. With seven purposively chosen corpora the model is a sensitivity check, not an estimate for a
+population of corpora.
+
 \section{Additional Results}
 \label{sec:appendix-results}
 
 \input{../thesis/tables/regime_map_source_transfer}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{regime_map_source_transfer.pdf}
+\Description{Four scatter plots, one per source task, of AUROC retention against predicted-label shift for each target.}
+\caption{AUROC retention against the shift of the predicted-label distribution for the 21 shifted pairs, by source
+task (means over converged runs). Hollow: target TS no better than a constant predictor in most runs. Cross: unbounded
+oracle temperature in every run.}
+\label{fig:regime-map}
+\end{figure}
+
 \subsection{Sensitivity of the regime assignment}
 \label{sec:appendix-regime-sensitivity}
-The thresholds of Section~\ref{sec:results-regimes} were set after inspecting the results, and one rule changed because
-of a single pair. Our first rule for a threshold shift required a retention of at least 0.70; BD-SHS models on English
+The descriptive regimes use these thresholds: retention $\ge 0.95$, $|\log T^*_Q/T_P| \le 0.15$ and marginal shift
+$\le 0.10$ for no correction; a ratio of at least 0.25 with a marginal shift $\le 0.10$ for a temperature shift; and a
+marginal shift $\ge 0.10$ with target TS better than a constant and a finite oracle temperature in most runs for a
+threshold shift. They were set after inspecting the results, and one rule changed because of a single pair. Our first rule for a threshold shift required a retention of at least 0.70; BD-SHS models on English
 OLID came in at 0.6997, and we replaced that condition by the present one (target TS better than a constant and a finite
 oracle temperature in most runs). The finiteness condition is read over runs because a few runs of threshold-shift pairs
 reach the bound (5 of 49 on Banglish, 1 of 50 on Hinglish). Weak ranking requires target TS no better than a constant in
@@ -230,7 +265,7 @@ constant).
 
 \subsection{Cross-definition contrasts and triage policies}
 \label{sec:appendix-triage-tables}
-Table~\ref{tab:cross-definition-contrasts} gives the contrasts behind Section~\ref{sec:results-causes}.
+Table~\ref{tab:cross-definition-contrasts} gives the contrasts behind Section~\ref{sec:results-factorial}.
 Tables~\ref{tab:shift-triage-policies} and~\ref{tab:triage-prevalence-stress} give the policy comparison of
 Section~\ref{sec:shift-triage} and its prevalence stress test. The coverage tails of
 Table~\ref{tab:shift-triage-policies} are not at matched nominal levels: the coverage of a valid split-conformal set on 50
@@ -245,9 +280,10 @@ sentiment.
 
 \input{../thesis/tables/triage_prevalence_stress}
 
-\subsection{Class-prior shift on the sentiment sources}
+\subsection{Class-prior shift}
 \label{sec:appendix-prior-sentiment}
-Table~\ref{tab:prior-shift-sentiment} repeats the stress test of Section~\ref{sec:results-threshold} on the two
+Table~\ref{tab:prior-shift-ablation} gives the stress test of Section~\ref{sec:results-few-labels} on the two offensive
+source tasks, and Table~\ref{tab:prior-shift-sentiment} repeats it on the two
 three-class sources, with every target resampled to uniform classes or to one class at a share of 0.6 or 0.8. Pooled
 over the two sources, uniform batch calibration never falls below source TS in mean macro-F1, although it does for one
 source at a share of 0.8 (SentNoB, positive class, 0.439 against 0.443; Hinglish, neutral class, 0.425 against 0.457). Pooled, it
@@ -257,17 +293,20 @@ against 0.923 at 0.6 and 1.041 against 0.763 at 0.8). A prior from 50
 labels has lower NLL than uniform batch calibration on every skewed prior, but its macro-F1 is less reliable: with the
 positive class at 0.8 it is below source TS in 52\% of the run--target units.
 
+\input{../thesis/tables/prior_shift_ablation}
+
 \input{../thesis/tables/prior_shift_sentiment}
 
 \subsection{Spending labels}
 \label{sec:appendix-few-label}
 Figure~\ref{fig:few-label} compares the ways of spending target labels on four targets. It is the evidence for the
-conclusion of Section~\ref{sec:results-systems} that, with up to 100 labels, routing to a surviving ranking and correcting
+conclusion of Section~\ref{sec:triage-detection} that, with up to 100 labels, routing to a surviving ranking and correcting
 its bias beats fine-tuning the encoder.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{few_label_adaptation_curves.pdf}
+\Description{Four panels of macro-F1 against the number of target labels for four ways of spending labels on four targets.}
 \caption{Ways of spending $n$ target labels, macro-F1 on the target test items. Dashed line: encoder with source TS.
 The character n-gram classifier is trained on the same labels and shows how much of each label is predictable from
 surface features.}
@@ -297,7 +336,34 @@ cross-language target, for encoders and LLMs alike; on OffMix-3L it drives the e
 every system (macro-F1 0.343). For encoders it is harmless on the BIDWESH dialects (macro-F1 lower by at most 0.003 than
 BCTS alone) but not on Sylheti (lower by 0.096 on average); for LLMs it lowers macro-F1 by up to 0.266 on the BIDWESH
 dialects. EM assumes that the class-conditional distributions are
-unchanged, which these targets violate.
+unchanged, which these targets violate. The distance-aware calibrator of \citet{gasparin2024distance} mixes the
+source-TS probabilities with the uniform distribution by a weight that decays with the $k$-nearest-neighbour distance
+of the final-layer representation; we adapted it to a reference bank drawn from half of the source calibration split
+because training-split representations were not stored, and chose its scale on the unlabelled target inputs as the
+authors do. It never changes a predicted class. In the threshold-shift pairs it lowers NLL below source TS in 0.900 of
+runs (1.116 against 1.145 on the items of this comparison) but stays above batch calibration (0.936).
+
+\subsection{Translation quality of the factorial sources}
+\label{sec:appendix-translation}
+The factorial's translated sources were measured only automatically. OLID translated into Bangla has a mean LaBSE
+similarity to its source of 0.861, a round-trip chrF++ of 61.1 and 0.935 of its letters in Bangla script; BD-SHS
+translated into English has a similarity of 0.704 and a round-trip chrF++ of 30.4. Offensive items of BD-SHS translate
+worse than the others (similarity 0.671 against 0.733), which is part of the word-level sanitisation discussed in
+Section~\ref{sec:results-factorial}. No item was filtered by translation quality.
+
+\subsection{Choice of calibration metric}
+Whether source TS improves calibration on a shifted condition does not depend on the metric chosen. The sign of its
+effect on adaptive and classwise ECE, the Brier score and NLL agrees with its sign on top-label ECE in every run of
+every offensive condition, and in at least 0.8 of the runs of every sentiment condition.
+
+\subsection{Stress tests of the triage}
+\label{sec:appendix-stress}
+Two tests probe the assumptions of Section~\ref{sec:shift-triage}. In the first, the target scores of both candidate
+systems are replaced by uninformative scores on a growing share of the items; when every item is affected, the
+survival test with all 50 labels declares a candidate surviving in 0.048 of resamples, close to its level of 0.05. In
+the second, calibration and deployment items come from different writing-style clusters instead of a random split of
+the same size: with 50 labels, mean coverage stays at 0.895 against 0.897 for a random split, but the share of
+deployments below 0.85 rises from 0.165 to 0.222 and the coverage of the worst cluster falls on average from 0.873 to 0.807.
 
 \subsection{Conformal sets under shift}
 Split-conformal sets calibrated on the source split ($\alpha = 0.1$) lose coverage on the shifted targets: for the base
@@ -322,7 +388,7 @@ items as not judgeable. Their agreement with the gold label was at chance (0.44 
 further items, one annotator recovered part of the gold label (agreement 0.677, $\kappa$ 0.359), the other applied the
 insult-based definition and labelled almost every item non-offensive; the two annotators agreed with each other at
 $\kappa = 0.030$. We report this round as consistent with, but much weaker than, the cross-definition intervention of
-Section~\ref{sec:results-causes}, which does not depend on our judgement. Chance agreement also fits noisy labels, not
+Section~\ref{sec:results-factorial}, which does not depend on our judgement. Chance agreement also fits noisy labels, not
 only a different definition.
 
 \subsection{Contamination}
@@ -339,6 +405,7 @@ $p < 0.001$, against $-0.006$ on Sylheti, with touching intervals). They are sma
 do not show memorisation of items, but they do not exclude exposure to these sets.
 
 \subsection{Prompt definitions}
+\label{sec:appendix-prompts}
 Rewriting the offensive instruction with the OLID annotation guideline left the OffMix-3L ranking and threshold almost
 unchanged (AUROC 0.916 against 0.913; 6.7\% predicted offensive against 47.8\% in the gold labels), contrary to our
 prediction. A broader definition that also counts hostile or harshly critical remarks raised OffMix-3L AUROC by 0.040 for

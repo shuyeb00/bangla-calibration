@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Corrections under threshold shift (R2: 12 source--target pairs, 7 target corpora, 386 run $\times$ pair units). F1 is macro-F1 on the target test split. Runs: mean over units; corpora: mean over corpora of the pair means. Labels: target labels used (50 calibration labels, 20 resamples). The last three rows are references, not deployable corrections: the true prior is the target calibration prior, the oracle bias is fitted on all target calibration labels, and the oracle threshold is tuned on the test labels themselves. Batch calibration uses the unlabelled target calibration split.}
+\label{tab:threshold-shift-operating-point}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrrr}
+\toprule
+Correction & Adjusts & Labels & F1 (runs) & F1 (corpora) & NLL (runs) & NLL (corpora) \\
+\midrule
+Source TS & -- & 0 & 0.527 & 0.505 & 0.892 & 0.883 \\
+Shrinkage TS & temperature & 50 & 0.527 & 0.505 & 0.728 & 0.771 \\
+Prior adjustment, prior from labels & class prior & 50 & 0.531 & 0.524 & 0.918 & 0.882 \\
+MAP bias & bias & 50 & 0.601 & 0.584 & 0.698 & 0.744 \\
+MAP BCTS & temperature + bias & 50 & 0.594 & 0.578 & 0.684 & 0.732 \\
+Batch calibration & bias & 0 & 0.620 & 0.615 & 0.699 & 0.725 \\
+Tuned threshold & threshold & 50 & 0.631 & 0.618 & 0.713 & 0.749 \\
+\midrule
+Prior adjustment, true prior & class prior & prior & 0.536 & 0.531 & 0.902 & 0.864 \\
+Oracle bias & bias & all & 0.626 & 0.609 & 0.665 & 0.701 \\
+Oracle threshold & threshold & test & 0.660 & 0.649 & 0.693 & 0.726 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

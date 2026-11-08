@@ -1,0 +1,96 @@
+\section{Background and Problem Setting}
+\label{sec:background}
+
+\subsection{Setting and corrections}
+\label{sec:background-corrections}
+
+A fine-tuned classifier maps an input $x$ to logits $z(x) \in \mathbb{R}^K$, with $K = 2$ for offensive language and
+$K = 3$ for sentiment. It is trained on a source distribution $P$ and deployed on a target distribution $Q$ of another
+language variety. We observe labelled source splits and, on the target, unlabelled inputs and possibly $n$ labelled
+calibration items; every target quantity is evaluated on a disjoint target test split. All corrections are maps
+applied to the logits of a fixed model, and they differ in what they adjust.
+
+Temperature scaling (TS; \citealp{guo2017calibration}) predicts $\mathrm{softmax}(z/T)$, with $T$ fitted on the source
+calibration split (\emph{source TS}) or on target labels. With $n$ target labels we fit $\log T$ by maximum a
+posteriori estimation under a Gaussian prior centred on the source estimate (\emph{shrinkage TS}). Bias-corrected
+temperature scaling (BCTS; \citealp{alexandari2020maximum}) predicts $\mathrm{softmax}(z/T + b)$ with $b_0 = 0$; its MAP
+version with 50 labels (\emph{MAP BCTS}) places Gaussian priors on $\log T$ and on each free bias, and its
+\emph{MAP bias} variant keeps the source temperature and fits only $b$. The prior variances are the mean squared
+oracle deviations measured on the other task, so nothing is fitted on the target being evaluated. A
+\emph{prior adjustment} multiplies the source-TS probabilities by $\pi_Q / \pi_P$ and renormalises
+\citep{saerens2002adjusting}, with $\pi_Q$ either estimated from the $n$ labels or, as a reference, the true target
+calibration prior. Batch calibration \citep{zhou2024batch} needs no labels: it divides the source-TS probabilities by
+their arithmetic mean over a batch of unlabelled target inputs and renormalises, which pulls the predicted class
+proportions towards uniform. It therefore assumes a balanced target and acts on a batch rather than a single item.
+Finally, a \emph{tuned threshold} adds the bias offset that maximises macro-F1 on the $n$ labelled items.
+
+For every $T > 0$, $\mathrm{softmax}(z/T)$ preserves the order of the classes within an item, and for $K = 2$ it
+preserves the order of the scores across items, since the logit difference is divided by the same positive constant.
+Temperature scaling therefore changes no predicted class, and for $K = 2$ neither the AUROC nor the set of decisions
+reachable by thresholding the score: a threshold calibrated on the scores, as in conformal risk control, flags the
+same items. This is a fact about monotone maps, not an empirical finding. A bias term moves the boundary between
+classes and changes decisions; for $K = 2$ it leaves the ranking of items intact.
+
+\subsection{When a bias is the right repair}
+\label{sec:background-location}
+
+Write the binary case with $Z = z_1(X) - z_0(X)$, the source-TS log-odds, and $\sigma(u) = 1/(1 + e^{-u})$. Two
+assumptions describe the simplest shift that keeps the ranking. (A1) The score is calibrated on the source:
+$P_P(Y = 1 \mid Z = u) = \sigma(u)$. (A2) Both classes move by the same amount: there is one $\delta \in \mathbb{R}$
+such that, for each class $y$, the law of $Z$ given $Y = y$ under $Q$ is the law of $Z + \delta$ given $Y = y$ under
+$P$; the class prior may move from $\pi_P$ to $\pi_Q$. Let $\lambda = \mathrm{logit}\, \pi_Q - \mathrm{logit}\, \pi_P$
+and $\beta = \lambda - \delta$.
+
+\begin{proposition}[A common location shift needs a bias]
+\label{prop:location}
+Under (A1) and (A2): (a) the target posterior is $P_Q(Y = 1 \mid Z = u) = \sigma(u + \beta)$, a bias at temperature 1;
+(b) the AUROC of $Z$ is the same under $Q$ as under $P$; (c) every temperature map $\sigma(u/T)$, $T > 0$, keeps the
+source decisions $\mathbb{1}[u > 0]$ while the Bayes rule is $\mathbb{1}[u > -\beta]$, and if $\beta \ne 0$, $Z$ has
+no atoms and $\mathbb{E}_Q|Z| < \infty$, the target log-loss of the best temperature exceeds that of the bias map by a
+positive amount; (d) with $K$ classes and a common shift $d \in \mathbb{R}^K$ of the logit vector, the target posterior
+is $\mathrm{softmax}(s + b)$ with $b_k = \log(\pi_{Q,k}/\pi_{P,k}) - d_k$.
+\end{proposition}
+
+The proof (Appendix~\ref{sec:appendix-proofs}) is a direct application of Bayes' rule. Its use here is to name the
+assumption under which a bias, not a temperature, is the right repair, and to say what a fitted temperature means
+when the assumption holds: a temperature fitted on target labels under (A2) is not 1, because it rises to hedge the
+misplaced threshold. In a Gaussian model with $|\beta| = 2$ the oracle log temperature is 0.71--1.12, depending on
+the class separation and the direction of the shift (Appendix~\ref{sec:appendix-simulation}). A measured temperature shift can therefore be a bias shift
+read through the wrong parameter. The decomposition $\beta = \lambda - \delta$ also separates a change of the class
+prior ($\lambda$) from a shift of the score ($\delta$). Label-shift estimators assume $\delta = 0$ and attribute every
+change of the predicted proportions to the prior; when the score moves they estimate the wrong prior. Proposition~\ref{prop:location} is
+an idealised limit: under (A2) the AUROC is retained exactly, whereas real threshold shifts lose some ranking. If the
+classes move by different amounts, the target log-odds stay linear in $u$ in an equal-variance Gaussian model but with
+another slope, so both a temperature and a bias are needed. On a labelled target sample, the slope that BCTS estimates
+is the diagnostic: under (A2) its change of $\log T$ is close to zero.
+
+\subsection{Quantities that describe a shift}
+\label{sec:background-coordinates}
+
+For each model and target we record, after source TS:
+(i) the ranking \emph{AUROC} (macro one-vs-rest for $K = 3$) and its \emph{retention}, the ratio to the in-domain AUROC;
+(ii) the \emph{predicted-marginal shift}, the total variation between the distribution of predicted labels on the
+target inputs and on the source calibration split, which needs no target labels, and for comparison the total
+variation between the target and source class priors, which does;
+(iii) the \emph{oracle temperature change} $\log(T^{*}_{Q}/T_{P})$, where $T^{*}_{Q}$ maximises the likelihood of all
+target calibration labels, flagged when the fit reaches the bound $T = 20$, that is, when the optimum is unbounded;
+(iv) the \emph{BCTS coordinates}, the change of $\log T$ and the bias of BCTS fitted on all target calibration labels,
+and the shares of the BCTS log-loss gain that the temperature alone and the bias alone recover; and
+(v) the \emph{explained label entropy} $1 - \mathrm{NLL}_{Q}(\text{target TS}) / H(\pi_Q)$, whose value is at most 0
+when even the oracle temperature is no better than predicting the target prior $\pi_Q$ for every input.
+
+\subsection{Descriptive regimes}
+\label{sec:background-regimes}
+
+The primary analysis uses these quantities directly, over all 21 pairs. To describe the pairs we also use five labels,
+which were defined after the results had been seen and are not a deployment diagnostic, since three of the quantities
+above need target labels:
+R0, \emph{no correction} (ranking retained, temperature and predicted proportions stable);
+R1, \emph{temperature shift} (a finite temperature change with stable predicted proportions);
+R2, \emph{threshold shift} (the predicted proportions move, target TS beats a constant predictor and the oracle
+temperature is finite in most runs);
+R3, \emph{weak ranking} (AUROC above 0.6 but target TS no better than a constant in most runs); and
+R4, \emph{collapse} (an unbounded oracle temperature in every run). The operational thresholds are listed with the
+regime table in Appendix~\ref{sec:appendix-regime-sensitivity}, which also varies them. The practical conclusions of
+this article are stated over all pairs or over the pairs with a predicted-marginal shift above 0.10, and do not depend
+on the labels.

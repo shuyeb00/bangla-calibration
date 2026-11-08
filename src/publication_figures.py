@@ -8,6 +8,8 @@ Figures (thesis/figures/grid_max_length_512/publication/, PDF and PNG):
   collapse_causes                     the two previous figures as panels (a) and (b) of one full-width figure
   few_label_adaptation_curves         macro-F1 vs number of target labels for the label-spending options
   all_pairs_bias_gain                 macro-F1 gain of a bias correction vs predicted-marginal shift, all 21 pairs
+  bcts_shift_coordinates              temperature fitted alone vs jointly with a bias, and their shares of the gain
+  source_corpus_factorial             AUROC of the six definition-by-language cells on OffMix-3L and Chaos Banglish
 
     python -m src.publication_figures
 """
@@ -31,6 +33,7 @@ MARKERS = ["o", "s", "^", "D"]
 INK, INK_SECONDARY, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 RETENTION_RAMP = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b"]
 GENERAL_LLMS = ["llama3_1_8b_instruct", "qwen3_4b_instruct", "qwen3_5_9b", "qwen3_8b"]
+WIDTH = 5.0
 
 CONDITION_NAMES = {
     "test": "In domain", "shift_d1_barishal_test": "Barishal", "shift_d1_chittagong_test": "Chittagong",
@@ -64,7 +67,7 @@ def style():
         "axes.labelcolor": INK, "xtick.color": INK_SECONDARY, "ytick.color": INK_SECONDARY, "text.color": INK,
         "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True, "grid.color": GRID,
         "grid.linewidth": 0.6, "axes.axisbelow": True, "legend.frameon": False, "pdf.fonttype": 42,
-        "savefig.dpi": 300, "savefig.bbox": "tight", "figure.facecolor": "white", "axes.facecolor": "white",
+        "savefig.dpi": 600, "savefig.bbox": "tight", "figure.facecolor": "white", "axes.facecolor": "white",
     })
 
 
@@ -85,7 +88,7 @@ def regime_map():
     runs = pd.read_csv(TABLES / "source_transfer_per_run.csv")
     no_gain = (runs.explained_label_entropy <= 0).groupby([runs.source_task, runs.condition]).mean()
     order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
-    fig, axes = plt.subplots(2, 2, figsize=(7.0, 4.0), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.6), sharex=True, sharey=True)
     for ax, src in zip(axes.flat, order):
         d = r[r.source_task == src]
         collapsed = d.at_upper_bound >= 0.5
@@ -113,8 +116,8 @@ def regime_map():
                plt.Line2D([], [], marker="X", ls="", color=SERIES[1], markersize=6,
                           label="oracle temperature unbounded (collapse)"),
                plt.Line2D([], [], color=INK_SECONDARY, ls=":", lw=0.8, label="chance AUROC")]
-    fig.legend(handles=handles, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.03))
-    fig.tight_layout(rect=(0.012, 0.04, 1, 1))
+    fig.legend(handles=handles, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06))
+    fig.tight_layout(rect=(0.012, 0.07, 1, 1))
     return save(fig, "regime_map_source_transfer")
 
 
@@ -128,7 +131,7 @@ def encoder_llm_auroc():
                       "shift_d2_test"],
         "sentiment": ["test", "shift_d1_test", "shift_d6_hinglish_test", "shift_d2_test", "shift_d7_spanglish_test"],
     }
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.85),
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.1),
                              gridspec_kw={"width_ratios": [len(conditions["offensive"]), len(conditions["sentiment"])]})
     for ax, (task, conds) in zip(axes, conditions.items()):
         x = np.arange(len(conds))
@@ -152,8 +155,8 @@ def encoder_llm_auroc():
         ax.set_ylim(0.4, 1.0)
     axes[0].set_ylabel("AUROC after source TS")
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04))
-    fig.tight_layout(rect=(0, 0.07, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=1, bbox_to_anchor=(0.5, -0.08))
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
     return save(fig, "encoder_llm_auroc_by_condition")
 
 
@@ -165,7 +168,7 @@ def script_intervention():
     s["name"] = [MODEL_NAMES.get(n.replace("_full_ft", "").replace("_lora", ""), n) + (" LoRA" if n.endswith("_lora") else "")
                  for n in s.name]
     s = s.sort_values(["kind", "auroc_banglish"])
-    fig, ax = plt.subplots(figsize=(4.6, 4.2))
+    fig, ax = plt.subplots(figsize=(WIDTH, 4.2))
     y = np.arange(len(s))
     ax.hlines(y, s.auroc_banglish, s.auroc_bangla_script, color=GRID, lw=2.0)
     ax.scatter(s.auroc_banglish, y, color=SERIES[1], s=30, marker=MARKERS[1], edgecolor="white", zorder=3,
@@ -190,7 +193,7 @@ def cross_definition():
     order = ["bdshs_test", "olid_test", "offmix3l", "chaos_banglish", "chaos_bangla_script", "mixtox"]
     names = ["BD-SHS test", "OLID test", "OffMix-3L", "Chaos\n(Banglish)", "Chaos\n(Bangla script)",
              "MixTox-SA"]
-    fig, ax = plt.subplots(figsize=(5.6, 3.0))
+    fig, ax = plt.subplots(figsize=(WIDTH, 3.0))
     x = np.arange(len(order))
     for i, (src, label) in enumerate([("bdshs", "Trained on BD-SHS (Bangla)"), ("olid", "Trained on OLID (English)")]):
         d = c[c.source == src]
@@ -261,7 +264,7 @@ def definition_panel(ax):
 
 
 def collapse_causes():
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.1), gridspec_kw={"width_ratios": [0.85, 1.25]})
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.6), gridspec_kw={"width_ratios": [0.85, 1.25]})
     script_panel(axes[0])
     definition_panel(axes[1])
     fig.tight_layout(w_pad=1.5)
@@ -280,8 +283,8 @@ def few_label_curves():
               ("encoder_map_bcts", "Encoder + MAP BCTS"),
               ("llm_zero_shot_map_bcts", "Zero-shot LLM + MAP BCTS"),
               ("char_ngram", "Character n-gram classifier")]
-    fig, axes = plt.subplots(1, 4, figsize=(7.0, 2.5), sharey=True)
-    for ax, (task, cond) in zip(axes, panels):
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.0), sharey=True)
+    for ax, (task, cond) in zip(axes.flat, panels):
         d = f[(f.task == task) & (f.condition == cond)]
         n0 = d[d.system == "encoder_source_ts"].macro_f1
         if len(n0):
@@ -298,13 +301,15 @@ def few_label_curves():
         ax.set_xticks(grid, [str(n) for n in grid])
         ax.minorticks_off()
         ax.set_title(condition_name(task, cond), loc="left")
+    for ax in axes[1]:
         ax.set_xlabel("Target labels")
-    axes[0].set_ylabel("Macro-F1")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Macro-F1")
     handles = [plt.Line2D([], [], color=SERIES[i], marker=MARKERS[i], lw=2.0, label=label)
                for i, (_, label) in enumerate(series)]
     handles.append(plt.Line2D([], [], color=INK_SECONDARY, ls="--", lw=0.8, label="Encoder, source TS (no labels)"))
-    fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.12))
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    fig.legend(handles=handles, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.1))
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
     return save(fig, "few_label_adaptation_curves")
 
 
@@ -314,7 +319,7 @@ def all_pairs_bias_gain():
     cmap = LinearSegmentedColormap.from_list("retention", RETENTION_RAMP)
     norm = Normalize(vmin=0.5, vmax=1.0)
     order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
-    fig, axes = plt.subplots(1, 2, figsize=(5.5, 2.7), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.8), sharey=True)
     panels = [("batch_calibration_macro_f1_gain", "(a) Batch calibration (no labels)"),
               ("map_bcts_macro_f1_gain", "(b) MAP BCTS (50 target labels)")]
     for ax, (column, title) in zip(axes, panels):
@@ -345,9 +350,80 @@ def all_pairs_bias_gain():
     return save(fig, "all_pairs_bias_gain")
 
 
+REGIME_STYLE = {"R0": ("no correction", "#9a9893"), "R1": ("temperature shift", SERIES[3]),
+                "R2": ("threshold shift", SERIES[0]), "R3": ("weak ranking", SERIES[2]), "R4": ("collapse", SERIES[1])}
+
+
+def bcts_shift_coordinates():
+    b = pd.read_csv(TABLES / "bcts_shift_coordinates_summary.csv")
+    a = pd.read_csv(TABLES / "all_pairs_bias_gain.csv")[["source_task", "condition", "regime"]]
+    d = b.merge(a, on=["source_task", "condition"], validate="one_to_one")
+    order = ["offensive", "offensive_olid", "sentiment", "sentiment_hinglish"]
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.7))
+    panels = [("delta_log_t_ts", "delta_log_t_bcts", "(a) Fitted change of log temperature",
+               "Temperature alone", "Temperature with a bias"),
+              ("ts_share_of_bcts_gain", "bias_share_of_bcts_gain", "(b) Share of the BCTS log-loss gain",
+               "Temperature alone", "Bias alone")]
+    for ax, (xc, yc, title, xl, yl) in zip(axes, panels):
+        lo, hi = (-1.2, 2.6) if xc == "delta_log_t_ts" else (-0.1, 1.25)
+        ax.plot([lo, hi], [lo, hi], color=INK_SECONDARY, lw=0.8, ls=":")
+        ax.axhline(0, color=GRID, lw=0.8)
+        for i, src in enumerate(order):
+            for reg, (_, color) in REGIME_STYLE.items():
+                g = d[(d.source_task == src) & (d.regime == reg)]
+                ax.scatter(g[xc], g[yc], s=30, marker=MARKERS[i], color=color, edgecolor="white", linewidth=0.7,
+                           zorder=3)
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
+        ax.set_title(title, loc="left")
+        ax.set_xlabel(xl)
+        ax.set_ylabel(yl)
+    handles = [plt.Line2D([], [], marker="o", ls="", color=color, markeredgecolor="white", markersize=6, label=name)
+               for name, color in REGIME_STYLE.values()]
+    handles += [plt.Line2D([], [], marker=MARKERS[i], ls="", markerfacecolor=INK_SECONDARY, markeredgecolor="white",
+                           markersize=6, label=SOURCE_NAMES[src].split(" (")[0] + " source")
+                for i, src in enumerate(order)]
+    fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.17), handletextpad=0.2,
+               columnspacing=0.8)
+    fig.tight_layout(w_pad=1.6)
+    return save(fig, "bcts_shift_coordinates")
+
+
+FACTORIAL_CELLS = [("A", "bdshs", "orig."), ("F", "bdshs", "RT"), ("C", "olid", "MT"), ("B", "olid", "orig."),
+                   ("E", "olid", "RT"), ("D", "bdshs", "MT")]
+
+
+def source_corpus_factorial():
+    c = pd.read_csv(TABLES / "definition_language_factorial_cells.csv")
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.9), sharey=True)
+    x = np.array([0, 1, 2, 3.6, 4.6, 5.6])
+    for ax, (target, title) in zip(axes, [("offmix3l", "(a) OffMix-3L"), ("chaos_banglish", "(b) Code-mixed Chaos, Banglish")]):
+        for xi, (cell, corpus, _) in zip(x, FACTORIAL_CELLS):
+            d = c[(c.cell == cell) & (c.target == target)]
+            pooled = d[d.scope == "pooled"].auroc_mean.iloc[0]
+            arch = d[d.scope != "pooled"].auroc_mean
+            i = 0 if corpus == "bdshs" else 1
+            ax.vlines(xi, arch.min(), arch.max(), color=SERIES[i], lw=2.0, alpha=0.45)
+            ax.scatter(xi, pooled, color=SERIES[i], s=34, marker=MARKERS[i], edgecolor="white", zorder=3)
+        ax.axhline(0.5, color=INK_SECONDARY, lw=0.8, ls=":")
+        ax.set_xticks(x, [f"{cell}\n{name}" for cell, _, name in FACTORIAL_CELLS])
+        ax.text(1.0, 0.03, "Bangla", ha="center", fontsize=7, color=INK_SECONDARY, transform=ax.get_xaxis_transform())
+        ax.text(4.6, 0.03, "English", ha="center", fontsize=7, color=INK_SECONDARY, transform=ax.get_xaxis_transform())
+        ax.set_title(title, loc="left")
+        ax.set_ylim(0.4, 1.0)
+        ax.grid(axis="x", visible=False)
+    axes[0].set_ylabel("AUROC after source TS")
+    handles = [plt.Line2D([], [], marker=MARKERS[i], ls="", color=SERIES[i], markeredgecolor="white", markersize=6,
+                          label=label) for i, label in enumerate(["Source corpus BD-SHS", "Source corpus OLID"])]
+    fig.legend(handles=handles, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06))
+    fig.tight_layout(rect=(0, 0.05, 1, 1), w_pad=1.2)
+    return save(fig, "source_corpus_factorial")
+
+
 FIGURES = {"regime_map": regime_map, "encoder_llm_auroc": encoder_llm_auroc, "script_intervention": script_intervention,
            "cross_definition": cross_definition, "collapse_causes": collapse_causes, "few_label_curves": few_label_curves,
-           "all_pairs_bias_gain": all_pairs_bias_gain}
+           "all_pairs_bias_gain": all_pairs_bias_gain,
+           "bcts_shift_coordinates": bcts_shift_coordinates, "source_corpus_factorial": source_corpus_factorial}
 
 
 def main():

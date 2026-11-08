@@ -1,0 +1,120 @@
+\section{Data, Systems and Protocol}
+\label{sec:data-protocol}
+
+\subsection{Source tasks and targets}
+\label{sec:data}
+
+Two Bangla tasks carry the main grid: offensive-language detection on BD-SHS \citep{romim2022bdshs}, a hate-speech
+corpus with a binary label (33{,}057 training items), and three-class sentiment on SentNoB \citep{islam2021sentnob}
+(9{,}520). Two further source tasks test whether the findings depend on the source language: English OLID
+\citep{zampieri2019olid} in the TweetEval release \citep{barbieri2020tweeteval}, and SentiMix Hinglish
+\citep{patwa2020sentimix}. Table~\ref{tab:data} lists the calibration and test splits of every source and target;
+training and validation sizes and preprocessing are in Appendix~\ref{sec:appendix-data}. Every target has a labelled
+calibration split, used only by few-label methods and oracle quantities, and a disjoint test split.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Source tasks and targets with their calibration and test splits (numbers of items after preprocessing).
+Each target is listed with the source tasks whose models are evaluated on it.}
+\label{tab:data}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllrr}
+\toprule
+Role & Data set & Variety & Calibration & Test \\
+\midrule
+Source (BD-SHS models) & BD-SHS & Bangla, Bangla script & 4{,}718 & 4{,}722 \\
+Source (SentNoB models) & SentNoB & Bangla, Bangla script & 1{,}359 & 1{,}360 \\
+Source (OLID models) & OLID (TweetEval) & English & 1{,}191 & 860 \\
+Source (Hinglish models) & SentiMix Hinglish & Hindi--English, Latin script & 1{,}500 & 3{,}000 \\
+\midrule
+Target (BD-SHS) & BIDWESH Barishal & Bangla dialect & 611 & 2{,}445 \\
+Target (BD-SHS) & BIDWESH Chittagong & Bangla dialect & 610 & 2{,}443 \\
+Target (BD-SHS) & BIDWESH Noakhali & Bangla dialect & 611 & 2{,}445 \\
+Target (BD-SHS, OLID) & Code-mixed Chaos & Banglish (Latin script) & 2{,}035 & 8{,}144 \\
+Target (BD-SHS, OLID) & Code-mixed Chaos & Same comments, Bangla script & 2{,}035 & 8{,}144 \\
+Target (BD-SHS, OLID) & MixTox-SA & Bangla, Hindi, English, mixed & 2{,}456 & 9{,}824 \\
+Target (BD-SHS, OLID) & OffMix-3L & Bangla--English--Hindi, three scripts & 200 & 800 \\
+Target (BD-SHS) & OLID & English & 1{,}191 & 860 \\
+Target (OLID) & BD-SHS & Bangla & 4{,}718 & 4{,}722 \\
+\midrule
+Target (SentNoB, Hinglish) & Sylheti (this work) & Bangla dialect & 200 & 201 \\
+Target (SentNoB, Hinglish) & SentMix-3L & Bangla--English--Hindi, three scripts & 201 & 804 \\
+Target (SentNoB) & SentiMix Hinglish & Hindi--English & 2{,}998 & 3{,}000 \\
+Target (SentNoB, Hinglish) & SentiMix Spanglish & Spanish--English & 3{,}000 & 2{,}988 \\
+Target (Hinglish) & SentNoB & Bangla & 1{,}359 & 1{,}360 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The dialect targets are the Barishal, Chittagong and Noakhali portions of BIDWESH \citep{bidwesh}, three parallel
+translations of the same BD-SHS sentences, so the three are not independent. For sentiment we built a Sylheti test set
+by human translation of a uniform random sample of 401 SentNoB test items (calibration 200, test 201). Two of the
+authors, both native Sylheti speakers, translated the items into Sylheti written in Bangla script; the protocol and the
+label-validity check are in Appendix~\ref{sec:appendix-data}. Of the BIDWESH test items, 8.6\% are translations of
+BD-SHS training sentences and 11.3\% of sentences in some BD-SHS split; removing the latter changes macro-F1 by at most
+0.0066 and AUROC by at most 0.0048 in any encoder configuration, so the dialect results are not driven by this
+overlap.
+
+The natural Bangla--English code-mixed targets are Code-mixed Chaos \citep{codemixedchaos}, toxic and non-toxic
+social-media comments in Banglish together with a row-aligned Bangla-script transliteration, which gives a script
+intervention with the same comments and identical labels, and MixTox-SA \citep{mixtox}, comments in native and
+romanised scripts whose neutral class we merge into non-toxic. Code-mixed Chaos reaches its exact balance by adding
+non-toxic comments from a public emotion corpus, so its label is partly tied to the source of a comment. These two
+corpora carry the general claims about code-mixing. The tri-lingual targets OffMix-3L \citep{goswami2023offmix} and
+SentMix-3L \citep{raihan2023sentmix} contain Bangla--English--Hindi text in three scripts written by students for the
+benchmark. OffMix-3L in particular is a qualified stress case: a character n-gram classifier separates its classes
+from 50 labelled items, and two of the authors reading 100 of its items blind agreed with its gold label at chance
+(Appendix~\ref{sec:appendix-artifacts}). The cross-language targets are SentiMix Hinglish and Spanglish for the
+SentNoB models, SentNoB and Sylheti for the Hinglish models, OLID for the BD-SHS models and BD-SHS for the OLID models.
+The natural code-mixed and cross-language targets were added after the original conditions and are held out: no
+prior, threshold or method choice is fitted on them.
+
+\subsection{Systems}
+\label{sec:systems}
+
+The encoders are BanglaBERT \citep{bhattacharjee2022banglabert}, IndicBERT \citep{kakwani2020indicnlpsuite} and
+XLM-R-base \citep{conneau2020xlmr}, each fully fine-tuned and with LoRA \citep{hu2022lora}; BanglaBERT-large and
+XLM-R-large; and MuRIL \citep{khanuja2021muril} and mDeBERTa-v3-base \citep{he2023debertav3}, all trained on BD-SHS and
+SentNoB with five seeds per configuration. The OLID and Hinglish sources use XLM-R-base, MuRIL and mDeBERTa-v3 with the
+recipes of their BD-SHS runs. Inputs are up to 512 tokens and the epoch with the best validation macro-F1 is kept. A
+run that predicts a single class or does not exceed the majority-class validation macro-F1 by 0.02 is reported as
+non-converged and excluded from aggregates. Of the 60 base-grid runs, one IndicBERT LoRA run did not converge; the
+large-encoder, architecture, OLID and Hinglish runs all converged (Appendix~\ref{sec:appendix-training}). The regime
+analysis uses every converged cross-entropy run: 49 BD-SHS and 50 SentNoB runs of seven encoders, and 15 runs each for
+OLID and Hinglish.
+
+The language models are Qwen3-8B \citep{qwen3}, Qwen3-4B-Instruct-2507 \citep{qwen34b2507}, Llama-3.1-8B-Instruct
+\citep{llama3} and Qwen3.5-9B \citep{qwen35}, prompted zero-shot and few-shot (three demonstrations per class from the
+source training split, three demonstration seeds). The class score is the log-probability of each label word at the
+answer position, so every model yields a score vector that is recalibrated with the same methods as the encoders,
+starting from its own source TS. Language models and encoders are compared on identical items, at most 1{,}500 per
+split. The sentiment instruction tells the model that the text is in Bangla, including on the Hinglish and Spanglish
+targets; a language-neutral variant of the instruction changes macro-F1 there by $-0.011$ and $-0.018$, so this
+mislabelling does not drive the comparison (Appendix~\ref{sec:appendix-prompts}).
+
+For the factorial of Section~\ref{sec:results-factorial}, BD-SHS was machine-translated into English and OLID into
+Bangla with NLLB-200 3.3B \citep{nllbteam2024scaling}, together with round trips through the other language that keep each corpus
+in its own language. Translation quality is measured only automatically (LaBSE similarity, chrF++ and BLEU of the round
+trip, script share and degeneration rate; \citealp{feng2022labse, popovic2017chrf, post2018call}) and no item is
+filtered by it. XLM-R-base, MuRIL and mDeBERTa-v3 are trained on each translated source with five seeds.
+
+\subsection{Methods, metrics and statistics}
+\label{sec:protocol}
+
+Few-label corrections use $n \in \{10, 25, 50, 100, \text{all}\}$ target labels with 20 resamples drawn identically
+for every system; the main comparisons use $n = 50$. Uncertainty sets are split-conformal sets at $\alpha = 0.1$ and
+conformal risk control \citep{angelopoulos2024crc} of the false-negative rate (FNR) of the offensive class at 0.1. The
+metrics are macro-F1, balanced accuracy, negative log-likelihood (NLL), expected calibration error with 15 bins, AUROC,
+coverage, set size, FNR and false-positive rate (FPR).
+
+Associations over pairs are Spearman correlations, reported with the $t$ statistic on $n - 2$ degrees of freedom and a
+permutation p-value from 100{,}000 permutations. Effects at the level of target corpora use exact two-sided sign tests
+and a hierarchical bootstrap over corpora, pairs and runs; a linear mixed model with random intercepts for corpus and
+for pair within corpus is a sensitivity check (Appendix~\ref{sec:appendix-mixed}). Contrasts between training choices
+and between correction methods use exact permutation or sign-flip tests with Holm's correction \citep{holm1979} within
+families fixed in the analysis code (Appendix~\ref{sec:appendix-statistics}). These families were not registered
+before the data were seen; the factorial's confirmatory family is the exception in part, since it was committed
+before four of its six cells were trained, after the two untranslated cells were known. Unless stated otherwise,
+means are over runs; where the weighting matters we give the mean over corpora as well. Appendix
+Table~\ref{tab:analysis-status} classifies every analysis as confirmatory or exploratory and gives its cohort.

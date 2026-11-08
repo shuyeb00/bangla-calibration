@@ -9,10 +9,11 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{{../thesis/figures/grid_max_length_512/publication/}}
+\newcommand{\zenodoRecord}{Zenodo, DOI to be added at submission}
 
 \begin{document}
 
-\title{Temperature Is the Wrong Knob: How Text Classifiers Fail Across Dialects, Scripts and Code-Mixing}
+\title{When Thresholds Move: Bangla Text Classification Under Dialect, Script and Code-Mixing Shift}
 
 \author{Md Suheb Ahmed}
 \email{suhebahmedabdullah@gmail.com}
@@ -60,8 +61,8 @@
 \ccsdesc[500]{Computing methodologies~Natural language processing}
 \ccsdesc[300]{Computing methodologies~Machine learning}
 
-\keywords{Bangla, code-mixing, dialects, distribution shift, calibration, temperature scaling, conformal prediction,
-selective prediction}
+\keywords{Bangla, code-mixing, dialects, romanised text, distribution shift, label shift, calibration, temperature
+scaling, conformal prediction}
 
 \maketitle
 
@@ -69,9 +70,10 @@ selective prediction}
 % Further declaration points, if any, to be written by the authors.
 
 \input{sections/introduction}
-\input{sections/problem_setting}
-\input{sections/experimental_design}
-\input{sections/results}
+\input{sections/background}
+\input{sections/data_protocol}
+\input{sections/results_diagnosis}
+\input{sections/results_interventions}
 \input{sections/shift_triage}
 \input{sections/related_work}
 \input{sections/discussion}

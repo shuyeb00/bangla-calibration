@@ -2,48 +2,50 @@
 \label{sec:introduction}
 
 A Bangla offensive-language classifier fine-tuned on Bangla-script comments ranks held-out comments almost perfectly
-(AUROC 0.969, mean over the 29 converged runs of three base encoders). We set its false-negative rate to 10\% on its own calibration data and show it
-toxic comments written in Banglish, Bangla typed in Latin letters as many speakers write online. It now misses 78\% of
-them. Its ranking of those comments is still far from chance (AUROC 0.771): the model has not lost the notion of
-offensiveness, it has kept the wrong cut-off. Temperature scaling \citep{guo2017calibration}, the default repair for
-confidence that no longer matches accuracy, cannot help. For a binary classifier it divides the logit by a constant,
-so it changes neither the predicted class nor the order of the scores, and a threshold recalibrated on those scores
-selects the same items.
+(AUROC 0.969, mean over the 29 converged runs of three base encoders). Suppose its false-negative rate is set to 10\% on
+its own calibration data and it then meets toxic comments written in Banglish, Bangla typed in Latin letters as many
+speakers write online. It misses 78\% of them. Its ranking of those comments is still far from chance (AUROC 0.771):
+the model has not lost the notion of offensiveness, it has kept the wrong cut-off. Temperature scaling
+\citep{guo2017calibration}, the default repair when confidence stops matching accuracy, cannot help. For a binary
+classifier it divides the logit by a constant, so it changes neither the predicted class nor the order of the scores,
+and a threshold recalibrated on those scores selects the same items.
 
-This paper asks what breaks when text classifiers meet language varieties they were not trained on, and what it takes
-to repair it. We fine-tune seven encoders (ten configurations, five seeds each) on Bangla offensive-language and sentiment data and
-compare them with four instruction-tuned LLMs on identical items. The targets cover regional dialects, including a
-Sylheti set we translated, natural Bangla--English code-mixing written in two scripts, tri-lingual
-Bangla--English--Hindi code-mixing, and other languages. To check that the conclusions are not a property of one
-source language, we repeat the analysis with encoders trained on English (OLID) and on Hindi--English code-mixed
-sentiment (SentiMix Hinglish). For each source--target pair we separate three ways in which a classifier can fail: its
-confidence can be mis-scaled (a temperature shift), its decision threshold can move while its ranking survives (a
-threshold shift), or its ranking can collapse.
+That a moved decision boundary calls for a bias rather than a temperature is not new. The label-shift literature has
+long corrected classifier outputs for a change of the class prior by adding a bias to the log-odds
+\citep{saerens2002adjusting}, estimated the new prior from unlabelled data \citep{lipton2018bbse, garg2020unified}, and
+shown that bias-corrected temperature scaling makes these estimators work \citep{alexandari2020maximum}. What is not
+known is how often the shifts that matter for a language like Bangla take this form, whether the boundary moves
+because the class prior changes or because the scores themselves move, and how many target labels a practitioner needs
+to tell the cases apart. Bangla is written in its own script and, online, in Latin letters; it has regional varieties
+that differ in vocabulary and morphology; and its social-media text mixes it with English and Hindi. Each of these is
+a distribution shift that a deployed classifier meets without warning, and each may break a different part of it.
 
-\paragraph{Findings.}
-\begin{itemize}
-  \item \textbf{Shift falls into a few regimes, and the common one is a threshold shift}
-  (Section~\ref{sec:results-regimes}). Two of three Bangla dialects and Sylheti need no correction, and pure
-  temperature shifts are rare. In 12 of 21 source--target pairs, from all four source tasks, the ranking survives
-  while the predicted class proportions move; in four of them the true proportions barely move, in the other eight a
-  real change of the class prior is part of the shift. The ranking collapses in one pair.
-  \item \textbf{Temperature is the wrong knob} (Section~\ref{sec:results-threshold}). Under a threshold shift, fitting
-  the temperature on 50 target labels lowers the log-loss but leaves macro-F1 at 0.527; a label-free bias correction
-  raises it to 0.620. The label-free correction assumes balanced classes and is harmful when positives are rare, the normal
-  case in content moderation; a class prior estimated from 50 labels repairs it on average, not in every run.
-  \item \textbf{The one collapse points to a mismatch of label definitions} (Section~\ref{sec:results-causes}). Changing
-  only the script of the same comments moves encoder AUROC by up to 0.225, but retraining the same architectures on a
-  source that shares the target's labels restores the collapsed ranking (pre-specified difference-in-differences
-  $+0.378$, $p_{\mathrm{Holm}} < 0.001$). That retraining also changes the language and the corpus, so we read it as
-  strong but not conclusive evidence.
-  \item \textbf{A few labels decide what to do} (Sections~\ref{sec:results-systems} and~\ref{sec:shift-triage}).
-  Shift is easy to detect without labels but cannot be diagnosed from the model's own confidence. On a balanced target,
-  about 50 labels suffice to test whether a strong ranking is above chance (weak rankings need about 100), to choose between the fine-tuned encoder
-  and an LLM, to correct the threshold, and to certify coverage and false-negative rate after that choice. The
-  false-negative certificate needs 19 labelled positives, so its cost grows as the offensive class gets rarer.
-\end{itemize}
+This article is an empirical diagnosis of those shifts. We fine-tune seven encoders (ten configurations, five seeds
+each) on Bangla offensive-language and sentiment data and compare them with four instruction-tuned language models on
+identical items. The targets cover three BIDWESH dialects, a Sylheti test set that two of the authors translated,
+natural Bangla--English code-mixing written in two scripts, tri-lingual Bangla--English--Hindi code-mixing, and other
+languages. To check that the conclusions do not depend on the source language, we repeat the analysis with encoders
+trained on English (OLID) and on Hindi--English code-mixed sentiment (SentiMix Hinglish). The result is a set of 21
+shifted source--target pairs on 11 target corpora, each with a labelled calibration split and a disjoint test split.
+For every pair we separate three ways in which a classifier can fail: its confidence can be mis-scaled, its decision
+threshold can move while its ranking survives, or its ranking can collapse.
 
-We turn these findings into a triage procedure with a limit on post-hoc repair, a ranking test and selection-valid
-conformal guarantees (Section~\ref{sec:shift-triage}), and we built a human-translated Sylheti sentiment test set of
-401 items. Code, every derived table and a script that rebuilds every figure and table are released
-(Appendix~\ref{sec:appendix-reproducibility}).
+The study makes four contributions. First, over all 21 pairs, the gain of a bias correction rises with the shift of
+the predicted-label distribution, which can be measured without labels; in the 12 pairs with a retained ranking and a
+moved threshold, a label-free bias correction raises macro-F1 from 0.527 to 0.620, and temperature scaling, which
+lowers the log-loss, changes no decision (Section~\ref{sec:results-diagnosis}). Second, a decomposition of the
+correction shows that the temperature change measured in those pairs is almost entirely a bias seen through the wrong
+parameter: fitted jointly with a bias, the mean change of log temperature falls from 0.976 to 0.028. A change of the
+class prior explains little of the required move, and three label-shift estimators fail, so the label-shift
+assumption is violated on these targets. Third, the one ranking collapse, BD-SHS models on the student-written
+OffMix-3L corpus, is tested with a definition-by-language factorial built by machine translation: the source corpus
+explains a large AUROC difference on OffMix-3L in both languages, but the same contrast reverses on natural Banglish,
+so the collapse is a property of that target rather than of code-mixing (Section~\ref{sec:results-interventions}).
+Fourth, a label-budgeted triage procedure detects shift without labels, tests the ranking, chooses between the
+fine-tuned encoder and a language model, corrects the threshold and certifies coverage, with the number of labels each
+step needs stated in advance (Section~\ref{sec:shift-triage}).
+
+The focus is practical: what a practitioner who deploys a Bangla classifier on a new variety should measure and
+correct. The theory used is elementary and stated with its assumptions; its role is to say when a bias is the right
+repair and a temperature provably is not. Code, every derived table and a script that rebuilds every figure, table
+and number in the text are released (Appendix~\ref{sec:appendix-reproducibility}).

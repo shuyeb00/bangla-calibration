@@ -3,40 +3,47 @@
 
 \paragraph{What to do in practice.}
 Detect shift with a domain classifier, not with the model's confidence. After a detected shift, correct the class bias
-rather than only the temperature. Without labels, batch calibration should not be used if positives may be rare; then
-use about 50 labels to estimate the prior or to fit MAP BCTS. On a
-near-balanced target the same 50 labels test a strong ranking, choose between the fine-tuned encoder and an LLM, and certify
-coverage and the false-negative rate; on a skewed target they still choose the system and correct the threshold, but
-the false-negative certificate needs 19 labelled positives, hence hundreds of random labels. Fine-tuning on the target becomes the better use of labels only at a few hundred labels.
+rather than only the temperature. Without labels, batch calibration is the strongest single correction on
+near-balanced targets, but it should not be used when positives may be rare. With about 50 labels drawn from the
+deployment stream, estimate the prior or fit the bias, choose between the fine-tuned encoder and a language model, and
+refit whenever the class prior of the stream may have drifted, because every correction fitted on target items
+inherits their prior. On a near-balanced target the same labels test a strong ranking and certify coverage; on a skewed
+target the false-negative certificate needs 19 labelled positives, hence hundreds of random labels. Fine-tuning on the
+target becomes the better use of labels only at a few hundred labels.
 
 \paragraph{Why thresholds move.}
-Our evidence locates the failure but does not explain why the threshold moves. One plausible account is that
-text the encoder cannot read well receives scores close to those of bland in-domain text, which pushes its predictions
-towards the non-offensive class. The script intervention is consistent with this account: the BD-SHS encoders label 16.4\% of the Banglish Chaos comments as toxic and
-26.1\% of the same comments in Bangla script, against 50\% in the gold labels.
+The decomposition of Section~\ref{sec:results-decomposition} says where the move comes from: the scores of the target
+items shift relative to the source, mostly for both classes alike, and little of the move is a change of the class
+prior. It does not say why the scores shift. One account consistent with the script intervention is that text the
+encoder reads poorly receives scores close to those of bland in-domain text, which pushes its predictions towards the
+non-offensive class; restoring the script raises the predicted toxic share but leaves it far below the target's.
+Testing this account would need targets whose readability for the encoder can be varied while the content stays fixed,
+which the two scripts of Code-mixed Chaos provide only for one pair of conditions.
 
 \paragraph{Limitations.}
-\begin{itemize}
-  \item \emph{Scope.} Two classification tasks; the main grid is Bangla, and the English and Hindi--English sources use
-  three architectures each, against seven for the Bangla sources. Encoders have up to 560M parameters and LLMs up to 9B;
-  generative tasks and proprietary models are not covered.
-  \item \emph{Regimes.} The regime names and the reading rule were fixed in advance, but the operational thresholds were
-  set after inspecting the results, and the counts move with them (Appendix~\ref{sec:appendix-regime-sensitivity}). The conclusion that matters for practice does not depend on where they are drawn:
-  in each of the 16 pairs whose predicted marginal moves by more than 0.10, label-free bias correction raises macro-F1
-  in at least 93\% of runs, while temperature scaling changes no predicted class anywhere. The 12 threshold-shift pairs
-  rest on seven corpora, so they are not independent evidence.
-  \item \emph{Data.} The Sylheti set is small and was translated by two of the authors; a blind re-annotation matched the gold
-  labels about as well as the same annotators matched SentNoB in domain (Appendix~\ref{sec:appendix-data}). OffMix-3L
-  carries strong writing-style artifacts, so we rely on the natural code-mixed targets for claims about code-mixing.
-  Most targets are close to balanced, which favours label-free batch calibration. The Spanglish calibration and test splits come from different releases, so their exchangeability is not guaranteed.
-  \item \emph{Statistics.} Many results are descriptive means over runs. Formal tests with multiplicity control are
-  reported for pre-defined families; five-versus-five comparisons cannot reach significance after correction in large
-  families and are reported descriptively.
-  \item \emph{Priors.} The prior variances of MAP BCTS come from our other task, which a practitioner may not have; a
-  generic unit-variance prior or variances scaled by 4 change mean macro-F1 by at most 0.01
-  (Appendix~\ref{sec:appendix-statistics}).
-  \item \emph{Guarantees} are marginal over target calibration and test items and assume exchangeability within the
-  target. When the same items also decide whether to deploy, the coverage bound holds jointly with the deployment event.
-  \item \emph{Contamination.} No item-level memorisation was detected, but exposure of the LLMs to the public test sets
-  cannot be excluded.
-\end{itemize}
+The study covers two classification tasks. The main grid is Bangla, and the English and Hindi--English sources use
+three architectures each, against seven for the Bangla sources; encoders have up to 560M parameters and language
+models up to 9B, and generative tasks and proprietary models are not covered. The 21 pairs come from 11 purposively
+chosen corpora and the 12 threshold-shift pairs from seven, so the results describe these corpora rather than a
+population of shifts, and two of the seven corpora are student-written; the corpus-level tests of
+Section~\ref{sec:results-robustness} show how far the effect holds without them. The regime labels and their thresholds
+were set after the results had been seen, and we state the practical conclusions over all pairs instead.
+
+Several limitations concern the data. The Sylheti set is small and was translated by two of the authors, and whether a
+correction helps on it depends on whether the gold or the authors' consensus labels are the reference. OffMix-3L
+carries strong writing-style artifacts and labels that two readers could not reproduce, so it serves only as a stress
+case. Most targets are close to balanced, which favours label-free batch calibration, and the few-label results assume
+that the labelled items come from the deployment distribution; under prior drift MAP BCTS can fall far below source TS.
+The Spanglish calibration and test splits come from different releases. The language-model prompt describes Hinglish
+and Spanglish text as Bangla; a language-neutral prompt did not change the result, but the main comparison uses the
+original prompt.
+
+The factorial isolates the source corpus rather than the label definition: each translated cell comes from one MT
+system and one translation, its inference covers seeds and architectures only, and translation removes
+offensive-associated words more than other words. The distance-aware calibrator is adapted to a reference bank drawn
+from the source calibration split, because training-split representations were not stored. Many results are
+descriptive means over runs; formal tests with multiplicity control are reported for the families fixed in the code,
+and five-versus-five comparisons cannot reach significance after correction in large families. The guarantees of
+Section~\ref{sec:shift-triage} are marginal over target calibration and test items and assume exchangeability within
+the target. Finally, no item-level memorisation by the language models was detected, but exposure to the public test
+sets cannot be excluded.

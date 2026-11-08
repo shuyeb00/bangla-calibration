@@ -1,8 +1,37 @@
-\section*{Broader Impact Statement}
-The study concerns offensive-language detection, where miscalibrated decisions have uneven costs: missed offensive posts
-harm their targets, and false flags silence speakers of under-served varieties. Our results show that a moderation
-model can miss most offensive posts in a new variety while remaining confident, and that a popular label-free fix can
-make matters worse on targets with few offensive posts. The triage procedure is meant to make such failures visible
-and to require a small labelled check before deployment, but its guarantee on missed posts is paid for in false flags, which
-fall on the same speakers. The datasets are used under their published terms; texts whose terms do not allow it are not
-redistributed. Offensive examples are not reproduced in the paper.
+\section*{Ethical Considerations}
+\paragraph{Human participants.}
+No external participants took part in this study. The Sylheti translations and all human labels used here, the blind
+re-annotation of Sylheti items and the reading of OffMix-3L items, were produced by
+two of the authors, who are native Sylheti and Bangla speakers, as part of their own research. No personal or
+identifying information was collected, and no one was paid. Offensive examples are not reproduced in this article.
+
+\paragraph{Broader impact.}
+The study concerns offensive-language detection, where miscalibrated decisions have uneven costs: missed offensive
+posts harm their targets, and false flags silence speakers of under-served varieties. A moderation model can miss most
+offensive posts in a new variety while remaining confident, and a popular label-free fix can make matters worse on
+targets with few offensive posts. The triage procedure is meant to make such failures visible and to require a small
+labelled check before deployment, but its guarantee on missed posts is paid for in false flags, which fall on the same
+speakers.
+
+\section*{Data and Code Availability}
+All datasets are used under the terms published by their authors, and no dataset text is redistributed. The code,
+every derived table, and the logits and item indices of every converged run and language-model system are released
+(\zenodoRecord); preparation scripts rebuild every split from the original releases except the Sylheti texts, which
+derive from SentNoB, whose repository states no licence. We will release the Sylheti texts if the SentNoB authors
+agree. The licence of every corpus, as read on its source page, is listed in Appendix~\ref{sec:appendix-data}.
+
+\section*{Use of Generative Models in the Research}
+Two kinds of generative model are part of the methods and are reported as such. NLLB-200 3.3B translated the source
+corpora of the factorial in Section~\ref{sec:results-factorial}, and four instruction-tuned language models are
+evaluated as classifiers. Neither was used to produce or validate any label: every label in this study comes from the
+original datasets or from the authors.
+
+\section*{Compute}
+All training and inference ran on NVIDIA T4 GPUs of free cloud notebooks. Training the 172 encoder runs on the
+Bangla sources took 38.3 GPU-hours and their output passes 5.1 GPU-hours (peak memory 10.3 GB); the 60 runs of the
+factorial took 16.0 GPU-hours of training, and the translations for it 4.5 GPU-hours. The time of the OLID and
+Hinglish runs and of language-model inference was not recorded. Every analysis in this article runs on a CPU from the
+released outputs.
+
+\section*{Funding and Competing Interests}
+This work received no external funding. The authors declare no competing interests.

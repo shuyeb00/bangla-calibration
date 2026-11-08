@@ -1,9 +1,12 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-Across the dialects, scripts, code-mixing and languages we studied, on two tasks centred on Bangla and with source tasks
-in three languages, the common failure of the fine-tuned classifiers was a misplaced decision threshold, not a wrong
-temperature.
-Temperature scaling cannot move the threshold however many labels it is fitted on; a bias correction can, provided its
-assumption about the class prior is checked with a few labels. A collapse of the ranking is rare, appears here to
-arise from a mismatch of label definitions, and no post-hoc map repairs it.
+Across the dialects, scripts, code-mixing and languages studied here, on two tasks centred on Bangla and with source
+tasks in three languages, the common failure of fine-tuned classifiers was a misplaced decision threshold rather than
+a wrong temperature. Temperature scaling recovers much of the lost log-loss but cannot move the threshold, however
+many labels it is fitted on, and the temperature change one measures under such a shift is mostly a bias seen through
+the wrong parameter. The bias is a shift of the scores, not of the class prior, so label-shift estimators recover the
+wrong prior, and a bias correction must either assume a balanced target or take its prior from a few labels drawn from
+the deployment stream. A collapse of the ranking was rare and, in the one case observed, tied to the target corpus
+rather than to code-mixing. A few dozen target labels are enough to choose a system and correct its threshold; a
+certificate on missed offensive posts costs hundreds when such posts are rare.

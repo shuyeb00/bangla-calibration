@@ -340,7 +340,44 @@ def training_objectives_table() -> str:
     return tabular("llrrrrr", header, rows, caption, "tab:training-objectives", r"\small", groups)
 
 
-TABLE_BUILDERS = {"triage_prevalence_stress": triage_prevalence_table, "regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
+def threshold_shift_operating_point_table() -> str:
+    o = pd.read_csv(TABLES / "operating_point_by_regime.csv")
+    o = o[o.regime == "R2"]
+    methods = [("source_ts", "Source TS", "--", "0"), ("shrinkage_ts", "Shrinkage TS", "temperature", "50"),
+               ("prior_labels", "Prior adjustment, prior from labels", "class prior", "50"),
+               ("bias_only_map", "MAP bias", "bias", "50"), ("map_bcts", "MAP BCTS", "temperature + bias", "50"),
+               ("batch_calibration", "Batch calibration", "bias", "0"),
+               ("threshold_tuned", "Tuned threshold", "threshold", "50"), ("prior_true", "Prior adjustment, true prior", "class prior", "prior"),
+               ("bias_oracle", "Oracle bias", "bias", "all"),
+               ("threshold_oracle", "Oracle threshold", "threshold", "test")]
+    rows, groups = [], [0, 7]
+    for m, name, part, labels in methods:
+        cells = [name, part, labels]
+        for metric in ("macro_f1", "nll"):
+            for weighting in ("runs", "corpora"):
+                cells.append(num(one_value(o, m, weighting, metric)))
+        rows.append(cells)
+    n = o.iloc[0]
+    header = ["Correction", "Adjusts", "Labels", r"F1 (runs)", r"F1 (corpora)", r"NLL (runs)", r"NLL (corpora)"]
+    caption = (rf"Corrections under threshold shift (R2: {int(n.n_pairs)} source--target pairs, {int(n.n_corpora)} "
+               rf"target corpora, {int(n.n_runs)} run $\times$ pair units). F1 is macro-F1 on the target test split. "
+               r"Runs: mean over units; corpora: mean over corpora of the pair means. Labels: target labels used (50 "
+               r"calibration labels, 20 resamples). The last three rows are references, not deployable corrections: the "
+               r"true prior is the target calibration prior, the oracle bias is fitted on all target calibration labels, "
+               r"and the oracle threshold is tuned on the test labels themselves. Batch calibration uses the unlabelled "
+               r"target calibration split.")
+    return tabular("lllrrrr", header, rows, caption, "tab:threshold-shift-operating-point", r"\small", groups,
+                   fit_width=True)
+
+
+def one_value(o: pd.DataFrame, method: str, weighting: str, metric: str) -> float:
+    d = o[(o.method == method) & (o.weighting == weighting)]
+    assert len(d) == 1, (method, weighting)
+    return float(d[metric].iloc[0])
+
+
+TABLE_BUILDERS = {"threshold_shift_operating_point": threshold_shift_operating_point_table,
+                  "triage_prevalence_stress": triage_prevalence_table, "regime_map_source_transfer": regime_map_table, "cross_definition_contrasts": cross_definition_table,
                   "contrast_families_holm": contrast_families_table, "shift_triage_policies": triage_table,
                   "correction_ablation_by_regime": correction_ablation_table,
                   "prior_shift_ablation": prior_shift_ablation_table, "prior_shift_sentiment": prior_shift_sentiment_table,

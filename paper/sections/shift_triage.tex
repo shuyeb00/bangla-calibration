@@ -1,10 +1,47 @@
-\section{Label-Efficient Shift Triage}
+\section{Label-Budgeted Shift Triage}
 \label{sec:shift-triage}
 
-The regimes call for different actions: nothing, a bias correction, a different system, or no prediction at all. Only
-the presence of a shift can be detected without labels. We therefore turn the findings into a procedure that spends a
-small number of target labels on the decisions that need them, and state what it guarantees. Proofs are in
-Appendix~\ref{sec:appendix-proofs} and simulation checks in Appendix~\ref{sec:appendix-simulation}.
+The diagnosis calls for different actions in different pairs: nothing, a bias correction, a different system, or no
+prediction. Which action a pair needs cannot be read off unlabelled data, and the regime labels of
+Section~\ref{sec:background-regimes} need target labels. This section turns the findings into a procedure that
+spends a stated number of target labels on the decisions that need them, and says what it guarantees.
+
+\subsection{What can be detected without labels}
+\label{sec:triage-detection}
+
+A character n-gram domain classifier separates in-domain from target items with AUROC 0.982--1.000 on every original
+condition. The models' own uncertainty does not reveal the shift: as a shift detector the encoders' confidence reaches
+an AUROC of 0.504--0.686 on average, and the language models' uncertainty is inverted on tri-lingual code-mixing (0.297
+offensive, 0.291 sentiment), meaning that they are more confident on the shifted inputs. Under collapse, abstaining on
+low confidence gives no protection: on OffMix-3L the encoders' selective risk at 80\% coverage is 0.476, against an
+overall error of 0.475. Detection is therefore easy, but it says only that the distribution has changed, not what to
+do about it.
+
+The candidate systems differ in where their ranking survives. On identical items (Figure~\ref{fig:encoder-llm}),
+zero-shot language models rank OffMix-3L at 0.857--0.941 against 0.481 for the BD-SHS encoders, Banglish at
+0.886--0.970 against 0.773, MixTox-SA at 0.795--0.831 against 0.687, and Hinglish at 0.843--0.890 against 0.735. In
+domain and on the dialects the encoders are better (BD-SHS test 0.970 against 0.758--0.854). A guided-completion test
+found no near-verbatim completion of any test set, and Llama-3.1-8B, which shows no completion signal at all, ranks
+OffMix-3L as well as the other models (Appendix~\ref{sec:appendix-contamination}). The language models' rankings come
+with a shifted threshold of their own: on OffMix-3L, MAP BCTS raises zero-shot macro-F1 from 0.470 to 0.752 with 25
+labels and 0.807 with 50. Fine-tuning the encoder on the target labels cures the collapse only with about 200 labels
+(AUROC 0.505, 0.621, 0.743 and 0.894 with 25, 50, 100 and 200; Appendix~\ref{sec:appendix-few-label}), so with up to
+100 labels the better use of them is to route to a system whose ranking survives and to correct its bias.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{encoder_llm_auroc_by_condition.pdf}
+\Description{AUROC of encoders and zero-shot language models on each target condition; encoders are better in domain and on dialects, language models on code-mixed and cross-language targets.}
+\caption{Encoders and zero-shot language models on identical items, after each system's own source TS. Encoders: mean
+over the converged runs of the three base encoders.}
+\label{fig:encoder-llm}
+\end{figure}
+
+\subsection{Guarantees}
+\label{sec:triage-guarantees}
+
+Four short propositions state what the procedure can promise. Proofs are in Appendix~\ref{sec:appendix-proofs} and
+simulation checks in Appendix~\ref{sec:appendix-simulation}.
 
 \begin{proposition}[No post-hoc map repairs an uninformative score]
 \label{prop:impossibility}
@@ -16,18 +53,20 @@ acceptance event $A \in \sigma(S)$ with $Q(A) > 0$ the selective error is at lea
 
 \begin{proposition}[Shrinkage versus maximum likelihood]
 \label{prop:shrinkage}
-For a scalar parameter in a locally quadratic approximation with per-item Fisher information $\tau^{-2}$ and prior variance $\sigma^2$, the MAP
-estimate is $w_n \hat\theta_n + (1 - w_n)\theta_P$ with $w_n = n\sigma^2 / (n\sigma^2 + \tau^2)$, and it has lower mean
-squared error than the maximum-likelihood estimate $\hat\theta_n$ if and only if $\delta^2 < 2\sigma^2 + \tau^2/n$, where
-$\delta$ is the distance between the target optimum and the source estimate $\theta_P$.
+For a scalar parameter in a locally quadratic approximation with per-item Fisher information $\tau^{-2}$ and prior
+variance $\sigma^2$, the MAP estimate is $w_n \hat\theta_n + (1 - w_n)\theta_P$ with
+$w_n = n\sigma^2 / (n\sigma^2 + \tau^2)$, and it has lower mean squared error than the maximum-likelihood estimate
+$\hat\theta_n$ if and only if $\delta^2 < 2\sigma^2 + \tau^2/n$, where $\delta$ is the distance between the target
+optimum and the source estimate $\theta_P$.
 \end{proposition}
 
-\begin{proposition}[Ranking-survival test]
+\begin{proposition}[Ranking tests]
 \label{prop:survival}
-For a score that is not fitted on the $n$ labelled target items, the Monte Carlo permutation p-value of the AUROC with the
-add-one correction is valid for the null hypothesis of no association between score and label, at every $n$. For $K = 2$
-and $m = \min(n_1, n_0)$ labelled items in the smaller class, $\Pr(A \ge \hat A - \sqrt{\log(1/\delta)/(2m)}) \ge 1 -
-\delta$.
+For a score that is not fitted on the $n$ labelled target items, (a) the Monte Carlo permutation p-value of the AUROC
+with the add-one correction is valid for the null hypothesis that score and label are independent, at every $n$; and
+(b) for $K = 2$ and $m = \min(n_1, n_0)$ labelled items in the smaller class,
+$\Pr(A \ge \hat A - \sqrt{\log(1/\delta)/(2m)}) \ge 1 - \delta$, so rejecting $A \le a_0$ when this lower bound exceeds
+$a_0$ is a level-$\delta$ test.
 \end{proposition}
 
 \begin{proposition}[Coverage and risk control after selection]
@@ -40,54 +79,59 @@ positives. If the choice and the calibration use disjoint parts of the labelled 
 $\alpha$ conditionally on the choice.
 \end{proposition}
 
-Proposition~\ref{prop:impossibility} is consistent with the failure of recalibration and abstention on OffMix-3L
-(Section~\ref{sec:results-systems}), and Proposition~\ref{prop:shrinkage} with shrinkage beating maximum likelihood on
-dialects, where the target optimum is near the source estimate; under collapse the optimum is unbounded, the quadratic
-approximation does not apply, and shrinkage loses.
+Proposition~\ref{prop:impossibility} is consistent with the failure of recalibration and abstention on OffMix-3L, and
+Proposition~\ref{prop:shrinkage} with shrinkage beating maximum likelihood on the dialects, where the target optimum is
+near the source estimate; under collapse the optimum is unbounded, the quadratic approximation does not apply, and
+shrinkage loses. Proposition~\ref{prop:survival}(a) rejects independence of score and label; it shows that some
+ranking survives, not that the ranking is good enough to deploy. Part (b) tests the second question, but its
+distribution-free bound is wide: with 12 items per class its half-width is 0.353. An asymptotic alternative uses the
+DeLong variance of the AUROC on the logit scale \citep{qin2008comparison}, which is tighter but holds only
+approximately with few labels.
 
-\paragraph{Procedure.}
-(1) Detect shift without labels with a character n-gram domain classifier trained to separate unlabeled source and
-target inputs; if it does, request $n$ randomly chosen target labels. (2) Test each candidate system, the fine-tuned
-encoder and an LLM, for a ranking above chance (Proposition~\ref{prop:survival}, Holm over candidates at
-$\delta = 0.05$). (3) If no candidate passes, abstain: the labels give no evidence that either score is informative,
-and if neither is, by Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold is
-better than ignoring the input. With few labels this also abstains on weak but real rankings. (4) Otherwise choose the
-passing candidate with the lowest log-loss on the labelled items after MAP BCTS and predict with its MAP BCTS
-probabilities. (5) Certify a fixed score. In the \emph{Bonferroni} variant the conformal sets and the FNR threshold use
-the candidate's source-TS score on all $n$ items at level $\alpha/M$. In the \emph{split} variant steps 2--4 use one
-half of the items, and the sets use the resulting MAP BCTS score on the other half at level $\alpha$. The guarantees of
-Proposition~\ref{prop:selection} hold for any data-dependent choice, so the in-sample log-loss of step 4 affects the
-quality of the choice but not their validity; for $K = 2$ the Bonferroni threshold on the source-TS score flags the
-same items as a threshold on any monotone recalibration of it.
+\subsection{Procedure and evaluation}
+\label{sec:triage-procedure}
 
-Passing step 2 shows that a score carries information about the label, not that it is good enough to deploy. The lower
-bound of Proposition~\ref{prop:survival} could set a minimum AUROC, but with 12 items per class its half-width is 0.353.
+The procedure has five steps. (1) Detect shift without labels with the domain classifier; if it fires, request $n$
+randomly chosen target labels. (2) Test each candidate, the fine-tuned encoder and a language model, for a ranking
+above chance (Proposition~\ref{prop:survival}a, Holm over candidates at $\delta = 0.05$). (3) If no candidate passes,
+abstain: the labels give no evidence that either score is informative, and if neither is, by
+Proposition~\ref{prop:impossibility} no recalibration, conformal set or confidence threshold is better than ignoring
+the input. (4) Otherwise choose the passing candidate with the lowest log-loss on the labelled items after MAP BCTS and
+predict with its MAP BCTS probabilities. (5) Certify a fixed score: in the \emph{Bonferroni} variant the conformal sets
+and the FNR threshold use the chosen candidate's source-TS score on all $n$ items at level $\alpha/M$; in the
+\emph{split} variant steps 2--4 use one half of the items and the sets use the resulting MAP BCTS score on the other
+half at level $\alpha$. In the Bonferroni variant the point predictions therefore come from MAP BCTS and the sets from
+source TS; for $K = 2$ the threshold on the source-TS score flags the same items as a threshold on any monotone
+recalibration of it.
 
-\paragraph{Evaluation.}
-We run the procedure on every shifted condition with a target calibration split, for every converged encoder run paired
-with each general LLM and 20 resamples of $n \in \{25, 50, 100\}$ target labels. It is compared with the encoder
-calibrated on the source, the encoder with the same labels, the LLM with the same labels, a router that reuses the labels
-for choice and calibration without correction, and an oracle that picks the system with the lower test NLL (Table~\ref{tab:shift-triage-policies} in the appendix). With $n = 50$ on the
-original shifts, the Bonferroni variant reaches macro-F1 0.794 (oracle 0.796, reuse router 0.788, always-LLM 0.715,
-encoder with labels 0.682, always-encoder 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router 0.124,
-always-encoder 0.472). Most of that gap is the nominal level, not selection: Bonferroni calibrates at $\alpha/2$, and even a
-valid set at $\alpha$ falls below 0.85 with probability 0.112 on 50 items (Appendix~\ref{sec:appendix-triage-tables}). On the held-out natural offensive targets, where the LLM is almost always the better system,
-always-LLM is as accurate as the oracle (0.792) and the Bonferroni variant reaches 0.787 in exchange for coverage that
-falls below 0.85 in 0.004 of deployments instead of 0.081: on these targets the procedure buys a guarantee, not
-accuracy. Abstention here comes only from low power: no target in this study defeats both systems, so that branch is
-untested on a true collapse of both.
+We run the procedure on every shifted condition with a target calibration split, for every converged base-encoder run
+paired with each general language model and 20 resamples of $n \in \{25, 50, 100\}$ labels. The resamples are shared
+across systems, so the shares below are shares of correlated resamples, not of independent deployments. With $n = 50$
+on the original shifts the Bonferroni variant reaches macro-F1 0.794 (oracle choice 0.796, a router that reuses the
+labels without correction 0.788, always the language model 0.715, the encoder with the same labels 0.682, the encoder
+calibrated on the source 0.658) and lets test coverage fall below 0.85 in only 0.006 of deployments (reuse router
+0.124, source-calibrated encoder 0.472; Table~\ref{tab:shift-triage-policies} in the appendix). Choosing by in-sample
+log-loss is optimistic, so we also cross-fitted the choice: at $n = 50$ it picks the same system as the in-sample rule
+in 0.959--0.979 of deployments on the original shifts and 0.884--0.945 on the natural targets, and mean macro-F1
+changes by at most 0.015. Abstention in this study comes only from low power, since no target defeats both systems; a
+stress test that destroys both rankings on a growing share of the items confirms that the gate then rejects at about
+its nominal level (Appendix~\ref{sec:appendix-stress}).
 
-The guarantees have a price that the numbers make explicit. Bonferroni-valid FNR control is conservative: on the
-original shifts it raises the FPR from 0.324 for the oracle to 0.543. With $n = 25$ and about twelve offensive items it
-flags every item, as Proposition~\ref{prop:selection} predicts. The split variant pays for its conditional guarantee
-with abstention, which reaches 0.34 of resamples on the natural offensive targets at $n = 25$.
+Certifying a usable ranking costs more labels than detecting one. With 50 labels, the DeLong test certifies
+AUROC above 0.65 for the offensive encoders in 0.738 of resamples and for the offensive language models in 0.664,
+against 0.443 and 0.097 with the distribution-free bound; for sentiment the shares are 0.194 and 0.481 with DeLong and
+zero with the bound. The label requirement of the survival test itself is planning guidance under a model of the
+score distribution. On a balanced target, the test on all $n$ labels at the level of the first Holm step for two
+candidates needs 25, 50, 75 and 300 labels for power 0.8 at AUROC 0.90, 0.80, 0.70 and 0.60, and the four score models we tried (binormal with
+equal variances, with the positive class at half or twice the spread, and a shifted exponential) give the same
+numbers. At a positive share of 0.1 the requirement grows and depends on the model: binormal with equal variances needs
+200 labels at AUROC 0.70, whereas with the positive class at twice the spread it needs 300.
 
-The label requirement is therefore a number of positives, not of items: 19 for two candidates at $\alpha = 0.1$. On a
-balanced target 50 random labels contain them with probability 0.97; at the 34\% toxic share of MixTox-SA only 0.33, and
-there the Bonferroni variant flags nearly everything (FPR 0.947); at 10\% prevalence 50 labels contain five positives on
-average and about 245 labels are needed for probability 0.9. A stress test that resamples the natural offensive targets
-to a fixed prevalence confirms this (Table~\ref{tab:triage-prevalence-stress} in the appendix). At 10\% prevalence the
-threshold flags every item in every deployment with 50 labels, in 0.35 of deployments with 200 and in none with 400; with
-400 labels the FNR is 0.034 at an FPR of 0.558, and on average over deployments 18.5\% of flagged posts are offensive. The point predictions need far
-fewer labels: macro-F1 is 0.723 with 50 labels and 0.728 with 400. On a skewed target, therefore, about 50 labels
-suffice to choose a system and correct its threshold, and several hundred are needed to certify it.
+The false-negative certificate is the most expensive part. It needs 19 labelled positives for two candidates at
+$\alpha = 0.1$ (Proposition~\ref{prop:selection}). On a balanced target 50 random labels contain them with probability
+0.97; at 10\% prevalence 50 labels contain five positives on average and about 245 labels are needed for probability
+0.9. Resampling the natural offensive targets to a positive share of 0.1 confirms this
+(Table~\ref{tab:triage-prevalence-stress} in the appendix): the threshold flags every item in every deployment with 50
+labels, in 0.35 of deployments with 200 and in none with 400, where the FNR is 0.034 at an FPR of 0.558. The point
+predictions need far fewer labels: macro-F1 is 0.723 with 50 labels and 0.728 with 400. About 50 labels therefore
+suffice to choose a system and correct its threshold, and several hundred are needed to certify it on a skewed target.

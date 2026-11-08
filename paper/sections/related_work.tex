@@ -4,38 +4,47 @@
 \paragraph{Calibration under distribution shift.}
 Modern networks are overconfident, and temperature scaling is a strong post-hoc repair in domain
 \citep{guo2017calibration}; calibration degrades under dataset shift \citep{ovadia2019trust}. For pre-trained
-transformers, \citet{desai2020calibration} found temperature scaling effective in domain and label smoothing helpful out of domain on
-English tasks,
-\citet{kong2020calibrated} regularise fine-tuning for calibration in and out of distribution,
-\citet{ahuja2022multilingual} report miscalibration of multilingual models under cross-lingual transfer, and
-\citet{yang2026multilingualqa} study multilingual question answering; \citet{roschewitz2025where} give the image-classification
-counterpart of a large calibration study under dataset shift. Multi-domain temperature scaling \citep{yu2022robust} adapts
-the temperature across labelled domains, which still moves no decision. We decompose
-the failure into temperature, threshold and ranking components and show that, under language-variety shift, the
-threshold component dominates and is invisible to temperature-only methods.
+transformers, \citet{desai2020calibration} found temperature scaling effective in domain and label smoothing helpful
+out of domain on English tasks, \citet{kong2020calibrated} regularise fine-tuning for calibration in and out of
+distribution, and \citet{zhang2023transferable} transfer a post-hoc calibrator to noisy text.
+\citet{ahuja2022multilingual} report miscalibration of multilingual models under cross-lingual transfer,
+\citet{yang2026multilingualqa} study multilingual question answering, and \citet{roschewitz2025where} give the
+image-classification counterpart of a large calibration study under dataset shift. Multi-domain temperature scaling
+\citep{yu2022robust} adapts the temperature across labelled domains, and density-aware and distance-aware calibrators
+use the model's hidden representations to temper confidence on unfamiliar inputs \citep{tomani2023density,
+gasparin2024distance}. All of these act on the scale of the confidence; we compare a distance-aware calibrator in the
+appendix, which, like temperature scaling, cannot change a decision. Our contribution to this line is
+a decomposition of the failure into temperature, threshold and ranking components for dialect, script and code-mixing
+shift, and the observation that the threshold component dominates there.
 
 \paragraph{Label shift and bias correction.}
-Prior adjustment by EM \citep{saerens2002adjusting}, black-box and related shift estimators
-\citep{lipton2018bbse, garg2020unified} and
-bias-corrected calibration \citep{alexandari2020maximum} address a change of the class prior with fixed class-conditional
-distributions, and posterior recalibration interpolates towards a target prior \citep{tian2020posterior}. For prompted
-LLMs, contextual calibration \citep{zhao2021calibrate} and batch calibration \citep{zhou2024batch} estimate a bias
-without labels. Our targets violate the label-shift assumption: in four threshold-shift pairs the predicted proportions move while
-the true ones barely do, and EM prior estimation lowers macro-F1 on every code-mixed and cross-language target
-(Appendix~\ref{sec:appendix-recalibration}). We find that a
-bias correction is nevertheless the right repair, that its label-free form backfires when positives are rare, and that
-a prior from 50 labels repairs it on average.
+Prior adjustment by expectation maximisation \citep{saerens2002adjusting}, black-box and related shift estimators
+\citep{lipton2018bbse, garg2020unified} and bias-corrected calibration \citep{alexandari2020maximum} address a change of
+the class prior with fixed class-conditional distributions, and posterior recalibration interpolates towards a target
+prior \citep{tian2020posterior}. For prompted language models, contextual calibration \citep{zhao2021calibrate}, domain-
+context calibration \citep{fei2023mitigating}, batch calibration \citep{zhou2024batch} and task calibration
+\citep{li2025task} estimate a bias without labels, and \citet{dhar2026universal} study calibration across in-context
+classification tasks. The bias correction we find to be the right repair belongs to this family. What our targets add
+is that the label-shift assumption fails on them: the predicted proportions move while the true ones barely do, the
+required bias is mostly a shift of the score rather than of the prior, and the estimators built on the assumption
+recover the wrong prior.
 
 \paragraph{Conformal prediction and risk control.}
 Split conformal prediction and conformal risk control give finite-sample guarantees under exchangeability
-\citep{angelopoulos2024crc}, and can be reweighted for a known label shift \citep{podkopaev2021distribution} or carry PAC guarantees under an estimated one \citep{si2024pac}. Weighted conformal prediction handles covariate shift with known density ratios
-\citep{tibshirani2019weighted}; our source and target barely overlap, so there is little to reweight. Choosing among models with the same calibration data breaks the
-guarantee unless corrected \citep{liang2024conformal}; we use Bonferroni and sample-splitting corrections and report
-their cost.
+\citep{angelopoulos2024crc}, and can be reweighted for a known label shift \citep{podkopaev2021distribution} or carry
+PAC guarantees under an estimated one \citep{si2024pac}. Weighted conformal prediction handles covariate shift with
+known density ratios \citep{tibshirani2019weighted}; our sources and targets barely overlap, so there is little to
+reweight. Choosing among models with the same calibration data breaks the guarantee unless corrected
+\citep{liang2024conformal}; we use Bonferroni and sample-splitting corrections and report their cost in labels.
 
 \paragraph{Code-mixing, dialects and cross-dataset offensive-language detection.}
-Code-mixed benchmarks \citep{khanuja2020gluecos, aguilar2020lince, patwa2020sentimix, goswami2023offmix} evaluate models on
-mixed-language text, dialect transformations \citep{ziems2023multivalue} document accuracy drops on dialectal text, and hate-speech detectors are known to generalise poorly across datasets, in part
-because their definitions differ \citep{yin2021generalisable, fortuna2021generalize}. Our interventions point to such a
-definition mismatch as the likely source of the only ranking collapse in our study; the far more common failure is one
-of calibration that the ranking survives.
+Code-mixed benchmarks \citep{khanuja2020gluecos, aguilar2020lince, patwa2020sentimix, goswami2023offmix} evaluate models
+on mixed-language text, and dialect transformations \citep{ziems2023multivalue} document accuracy drops on dialectal
+English. For Bangla, BIDWESH \citep{bidwesh} provides dialect translations of BD-SHS, and Code-mixed Chaos
+\citep{codemixedchaos} and MixTox-SA \citep{mixtox} provide natural romanised and mixed-script text. Hate-speech
+detectors generalise poorly across datasets, in part because the datasets define their labels differently
+\citep{fortuna2020toxic, yin2021generalisable, fortuna2021generalize}, and models trained on a dataset do not
+necessarily reflect its stated definition \citep{khurana2025defverify}. Our source-corpus factorial is consistent with
+this account on one student-written target and shows that the same contrast reverses on natural Banglish. Zero-shot
+decisions of language models are sensitive to prompt wording \citep{seleznyov2025punctuation}; we observe the same for
+their thresholds, not their rankings.
