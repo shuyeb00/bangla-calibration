@@ -18,6 +18,7 @@ run() { echo "== python -m src.$*"; "$PYTHON" -m "src.$1" "${@:2}"; }
 # Hidden states are not in the release bundle (size); the two modules that read them run only where they were fetched.
 has_hidden() { compgen -G "results/grid_max_length_512/runs/*/cal_hidden.npy" > /dev/null; }
 skip_hidden() { echo "== skipped src.$1: needs hidden states (python -m src.fetch_run_outputs --hidden-target-splits)"; }
+skip_data() { echo "== skipped src.$1: needs $2, which is not redistributed"; }
 
 if [ "$STAGE" = outputs ] || [ "$STAGE" = all ]; then
   run evaluate
@@ -65,6 +66,15 @@ if [ "$STAGE" = outputs ] || [ "$STAGE" = all ]; then
   run conformal_exchangeability_stress_test
   run conformal_exchangeability_stress_test --natural-codemixed
   run definition_language_factorial
+  run bcts_shift_coordinates
+  run prior_drift_stress_test
+  run label_shift_estimators
+  run triage_selection_sensitivity
+  run triage_selection_sensitivity --natural-codemixed
+  run convergence_audit
+  # The Sylheti texts and the machine-translated sources are not released; these run only where they exist.
+  if [ -f data/processed/sentiment/d1_dialectal.csv ]; then run sylheti_consensus_sensitivity; else skip_data sylheti_consensus_sensitivity "the Sylheti data"; fi
+  if [ -f data/processed/translation_preparation.json ]; then run translation_audit; else skip_data translation_audit "the translated sources"; fi
   if has_hidden; then
     run distance_aware_calibration
     run distance_aware_calibration --natural-codemixed
@@ -81,6 +91,7 @@ if [ "$STAGE" = tables ] || [ "$STAGE" = verify ] || [ "$STAGE" = all ]; then
   run source_transfer_validation
   run corpus_level_robustness
   run all_pairs_bias_gain
+  run factorial_within_cluster_contrasts
   run mixed_effects_sensitivity
   run run_inclusion_summary
   run proposition_simulation_checks
