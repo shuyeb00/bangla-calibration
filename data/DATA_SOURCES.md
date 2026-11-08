@@ -6,15 +6,17 @@ the SHA-256 prefixes given here.
 
 | Role | Dataset | Reference | Release | Licence (as stated by the release) | Preparation |
 |---|---|---|---|---|---|
-| Source, offensive (Bangla) | BD-SHS | Romim et al., LREC 2022 | authors' release | see release | `notebooks/00_data_preparation.ipynb` |
-| Source, sentiment (Bangla) | SentNoB | Islam et al., Findings of EMNLP 2021 | authors' release | see release | `notebooks/00_data_preparation.ipynb` |
-| Source, offensive (English) | OLID (TweetEval) | Zampieri et al., NAACL 2019; Barbieri et al., Findings of EMNLP 2020 | Hugging Face `cardiffnlp/tweet_eval`, config `offensive`, revision `b3a375baf0f409c77e6bc7aa35102b7b3534f8be` | not stated on the hub page | `python -m src.prepare_olid` |
+| Source, offensive (Bangla) | BD-SHS | Romim et al., LREC 2022 | authors' release (GitHub `naurosromim/hate-speech-dataset-for-Bengali-social-media`) | MIT on the repository; no dataset-specific statement | `notebooks/00_data_preparation.ipynb` |
+| Source, sentiment (Bangla) | SentNoB | Islam et al., Findings of EMNLP 2021 | authors' release (GitHub `KhondokerIslam/SentNoB`) | none stated | `notebooks/00_data_preparation.ipynb` |
+| Source, offensive (English) | OLID (TweetEval) | Zampieri et al., NAACL 2019; Barbieri et al., Findings of EMNLP 2020 | Hugging Face `cardiffnlp/tweet_eval`, config `offensive`, revision `b3a375baf0f409c77e6bc7aa35102b7b3534f8be` | unknown on the hub page (offensive subset: undefined); use must comply with the Twitter terms of service | `python -m src.prepare_olid` |
 | Source and target, sentiment (Hinglish, Spanglish) | SemEval-2020 Task 9 SentiMix | Patwa et al., SemEval 2020 | Zenodo record 3974927, `Semeval_2020_task9_data.zip`, MD5 `4d93553c213b3a966b6d55b7a7c03be7` | CC BY 4.0 | `python -m src.prepare_sentimix --download` |
-| Target, offensive (Bangla dialects) | BIDWESH (Barishal, Chittagong, Noakhali) | Fayaz et al., arXiv:2507.16183 | Mendeley Data, doi:10.17632/bpkrvf882k | see release | `notebooks/00_data_preparation.ipynb`; source overlap: `src/bidwesh_source_overlap.py` |
+| Target, offensive (Bangla dialects) | BIDWESH (Barishal, Chittagong, Noakhali) | Fayaz et al., arXiv:2507.16183 | Mendeley Data, doi:10.17632/bpkrvf882k | CC BY 4.0 | `notebooks/00_data_preparation.ipynb`; source overlap: `src/bidwesh_source_overlap.py` |
 | Target, sentiment (Sylheti) | Sylheti translation of 401 SentNoB test items | this study | created by the authors | derived from SentNoB, whose repository states no licence; not redistributed | `src/prepare_sylheti.py` |
-| Target, tri-lingual code-mixing | OffMix-3L, SentMix-3L | Goswami et al., SocialNLP 2023; Raihan et al., SEALP 2023 | authors' release | CC BY-NC-ND 4.0 (not redistributed) | `notebooks/00_data_preparation.ipynb` |
+| Target, tri-lingual code-mixing | OffMix-3L, SentMix-3L | Goswami et al., SocialNLP 2023; Raihan et al., SEALP 2023 | authors' releases (GitHub `LanguageTechnologyLab/OffMix-3L`, `LanguageTechnologyLab/SentMix-3L`) | AGPL-3.0 on both repositories; no dataset-specific statement (not redistributed) | `notebooks/00_data_preparation.ipynb` |
 | Target, natural code-mixing (Banglish, Bangla script) | Code-mixed Chaos | Rabbani Nuha, Anjum and Aman Ullah, 2025 | Mendeley Data, doi:10.17632/23dp3t88vk.1 | CC BY 4.0 | `python -m src.prepare_natural_codemixed` |
 | Target, natural code-mixing (multilingual) | MixTox-SA | Nahar et al., 2025 | Mendeley Data, doi:10.17632/bsdcd7zkyz.1 | CC BY 4.0 | `python -m src.prepare_natural_codemixed` |
+
+`data/corpus_licences.csv` records the page each licence statement was read from and the date (2026-11-08).
 
 Character-noise conditions are generated from the BD-SHS and SentNoB test splits by the notebook (seed 42).
 

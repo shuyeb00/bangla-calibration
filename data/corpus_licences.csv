@@ -1,0 +1,11 @@
+corpus,role,source_page,licence_as_stated,scope_of_statement,text_redistributed_here,checked_on
+BD-SHS,source offensive (Bangla),https://github.com/naurosromim/hate-speech-dataset-for-Bengali-social-media,MIT (GitHub licence label),repository; the README states no dataset-specific licence,no,2026-11-08
+SentNoB,source sentiment (Bangla),https://github.com/KhondokerIslam/SentNoB (linked from the paper as git.io/JuuNB),none shown,repository and README state no licence,no,2026-11-08
+OLID (TweetEval offensive),source offensive (English),https://huggingface.co/datasets/cardiffnlp/tweet_eval,unknown (offensive subset: undefined); use must comply with the Twitter terms of service,Hugging Face dataset card,no,2026-11-08
+SentiMix (Hinglish and Spanglish),source sentiment and target,https://doi.org/10.5281/zenodo.3974927,CC BY 4.0,Zenodo record (DataCite metadata),no,2026-11-08
+BIDWESH,target offensive (Bangla dialects),https://doi.org/10.17632/bpkrvf882k,CC BY 4.0,Mendeley Data record (DataCite metadata),no,2026-11-08
+OffMix-3L,target offensive (tri-lingual code-mixing),https://github.com/LanguageTechnologyLab/OffMix-3L,AGPL-3.0 (GitHub licence label),repository; the README states no dataset-specific licence; the arXiv version of the paper (2310.18387) is labelled CC BY-NC-ND without extending it to the dataset,no,2026-11-08
+SentMix-3L,target sentiment (tri-lingual code-mixing),https://github.com/LanguageTechnologyLab/SentMix-3L,AGPL-3.0 (GitHub licence label),repository; the README states no dataset-specific licence,no,2026-11-08
+Code-mixed Chaos,target offensive (Banglish and Bangla script),https://doi.org/10.17632/23dp3t88vk.1,CC BY 4.0,Mendeley Data record (DataCite metadata),no,2026-11-08
+MixTox-SA,target offensive (multilingual code-mixing),https://doi.org/10.17632/bsdcd7zkyz.1,CC BY 4.0,Mendeley Data record (DataCite metadata),no,2026-11-08
+Sylheti translation of SentNoB test items,target sentiment (Sylheti),created by the authors,derived from SentNoB; no licence can be granted,derivative of a corpus without a stated licence,no,2026-11-08
